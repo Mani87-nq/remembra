@@ -56,7 +56,7 @@ class QdrantStore:
             log.info(
                 "qdrant_collection_exists",
                 name=self.collection_name,
-                vectors_count=collection_info.vectors_count,
+                points_count=getattr(collection_info, 'points_count', 'unknown'),
             )
         except UnexpectedResponse as e:
             if "Not found" in str(e) or e.status_code == 404:

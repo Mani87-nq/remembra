@@ -59,3 +59,4 @@ logs/
 # Distribution
 *.tar.gz
 *.whl
+remembra.db

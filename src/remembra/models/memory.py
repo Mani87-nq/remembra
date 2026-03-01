@@ -2,13 +2,13 @@
 
 from datetime import datetime
 from typing import Any
+from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
-from ulid import ULID
 
 
 def _new_id() -> str:
-    return str(ULID())
+    return str(uuid4())
 
 
 # ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ class RecallRequest(BaseModel):
     query: str
     project_id: str = "default"
     limit: int = Field(default=5, ge=1, le=50)
-    threshold: float = Field(default=0.70, ge=0.0, le=1.0)
+    threshold: float = Field(default=0.40, ge=0.0, le=1.0)
 
 
 class RecallResult(BaseModel):
