@@ -639,7 +639,7 @@ class MemoryService:
                             "keyword_score": result.keyword_score,
                             "relevance": result.combined_score,
                             "created_at": payload_map.get(result.id, {}).get("created_at"),
-                            "matched_keywords": result.matched_terms,
+                            "matched_keywords": [],  # BM25 fallback doesn't track individual terms
                             "payload": result.payload or payload_map.get(result.id, {}),
                         })
                 else:

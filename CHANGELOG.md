@@ -133,3 +133,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This is an alpha release - API may change
 - Entity resolution coming in v0.2.0
 - LLM-powered extraction coming in v0.2.0
+
+## [0.4.1] - 2026-03-01
+
+### Fixed
+- API recall endpoint signature (removed duplicate max_tokens argument)
+- Hybrid search fallback path (correct method signature for fusion)
+- Test compatibility with HybridSearchConfig API
+
+### Added
+- RELEASE-CHECKLIST.md - mandatory pre-deploy verification
