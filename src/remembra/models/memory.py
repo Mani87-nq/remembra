@@ -113,7 +113,7 @@ class RecallRequest(BaseModel):
     threshold: float = Field(default=0.40, ge=0.0, le=1.0)
     max_tokens: int | None = Field(
         default=None,
-        description="Maximum tokens for context output. Uses default if not specified.",
+        description="Maximum tokens in context output. Overrides server default.",
         ge=100,
         le=128000,
     )
@@ -125,11 +125,13 @@ class RecallRequest(BaseModel):
         default=None,
         description="Enable CrossEncoder reranking. Uses config default if not specified.",
     )
-    max_tokens: int | None = Field(
+    as_of: datetime | None = Field(
         default=None,
-        description="Maximum tokens in context output. Overrides server default.",
-        ge=100,
-        le=100000,
+        description="Query memories as they existed at this point in time (historical/time-travel query).",
+    )
+    include_decay_score: bool = Field(
+        default=False,
+        description="Include decay scores in response (for debugging/analytics).",
     )
 
 

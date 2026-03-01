@@ -49,3 +49,13 @@ class ForgetResult:
     deleted_memories: int
     deleted_entities: int
     deleted_relationships: int
+
+
+@dataclass
+class ChangelogIngestResult:
+    """Result from ingesting a changelog."""
+    
+    releases_parsed: int
+    memories_stored: int
+    memory_ids: list[str]
+    errors: list[str]

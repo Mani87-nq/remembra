@@ -265,6 +265,52 @@ async def update_memory(
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Cleanup Expired
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/cleanup-expired",
+    summary="Clean up expired memories",
+)
+@limiter.limit("5/minute")
+async def cleanup_expired(
+    request: Request,
+    memory_service: MemoryServiceDep,
+    audit_logger: AuditLoggerDep,
+    current_user: CurrentUser,
+) -> dict:
+    """
+    Delete all expired memories (TTL-based cleanup).
+    
+    This endpoint should be called periodically to clean up
+    memories that have exceeded their time-to-live.
+    
+    Rate limit: 5 requests/minute.
+    """
+    try:
+        deleted = await memory_service.cleanup_expired(
+            user_id=current_user.user_id,
+        )
+        
+        await audit_logger.log_memory_forget(
+            user_id=current_user.user_id,
+            resource_id=f"expired:{deleted}",
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=True,
+        )
+        
+        return {"deleted_count": deleted}
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to cleanup expired memories: {str(e)}",
+        )
+
+
 @router.delete(
     "",
     response_model=ForgetResponse,

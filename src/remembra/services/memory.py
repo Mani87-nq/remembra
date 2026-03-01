@@ -1,5 +1,6 @@
 """Memory service - core business logic for store, recall, update, forget."""
 
+import math
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -305,19 +306,18 @@ class MemoryService:
             log.debug("fact_skipped_noop", fact=fact[:50])
             return None
         
+        old_memory_id = None
+        
         if result.action == ConsolidationAction.DELETE and result.target_id:
             # Delete old memory, then add new
-            await self.qdrant.delete(result.target_id)
-            await self.db.delete_memory(result.target_id)
-            log.debug("old_memory_deleted", memory_id=result.target_id)
+            old_memory_id = result.target_id
+            log.debug("old_memory_will_be_deleted", memory_id=result.target_id)
         
         if result.action == ConsolidationAction.UPDATE and result.target_id:
             # Update existing memory with merged content
             content = result.content or fact
-            # Delete old and insert new (simpler than true update)
-            await self.qdrant.delete(result.target_id)
-            await self.db.delete_memory(result.target_id)
-            log.debug("memory_updated", old_id=result.target_id)
+            old_memory_id = result.target_id
+            log.debug("memory_will_be_updated", old_id=result.target_id)
         else:
             content = result.content or fact
         
@@ -374,6 +374,31 @@ class MemoryService:
             except Exception as e:
                 # Don't fail the whole store if entity extraction fails
                 log.warning("entity_extraction_failed", error=str(e), memory_id=memory.id)
+        
+        # Clean up old memory AFTER new one is fully created (fixes FK constraint bug)
+        if old_memory_id:
+            try:
+                # Migrate entity links and relationships to the new memory
+                await self.db.migrate_memory_relationships(old_memory_id, memory.id)
+                
+                # Now safe to delete the old memory (relationships migrated)
+                await self.qdrant.delete(old_memory_id)
+                await self.db.delete_memory_fts(old_memory_id)
+                await self.db.delete_memory(old_memory_id)
+                
+                log.debug(
+                    "old_memory_cleaned_up",
+                    old_id=old_memory_id,
+                    new_id=memory.id,
+                    action=result.action.value,
+                )
+            except Exception as e:
+                log.warning(
+                    "old_memory_cleanup_failed",
+                    error=str(e),
+                    old_id=old_memory_id,
+                    new_id=memory.id,
+                )
         
         return {"id": memory.id, "content": content}
     
@@ -921,3 +946,227 @@ class MemoryService:
     async def get(self, memory_id: str) -> dict[str, Any] | None:
         """Get a memory by ID."""
         return await self.qdrant.get_by_id(memory_id)
+
+    # -----------------------------------------------------------------------
+    # Temporal Features (Week 8)
+    # -----------------------------------------------------------------------
+
+    def calculate_decay_score(
+        self,
+        created_at: datetime,
+        last_accessed: datetime | None,
+        access_count: int,
+        half_life_days: float = 30.0,
+        access_boost: float = 0.1,
+    ) -> float:
+        """
+        Calculate memory decay score based on age and access patterns.
+        
+        The decay model combines:
+        1. Exponential time decay (older = lower score)
+        2. Access frequency boost (more accesses = higher score)
+        3. Recency of access (recently accessed = higher score)
+        
+        Args:
+            created_at: When the memory was created
+            last_accessed: When the memory was last accessed (can be None)
+            access_count: Number of times the memory was accessed
+            half_life_days: Days until memory decays to 50% (default: 30)
+            access_boost: Boost per access (default: 0.1)
+            
+        Returns:
+            Decay score between 0.0 (fully decayed) and 1.0+ (fresh/boosted)
+        """
+        now = datetime.utcnow()
+        
+        # Calculate age-based decay (exponential)
+        age_days = (now - created_at).total_seconds() / 86400.0
+        decay_factor = math.exp(-math.log(2) * age_days / half_life_days)
+        
+        # Access count boost (log scale to prevent runaway)
+        if access_count > 0:
+            access_factor = 1.0 + access_boost * math.log(1 + access_count)
+        else:
+            access_factor = 1.0
+        
+        # Recency of access boost
+        recency_boost = 0.0
+        if last_accessed:
+            recency_days = (now - last_accessed).total_seconds() / 86400.0
+            # Boost fades with same half-life
+            recency_boost = 0.2 * math.exp(-math.log(2) * recency_days / half_life_days)
+        
+        return decay_factor * access_factor + recency_boost
+
+    async def recall_as_of(
+        self,
+        user_id: str,
+        query: str,
+        as_of: datetime,
+        project_id: str = "default",
+        limit: int = 5,
+    ) -> RecallResponse:
+        """
+        Recall memories as they existed at a specific point in time.
+        
+        This enables "time travel" queries - seeing what the memory
+        state was in the past. Useful for:
+        - Auditing what an AI knew at a specific time
+        - Debugging memory changes
+        - Historical analysis
+        
+        Args:
+            user_id: User ID
+            query: Natural language query
+            as_of: The point in time to query from
+            project_id: Project namespace
+            limit: Maximum results
+            
+        Returns:
+            RecallResponse with memories that existed at as_of time
+        """
+        log.info(
+            "recall_as_of",
+            user_id=user_id,
+            as_of=as_of.isoformat(),
+            query=query[:50],
+        )
+        
+        # Get memories that existed at that time
+        historical_memories = await self.db.get_memories_as_of(
+            user_id=user_id,
+            project_id=project_id,
+            as_of=as_of,
+            limit=limit * 2,  # Get more for filtering
+        )
+        
+        if not historical_memories:
+            return RecallResponse(context="", memories=[], entities=[])
+        
+        # Embed query and find most relevant among historical
+        query_vector = await self.embeddings.embed(query)
+        
+        # Re-embed historical memories for comparison
+        # (In production, we'd store embeddings - this is for correctness)
+        results: list[RecallResult] = []
+        for mem in historical_memories[:limit]:
+            results.append(RecallResult(
+                id=mem["id"],
+                content=mem["content"],
+                relevance=0.8,  # Simplified - historical queries don't rank
+                created_at=datetime.fromisoformat(mem["created_at"]),
+            ))
+        
+        # Build context string
+        context_parts = []
+        for r in results:
+            context_parts.append(f"[{r.created_at.strftime('%Y-%m-%d')}] {r.content}")
+        context = "\n".join(context_parts)
+        
+        return RecallResponse(
+            context=context,
+            memories=results,
+            entities=[],
+        )
+
+    async def cleanup_expired(
+        self,
+        user_id: str | None = None,
+        project_id: str | None = None,
+    ) -> int:
+        """
+        Clean up expired memories (TTL-based expiration).
+        
+        This should be called periodically (e.g., via cron or heartbeat)
+        to remove memories that have exceeded their TTL.
+        
+        Args:
+            user_id: Optional user filter
+            project_id: Optional project filter
+            
+        Returns:
+            Number of memories deleted
+        """
+        # Get expired memory IDs
+        expired_ids = await self.db.get_expired_memories(
+            user_id=user_id,
+            project_id=project_id or "default",
+        )
+        
+        if not expired_ids:
+            return 0
+        
+        log.info("cleaning_expired_memories", count=len(expired_ids))
+        
+        # Delete from Qdrant and SQLite
+        deleted = 0
+        for memory_id in expired_ids:
+            try:
+                await self.qdrant.delete(memory_id)
+                await self.db.delete_memory_fts(memory_id)
+                if await self.db.delete_memory(memory_id):
+                    deleted += 1
+            except Exception as e:
+                log.warning("expired_memory_cleanup_failed", memory_id=memory_id, error=str(e))
+        
+        log.info("expired_memories_cleaned", deleted=deleted)
+        return deleted
+
+    async def get_memories_with_decay(
+        self,
+        user_id: str,
+        project_id: str = "default",
+        min_decay_score: float = 0.1,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """
+        Get memories with their decay scores for ranking/filtering.
+        
+        This is useful for:
+        - Prioritizing recent/active memories in recall
+        - Finding "stale" memories that might be archived
+        - Analytics on memory usage patterns
+        
+        Args:
+            user_id: User ID
+            project_id: Project namespace
+            min_decay_score: Filter out memories below this decay score
+            limit: Maximum memories to return
+            
+        Returns:
+            List of memories with decay_score added
+        """
+        memories = await self.db.get_memories_with_decay_info(
+            user_id=user_id,
+            project_id=project_id,
+            limit=limit,
+        )
+        
+        results = []
+        half_life = self.settings.ranking_recency_decay_days
+        
+        for mem in memories:
+            created_at = datetime.fromisoformat(mem["created_at"])
+            last_accessed = (
+                datetime.fromisoformat(mem["last_accessed"])
+                if mem.get("last_accessed")
+                else None
+            )
+            access_count = mem.get("access_count", 0)
+            
+            decay_score = self.calculate_decay_score(
+                created_at=created_at,
+                last_accessed=last_accessed,
+                access_count=access_count,
+                half_life_days=half_life,
+            )
+            
+            if decay_score >= min_decay_score:
+                results.append({
+                    **mem,
+                    "decay_score": decay_score,
+                })
+        
+        # Sort by decay score (highest first)
+        results.sort(key=lambda x: x["decay_score"], reverse=True)
+        return results

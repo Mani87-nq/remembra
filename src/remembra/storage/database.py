@@ -258,7 +258,24 @@ class Database:
         return dict(row)
 
     async def delete_memory(self, memory_id: str) -> bool:
-        """Delete a memory and its associations."""
+        """Delete a memory and its associations.
+        
+        Properly handles FK constraints by deleting relationships first.
+        """
+        # Delete relationships that reference this memory as source
+        # (source_memory_id FK doesn't have CASCADE)
+        await self.conn.execute(
+            "DELETE FROM relationships WHERE source_memory_id = ?",
+            (memory_id,),
+        )
+        
+        # memory_entities has ON DELETE CASCADE, but explicit delete is cleaner
+        await self.conn.execute(
+            "DELETE FROM memory_entities WHERE memory_id = ?",
+            (memory_id,),
+        )
+        
+        # Now safe to delete the memory
         cursor = await self.conn.execute(
             "DELETE FROM memories WHERE id = ?", (memory_id,)
         )
@@ -272,6 +289,181 @@ class Database:
         )
         await self.conn.commit()
         return cursor.rowcount
+
+    async def migrate_memory_relationships(
+        self,
+        old_memory_id: str,
+        new_memory_id: str,
+    ) -> int:
+        """
+        Migrate relationships from old memory to new memory.
+        
+        Used during UPDATE consolidation to preserve entity links.
+        """
+        # Update relationships that reference the old memory as source
+        cursor = await self.conn.execute(
+            "UPDATE relationships SET source_memory_id = ? WHERE source_memory_id = ?",
+            (new_memory_id, old_memory_id),
+        )
+        rel_count = cursor.rowcount
+        
+        # Migrate memory_entity links
+        await self.conn.execute(
+            """
+            INSERT OR IGNORE INTO memory_entities (memory_id, entity_id, confidence)
+            SELECT ?, entity_id, confidence FROM memory_entities WHERE memory_id = ?
+            """,
+            (new_memory_id, old_memory_id),
+        )
+        
+        await self.conn.commit()
+        return rel_count
+
+    # -----------------------------------------------------------------------
+    # Temporal queries (Week 8)
+    # -----------------------------------------------------------------------
+
+    async def get_expired_memories(
+        self,
+        user_id: str | None = None,
+        project_id: str = "default",
+        before: datetime | None = None,
+    ) -> list[str]:
+        """
+        Get IDs of expired memories (expires_at < now).
+        
+        Args:
+            user_id: Filter by user (optional)
+            project_id: Project namespace
+            before: Check expiry before this time (default: now)
+        """
+        check_time = (before or datetime.utcnow()).isoformat()
+        
+        query = """
+            SELECT id FROM memories 
+            WHERE expires_at IS NOT NULL AND expires_at < ?
+        """
+        params: list[Any] = [check_time]
+        
+        if user_id:
+            query += " AND user_id = ?"
+            params.append(user_id)
+        
+        query += " AND project_id = ?"
+        params.append(project_id)
+        
+        cursor = await self.conn.execute(query, params)
+        rows = await cursor.fetchall()
+        return [row["id"] for row in rows]
+
+    async def get_memories_as_of(
+        self,
+        user_id: str,
+        project_id: str,
+        as_of: datetime,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """
+        Get memories that existed at a specific point in time.
+        
+        Returns memories where:
+        - created_at <= as_of
+        - (expires_at IS NULL OR expires_at > as_of)
+        
+        This enables "time travel" queries to see historical state.
+        """
+        cursor = await self.conn.execute(
+            """
+            SELECT * FROM memories
+            WHERE user_id = ? AND project_id = ?
+              AND created_at <= ?
+              AND (expires_at IS NULL OR expires_at > ?)
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (user_id, project_id, as_of.isoformat(), as_of.isoformat(), limit),
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    async def get_memory_with_decay(
+        self,
+        memory_id: str,
+    ) -> dict[str, Any] | None:
+        """
+        Get memory with decay metadata (access_count, last_accessed).
+        
+        Used for calculating decay scores.
+        """
+        cursor = await self.conn.execute(
+            """
+            SELECT id, content, created_at, updated_at, expires_at, 
+                   access_count, last_accessed
+            FROM memories WHERE id = ?
+            """,
+            (memory_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    async def get_memories_with_decay_info(
+        self,
+        user_id: str,
+        project_id: str = "default",
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """
+        Get all memories with decay/access metadata.
+        
+        Returns memories with access_count and last_accessed for decay calculation.
+        """
+        cursor = await self.conn.execute(
+            """
+            SELECT id, content, created_at, updated_at, expires_at,
+                   access_count, last_accessed
+            FROM memories
+            WHERE user_id = ? AND project_id = ?
+              AND (expires_at IS NULL OR expires_at > ?)
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            (user_id, project_id, datetime.utcnow().isoformat(), limit),
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    async def cleanup_expired_memories(
+        self,
+        user_id: str | None = None,
+        project_id: str | None = None,
+    ) -> int:
+        """
+        Delete all expired memories.
+        
+        Returns count of deleted memories.
+        """
+        now = datetime.utcnow().isoformat()
+        
+        query = "SELECT id FROM memories WHERE expires_at IS NOT NULL AND expires_at < ?"
+        params: list[Any] = [now]
+        
+        if user_id:
+            query += " AND user_id = ?"
+            params.append(user_id)
+        if project_id:
+            query += " AND project_id = ?"
+            params.append(project_id)
+        
+        cursor = await self.conn.execute(query, params)
+        expired_ids = [row["id"] for row in await cursor.fetchall()]
+        
+        # Delete each memory properly (handles FK constraints)
+        count = 0
+        for memory_id in expired_ids:
+            if await self.delete_memory(memory_id):
+                count += 1
+        
+        return count
 
     async def update_access(self, memory_id: str) -> None:
         """Update access count and timestamp."""

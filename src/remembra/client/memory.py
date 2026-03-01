@@ -26,6 +26,7 @@ from typing import Any
 import httpx
 
 from remembra.client.types import (
+    ChangelogIngestResult,
     EntityItem,
     ForgetResult,
     MemoryItem,
@@ -301,6 +302,68 @@ class Memory:
             Health status including version and component states
         """
         return self._request("GET", "/health")
+    
+    def ingest_changelog(
+        self,
+        content: str | None = None,
+        file_path: str | None = None,
+        project_name: str | None = None,
+        max_releases: int = 20,
+        skip_unreleased: bool = True,
+    ) -> ChangelogIngestResult:
+        """
+        Ingest project history from a CHANGELOG.md.
+        
+        Each release in the changelog is stored as a separate memory
+        with version and date metadata, making project history
+        searchable and recallable.
+        
+        Args:
+            content: Raw markdown content of the changelog
+            file_path: Path to a CHANGELOG.md file (alternative to content)
+            project_name: Human-readable project name for context
+            max_releases: Maximum number of releases to ingest (default: 20)
+            skip_unreleased: Skip the [Unreleased] section (default: True)
+        
+        Returns:
+            ChangelogIngestResult with counts and memory IDs
+        
+        Example:
+            >>> # From content
+            >>> with open("CHANGELOG.md") as f:
+            ...     result = memory.ingest_changelog(content=f.read(), project_name="MyProject")
+            >>> print(f"Stored {result.memories_stored} releases")
+            
+            >>> # From file path (server-side)
+            >>> result = memory.ingest_changelog(
+            ...     file_path="/path/to/CHANGELOG.md",
+            ...     project_name="MyProject"
+            ... )
+        """
+        if not content and not file_path:
+            raise ValueError("Either 'content' or 'file_path' must be provided")
+        
+        payload: dict[str, Any] = {
+            "project_id": self.project,
+            "max_releases": max_releases,
+            "skip_unreleased": skip_unreleased,
+        }
+        
+        if content:
+            payload["content"] = content
+        if file_path:
+            payload["file_path"] = file_path
+        if project_name:
+            payload["project_name"] = project_name
+        
+        data = self._request("POST", "/api/v1/ingest/changelog", json=payload)
+        
+        return ChangelogIngestResult(
+            releases_parsed=data.get("releases_parsed", 0),
+            memories_stored=data.get("memories_stored", 0),
+            memory_ids=data.get("memory_ids", []),
+            errors=data.get("errors", []),
+        )
     
     def __repr__(self) -> str:
         return f"Memory(base_url='{self.base_url}', user_id='{self.user_id}', project='{self.project}')"

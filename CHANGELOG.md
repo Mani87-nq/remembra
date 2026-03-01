@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-01
+
+### Added
+- **Temporal Features (Week 8)** - Time-aware memory operations
+  - **TTL (Time-to-Live)** - Memories can now expire automatically
+    - Set TTL on store: `memory.store("...", ttl="30d")` (supports d/w/m/y)
+    - `cleanup_expired()` method and `/cleanup-expired` endpoint
+    - Server-side default TTL configurable via `REMEMBRA_DEFAULT_TTL_DAYS`
+  
+  - **Memory Decay Algorithm** - Older/unused memories rank lower
+    - Exponential time decay with configurable half-life
+    - Access count boost (frequently accessed = higher score)
+    - Recency of access boost (recently accessed = higher score)
+    - `get_memories_with_decay()` for decay score visibility
+  
+  - **Historical Queries (as_of)** - Time-travel memory recall
+    - `recall_as_of()` method to see memories at a point in time
+    - Useful for auditing, debugging, historical analysis
+    - Respects both creation time and expiration time
+  
+- **Changelog Ingestion** - Auto-import project history
+  - New endpoint: `POST /api/v1/ingest/changelog`
+  - Parses Keep a Changelog format (and similar markdown formats)
+  - Each release becomes a searchable memory with version/date metadata
+  - SDK method: `memory.ingest_changelog(content_or_path, project_name="...")`
+  - Supports both raw content and file path input
+  
+- Database temporal query methods:
+  - `get_expired_memories()` - Find memories past their TTL
+  - `get_memories_as_of()` - Query historical memory state
+  - `get_memories_with_decay_info()` - Get access/decay metadata
+  - `cleanup_expired_memories()` - Batch delete expired memories
+  - `migrate_memory_relationships()` - Preserve links during UPDATE
+
+### Fixed
+- **Critical: FK Constraint Bug in Consolidation** - Memory UPDATE/DELETE operations
+  no longer fail with foreign key constraint errors. The fix:
+  - Relationships are now properly migrated to new memory before old is deleted
+  - `delete_memory()` cleans up relationships and entity links first
+  - Entity links preserved during consolidation merges
+  
+- Fixed duplicate `max_tokens` field in `RecallRequest` model
+
+### Changed
+- Memory deletion now explicitly handles FK constraints (relationships, entity links)
+- Consolidation UPDATE path migrates relationships to preserve entity graph integrity
+- `RecallRequest` now includes `as_of` and `include_decay_score` parameters
+
+### Configuration
+- `REMEMBRA_DEFAULT_TTL_DAYS` - Default TTL for all memories (optional)
+
 ## [0.5.0] - 2026-03-01
 
 ### Added

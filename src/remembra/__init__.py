@@ -17,11 +17,12 @@ Quick Start:
     print(result.context)  # "John works at Acme Corp as CTO."
 """
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 # SDK exports (client-side)
 from remembra.client.memory import Memory, MemoryError
 from remembra.client.types import (
+    ChangelogIngestResult,
     EntityItem,
     ForgetResult,
     MemoryItem,
@@ -37,6 +38,7 @@ __all__ = [
     "StoreResult",
     "RecallResult",
     "ForgetResult",
+    "ChangelogIngestResult",
     "MemoryItem",
     "EntityItem",
     # Metadata
