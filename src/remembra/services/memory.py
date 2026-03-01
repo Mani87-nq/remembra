@@ -159,7 +159,13 @@ class MemoryService:
     # Store
     # -----------------------------------------------------------------------
 
-    async def store(self, request: StoreRequest) -> StoreResponse:
+    async def store(
+        self,
+        request: StoreRequest,
+        source: str = "user_input",
+        trust_score: float = 1.0,
+        checksum: str | None = None,
+    ) -> StoreResponse:
         """
         Store a new memory with intelligent extraction and consolidation.
         
@@ -168,12 +174,19 @@ class MemoryService:
         2. For each fact, check for similar existing memories
         3. Consolidate: ADD new, UPDATE existing, or skip duplicates
         4. Store in Qdrant (vector) + SQLite (metadata)
+        
+        Args:
+            request: StoreRequest with content, user_id, etc.
+            source: Content provenance (user_input, agent_generated, external_api)
+            trust_score: Security trust score (0.0-1.0)
+            checksum: SHA-256 hash for integrity verification
         """
         log.info(
             "storing_memory",
             user_id=request.user_id,
             project_id=request.project_id,
             content_length=len(request.content),
+            trust_score=trust_score,
         )
 
         now = datetime.utcnow()
@@ -208,6 +221,9 @@ class MemoryService:
                 metadata=request.metadata,
                 expires_at=expires_at,
                 now=now,
+                source=source,
+                trust_score=trust_score,
+                checksum=checksum,
             )
             if fact_result:
                 stored_facts.append(fact_result["content"])
@@ -244,11 +260,25 @@ class MemoryService:
         metadata: dict[str, Any],
         expires_at: datetime | None,
         now: datetime,
+        source: str = "user_input",
+        trust_score: float = 1.0,
+        checksum: str | None = None,
     ) -> dict[str, Any] | None:
         """
         Store a single fact with consolidation logic.
         
         Returns dict with id and content if stored, None if skipped.
+        
+        Args:
+            fact: The extracted fact to store
+            user_id: User ID
+            project_id: Project namespace
+            metadata: Additional metadata
+            expires_at: Optional expiration time
+            now: Current timestamp
+            source: Content provenance (user_input, agent_generated, external_api)
+            trust_score: Security trust score (0.0-1.0)
+            checksum: SHA-256 hash for integrity verification
         """
         # Generate embedding for this fact
         embedding = await self.embeddings.embed(fact)
@@ -315,6 +345,9 @@ class MemoryService:
             metadata=memory.metadata,
             created_at=memory.created_at,
             expires_at=memory.expires_at,
+            source=source,
+            trust_score=trust_score,
+            checksum=checksum,
         )
         
         # Index in FTS5 for hybrid search (Week 6)

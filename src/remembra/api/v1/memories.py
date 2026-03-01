@@ -4,7 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
+from remembra.auth.middleware import AuthenticatedUser, CurrentUser, get_client_ip
 from remembra.config import Settings, get_settings
+from remembra.core.limiter import limiter
 from remembra.models.memory import (
     ForgetResponse,
     RecallRequest,
@@ -14,6 +16,8 @@ from remembra.models.memory import (
     UpdateRequest,
     UpdateResponse,
 )
+from remembra.security.audit import AuditLogger
+from remembra.security.sanitizer import ContentSanitizer
 from remembra.services.memory import MemoryService
 
 router = APIRouter(prefix="/memories", tags=["memories"])
@@ -26,7 +30,19 @@ def get_memory_service(request: Request) -> MemoryService:
     return request.app.state.memory_service
 
 
+def get_audit_logger(request: Request) -> AuditLogger:
+    """Dependency to get the audit logger from app state."""
+    return request.app.state.audit_logger
+
+
+def get_sanitizer(request: Request) -> ContentSanitizer:
+    """Dependency to get the content sanitizer from app state."""
+    return request.app.state.sanitizer
+
+
 MemoryServiceDep = Annotated[MemoryService, Depends(get_memory_service)]
+AuditLoggerDep = Annotated[AuditLogger, Depends(get_audit_logger)]
+SanitizerDep = Annotated[ContentSanitizer, Depends(get_sanitizer)]
 
 
 # ---------------------------------------------------------------------------
@@ -40,24 +56,73 @@ MemoryServiceDep = Annotated[MemoryService, Depends(get_memory_service)]
     status_code=status.HTTP_201_CREATED,
     summary="Store a new memory",
 )
+@limiter.limit("30/minute")
 async def store_memory(
+    request: Request,
     body: StoreRequest,
     memory_service: MemoryServiceDep,
+    audit_logger: AuditLoggerDep,
+    sanitizer: SanitizerDep,
+    current_user: CurrentUser,
+    settings: SettingsDep,
 ) -> StoreResponse:
     """
     Accept raw text, extract facts and entities, embed, and persist.
     
-    - **user_id**: Unique identifier for the user
     - **content**: The text content to memorize
     - **project_id**: Optional project namespace (default: "default")
     - **metadata**: Optional key-value metadata
     - **ttl**: Optional time-to-live (e.g., "30d", "1y")
+    
+    Note: user_id is determined by API key (cannot be overridden).
+    Rate limit: 30 requests/minute.
     """
+    # Override user_id with authenticated user (security: prevent user spoofing)
+    body.user_id = current_user.user_id
+    
+    # Sanitize content and compute trust score
+    sanitization = None
+    if settings.sanitization_enabled:
+        sanitization = sanitizer.analyze(body.content, source="user_input")
+    
     try:
-        return await memory_service.store(body)
+        result = await memory_service.store(
+            body,
+            source="user_input",
+            trust_score=sanitization.trust_score if sanitization else 1.0,
+            checksum=sanitization.checksum if sanitization else None,
+        )
+        
+        # Audit log (don't log content, only memory_id)
+        await audit_logger.log_memory_store(
+            user_id=current_user.user_id,
+            memory_id=result.id,
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=True,
+        )
+        
+        return result
+        
     except ValueError as e:
+        await audit_logger.log_memory_store(
+            user_id=current_user.user_id,
+            memory_id="",
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=False,
+            error=str(e),
+        )
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
+        await audit_logger.log_memory_store(
+            user_id=current_user.user_id,
+            memory_id="",
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=False,
+            error=str(e),
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to store memory: {str(e)}",
@@ -74,9 +139,13 @@ async def store_memory(
     response_model=RecallResponse,
     summary="Retrieve memories relevant to a query",
 )
+@limiter.limit("60/minute")
 async def recall_memories(
+    request: Request,
     body: RecallRequest,
     memory_service: MemoryServiceDep,
+    audit_logger: AuditLoggerDep,
+    current_user: CurrentUser,
 ) -> RecallResponse:
     """
     Embed the query, perform semantic search, synthesise a context string.
@@ -87,16 +156,39 @@ async def recall_memories(
     - Relevance ranking (recency, entity, keyword boosts)
     - Context window optimization (smart truncation)
     
-    - **user_id**: User whose memories to search
     - **query**: Natural language query
     - **project_id**: Optional project namespace (default: "default")
     - **limit**: Maximum results to return (1-50, default: 5)
     - **threshold**: Minimum relevance score (0.0-1.0, default: 0.40)
-    - **max_tokens**: Maximum tokens in context output (optional, overrides server default)
+    - **max_tokens**: Maximum tokens in context output (optional)
+    
+    Note: user_id is determined by API key (cannot be overridden).
+    Rate limit: 60 requests/minute.
     """
+    # Override user_id with authenticated user
+    body.user_id = current_user.user_id
+    
     try:
-        return await memory_service.recall(body)
+        result = await memory_service.recall(body)
+        
+        # Audit log
+        await audit_logger.log_memory_recall(
+            user_id=current_user.user_id,
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=True,
+        )
+        
+        return result
+        
     except Exception as e:
+        await audit_logger.log_memory_recall(
+            user_id=current_user.user_id,
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=False,
+            error=str(e),
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to recall memories: {str(e)}",
@@ -113,16 +205,30 @@ async def recall_memories(
     summary="Get a specific memory by ID",
 )
 async def get_memory(
+    request: Request,
     memory_id: str,
     memory_service: MemoryServiceDep,
+    current_user: CurrentUser,
 ) -> dict:
-    """Retrieve a specific memory by its ID."""
+    """
+    Retrieve a specific memory by its ID.
+    
+    Note: Can only access memories belonging to the authenticated user.
+    """
     result = await memory_service.get(memory_id)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Memory {memory_id} not found",
         )
+    
+    # Security: Verify memory belongs to authenticated user
+    if result.get("user_id") != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Memory {memory_id} not found",  # Don't reveal it exists
+        )
+    
     return result
 
 
@@ -140,6 +246,7 @@ async def update_memory(
     memory_id: str,
     body: UpdateRequest,
     memory_service: MemoryServiceDep,
+    current_user: CurrentUser,
 ) -> UpdateResponse:
     """
     Re-extract facts from updated content and merge entity graph.
@@ -163,36 +270,66 @@ async def update_memory(
     response_model=ForgetResponse,
     summary="Forget memories (GDPR-compliant deletion)",
 )
+@limiter.limit("10/minute")
 async def forget_memories(
+    request: Request,
     memory_service: MemoryServiceDep,
+    audit_logger: AuditLoggerDep,
+    current_user: CurrentUser,
     memory_id: Annotated[
         str | None, Query(description="Delete a specific memory by ID")
     ] = None,
     entity: Annotated[
         str | None, Query(description="Delete all memories about an entity")
     ] = None,
-    user_id: Annotated[
-        str | None, Query(description="Delete all memories for a user")
-    ] = None,
+    all_memories: Annotated[
+        bool, Query(description="Delete all memories for the user")
+    ] = False,
 ) -> ForgetResponse:
     """
     Delete memories matching the given filter.
 
-    At least one of `memory_id`, `entity`, or `user_id` is required.
+    At least one of `memory_id`, `entity`, or `all_memories=true` is required.
+    
+    Note: Can only delete your own memories.
+    Rate limit: 10 requests/minute.
     """
-    if not any([memory_id, entity, user_id]):
+    if not any([memory_id, entity, all_memories]):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Provide at least one of: memory_id, entity, user_id",
+            detail="Provide at least one of: memory_id, entity, all_memories=true",
         )
 
+    # Always scope to authenticated user (security: prevent cross-user deletion)
+    user_id = current_user.user_id if all_memories else None
+
     try:
-        return await memory_service.forget(
+        result = await memory_service.forget(
             memory_id=memory_id,
             user_id=user_id,
             entity=entity,
         )
+        
+        # Audit log
+        await audit_logger.log_memory_forget(
+            user_id=current_user.user_id,
+            resource_id=memory_id or f"user:{user_id}" if user_id else f"entity:{entity}",
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=True,
+        )
+        
+        return result
+        
     except Exception as e:
+        await audit_logger.log_memory_forget(
+            user_id=current_user.user_id,
+            resource_id=memory_id,
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=False,
+            error=str(e),
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to forget memories: {str(e)}",

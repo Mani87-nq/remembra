@@ -153,6 +153,38 @@ class Settings(BaseSettings):
     max_memories_per_recall: int = 10
     recall_score_threshold: float = 0.70
 
+    # -----------------------------------------------------------------------
+    # Security & Authentication (Week 7)
+    # -----------------------------------------------------------------------
+    auth_enabled: bool = Field(
+        True,
+        description="Enable API key authentication (disable for development only)"
+    )
+    auth_master_key: str | None = Field(
+        None,
+        description="Master key for admin operations (key management)"
+    )
+    
+    # Rate Limiting
+    rate_limit_enabled: bool = Field(
+        True,
+        description="Enable rate limiting"
+    )
+    rate_limit_storage: str = Field(
+        "memory",
+        description="Rate limit storage backend: 'memory' or 'redis://...'"
+    )
+    
+    # Input Sanitization
+    sanitization_enabled: bool = Field(
+        True,
+        description="Enable input sanitization and trust scoring"
+    )
+    trust_score_threshold: float = Field(
+        0.5,
+        description="Content below this trust score is flagged as suspicious"
+    )
+
 
 _settings: Settings | None = None
 

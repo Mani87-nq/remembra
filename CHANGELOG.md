@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-01
+
+### Added
+- **API Key Authentication** - Secure access control for all memory operations
+  - Generate API keys with `rem_` prefix and 256-bit entropy
+  - Keys hashed with bcrypt before storage (never stored in plaintext)
+  - Per-user memory isolation enforced via API key
+  - Master key support for admin operations
+  - Key management endpoints: POST/GET/DELETE /api/v1/keys
+  
+- **Rate Limiting** - Protection against abuse and DoS
+  - Per-endpoint limits (store: 30/min, recall: 60/min, forget: 10/min)
+  - Rate limit by API key (not just IP)
+  - Uses `slowapi` with in-memory or Redis backend
+  - Configurable via environment variables
+  
+- **Memory Protection Layer** - Defense against prompt injection (MINJA)
+  - Input sanitization before storage
+  - Trust scoring based on suspicious pattern detection
+  - Patterns detected: instruction override, role manipulation, delimiter injection
+  - SHA-256 checksums for integrity verification
+  - Content provenance tracking (source, trust_score, checksum)
+  
+- **Audit Logging** - Security monitoring and compliance
+  - Logs all memory operations (store, recall, forget)
+  - Logs authentication events (key created, revoked, failed attempts)
+  - Includes: timestamp, user_id, key_id, action, resource_id, IP, success
+  - Never logs actual memory content or full API keys
+  
+- New `auth/` module with:
+  - `keys.py` - API key generation, hashing, validation
+  - `middleware.py` - FastAPI dependencies for authentication
+  
+- New `security/` module with:
+  - `sanitizer.py` - Content sanitization and trust scoring
+  - `audit.py` - Security audit logging
+  
+- Database schema updates:
+  - `api_keys` table for key storage
+  - `audit_log` table for security events
+  - Memory provenance columns: source, trust_score, checksum
+
+### Configuration
+- `REMEMBRA_AUTH_ENABLED` - Enable API key authentication (default: true)
+- `REMEMBRA_AUTH_MASTER_KEY` - Master key for admin operations
+- `REMEMBRA_RATE_LIMIT_ENABLED` - Enable rate limiting (default: true)
+- `REMEMBRA_RATE_LIMIT_STORAGE` - Rate limit backend: "memory" or "redis://..."
+- `REMEMBRA_SANITIZATION_ENABLED` - Enable input sanitization (default: true)
+- `REMEMBRA_TRUST_SCORE_THRESHOLD` - Suspicious content threshold (default: 0.5)
+
+### Security
+- OWASP API Security Top 10 addressed
+- Defense-in-depth against memory injection attacks (MINJA - 95% success rate in research)
+- Cross-user memory access blocked via API key scoping
+- user_id in requests overridden by authenticated user (prevents spoofing)
+
+### Dependencies
+- Added `bcrypt>=4.0.0` for key hashing
+- Added `slowapi>=0.1.9` for rate limiting
+
 ## [0.4.0] - 2026-03-01
 
 ### Added

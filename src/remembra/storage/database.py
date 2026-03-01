@@ -26,12 +26,47 @@ CREATE TABLE IF NOT EXISTS memories (
     updated_at TEXT NOT NULL,
     expires_at TEXT,
     access_count INTEGER DEFAULT 0,
-    last_accessed TEXT
+    last_accessed TEXT,
+    -- Memory provenance columns (Week 7 - Security)
+    source TEXT DEFAULT 'user_input',  -- user_input, agent_generated, external_api
+    trust_score REAL DEFAULT 1.0,  -- 0.0-1.0 confidence rating
+    checksum TEXT  -- SHA-256 hash for integrity verification
 );
 
 CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(user_id);
 CREATE INDEX IF NOT EXISTS idx_memories_project ON memories(user_id, project_id);
 CREATE INDEX IF NOT EXISTS idx_memories_created ON memories(created_at);
+
+-- API Keys table (Week 7 - Authentication)
+CREATE TABLE IF NOT EXISTS api_keys (
+    id TEXT PRIMARY KEY,
+    key_hash TEXT NOT NULL UNIQUE,  -- bcrypt hash of the API key
+    user_id TEXT NOT NULL,
+    name TEXT,  -- "Production Key", "Dev Key"
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP,
+    active BOOLEAN DEFAULT TRUE,
+    rate_limit_tier TEXT DEFAULT 'standard'  -- 'standard', 'premium'
+);
+
+CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_api_keys_user ON api_keys(user_id);
+
+-- Audit log table (Week 7 - Security)
+CREATE TABLE IF NOT EXISTS audit_log (
+    id TEXT PRIMARY KEY,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id TEXT NOT NULL,
+    api_key_id TEXT,
+    action TEXT NOT NULL,  -- 'store', 'recall', 'forget', 'key_created', 'key_revoked', 'auth_failed'
+    resource_id TEXT,  -- memory_id or key_id
+    ip_address TEXT,
+    success BOOLEAN DEFAULT TRUE,
+    error_message TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id, timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action, timestamp);
 
 -- FTS5 full-text search index for BM25 keyword matching
 CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
@@ -130,7 +165,29 @@ class Database:
         
         await self._connection.executescript(SCHEMA_SQL)
         await self._connection.commit()
+        
+        # Run migrations for existing tables
+        await self._run_migrations()
+        
         log.info("database_schema_initialized")
+
+    async def _run_migrations(self) -> None:
+        """Apply migrations for existing databases (adds missing columns)."""
+        # Memory provenance columns (Week 7)
+        migrations = [
+            "ALTER TABLE memories ADD COLUMN source TEXT DEFAULT 'user_input'",
+            "ALTER TABLE memories ADD COLUMN trust_score REAL DEFAULT 1.0",
+            "ALTER TABLE memories ADD COLUMN checksum TEXT",
+        ]
+        
+        for migration in migrations:
+            try:
+                await self._connection.execute(migration)
+            except Exception:
+                # Column likely already exists, ignore
+                pass
+        
+        await self._connection.commit()
 
     @property
     def conn(self) -> aiosqlite.Connection:
@@ -152,19 +209,26 @@ class Database:
         metadata: dict[str, Any],
         created_at: datetime,
         expires_at: datetime | None = None,
+        source: str = "user_input",
+        trust_score: float = 1.0,
+        checksum: str | None = None,
     ) -> None:
         """Save memory metadata to SQLite."""
         await self.conn.execute(
             """
             INSERT INTO memories (id, user_id, project_id, content, extracted_facts, 
-                                  metadata, created_at, updated_at, expires_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  metadata, created_at, updated_at, expires_at,
+                                  source, trust_score, checksum)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 content = excluded.content,
                 extracted_facts = excluded.extracted_facts,
                 metadata = excluded.metadata,
                 updated_at = excluded.updated_at,
-                expires_at = excluded.expires_at
+                expires_at = excluded.expires_at,
+                source = excluded.source,
+                trust_score = excluded.trust_score,
+                checksum = excluded.checksum
             """,
             (
                 memory_id,
@@ -176,6 +240,9 @@ class Database:
                 created_at.isoformat(),
                 datetime.utcnow().isoformat(),
                 expires_at.isoformat() if expires_at else None,
+                source,
+                trust_score,
+                checksum,
             ),
         )
         await self.conn.commit()
@@ -594,6 +661,138 @@ class Database:
             )
             for row in rows
         ]
+
+
+    # -----------------------------------------------------------------------
+    # API Key operations (Week 7 - Authentication)
+    # -----------------------------------------------------------------------
+
+    async def save_api_key(
+        self,
+        key_id: str,
+        key_hash: str,
+        user_id: str,
+        name: str | None = None,
+        rate_limit_tier: str = "standard",
+    ) -> None:
+        """Save a new API key (hashed)."""
+        await self.conn.execute(
+            """
+            INSERT INTO api_keys (id, key_hash, user_id, name, created_at, active, rate_limit_tier)
+            VALUES (?, ?, ?, ?, ?, TRUE, ?)
+            """,
+            (key_id, key_hash, user_id, name, datetime.utcnow().isoformat(), rate_limit_tier),
+        )
+        await self.conn.commit()
+
+    async def get_api_key_by_hash(self, key_hash: str) -> dict[str, Any] | None:
+        """Get API key record by hash."""
+        cursor = await self.conn.execute(
+            "SELECT * FROM api_keys WHERE key_hash = ? AND active = TRUE",
+            (key_hash,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    async def get_user_api_keys(self, user_id: str) -> list[dict[str, Any]]:
+        """Get all API keys for a user (without hashes)."""
+        cursor = await self.conn.execute(
+            """
+            SELECT id, user_id, name, created_at, last_used_at, active, rate_limit_tier
+            FROM api_keys WHERE user_id = ?
+            ORDER BY created_at DESC
+            """,
+            (user_id,),
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    async def update_api_key_last_used(self, key_id: str) -> None:
+        """Update last_used_at timestamp for an API key."""
+        await self.conn.execute(
+            "UPDATE api_keys SET last_used_at = ? WHERE id = ?",
+            (datetime.utcnow().isoformat(), key_id),
+        )
+        await self.conn.commit()
+
+    async def revoke_api_key(self, key_id: str, user_id: str) -> bool:
+        """Revoke (deactivate) an API key. Returns True if found and revoked."""
+        cursor = await self.conn.execute(
+            "UPDATE api_keys SET active = FALSE WHERE id = ? AND user_id = ?",
+            (key_id, user_id),
+        )
+        await self.conn.commit()
+        return cursor.rowcount > 0
+
+    async def get_api_key_by_id(self, key_id: str) -> dict[str, Any] | None:
+        """Get API key by ID."""
+        cursor = await self.conn.execute(
+            "SELECT * FROM api_keys WHERE id = ?",
+            (key_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    # -----------------------------------------------------------------------
+    # Audit Log operations (Week 7 - Security)
+    # -----------------------------------------------------------------------
+
+    async def log_audit_event(
+        self,
+        audit_id: str,
+        user_id: str,
+        action: str,
+        api_key_id: str | None = None,
+        resource_id: str | None = None,
+        ip_address: str | None = None,
+        success: bool = True,
+        error_message: str | None = None,
+    ) -> None:
+        """Log an audit event."""
+        await self.conn.execute(
+            """
+            INSERT INTO audit_log (id, timestamp, user_id, api_key_id, action, 
+                                   resource_id, ip_address, success, error_message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                audit_id,
+                datetime.utcnow().isoformat(),
+                user_id,
+                api_key_id,
+                action,
+                resource_id,
+                ip_address,
+                success,
+                error_message,
+            ),
+        )
+        await self.conn.commit()
+
+    async def get_audit_logs(
+        self,
+        user_id: str | None = None,
+        action: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Get audit log entries with optional filters."""
+        query = "SELECT * FROM audit_log WHERE 1=1"
+        params: list[Any] = []
+        
+        if user_id:
+            query += " AND user_id = ?"
+            params.append(user_id)
+        
+        if action:
+            query += " AND action = ?"
+            params.append(action)
+        
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        
+        cursor = await self.conn.execute(query, params)
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
 
 
 # ---------------------------------------------------------------------------

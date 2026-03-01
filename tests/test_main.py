@@ -1,5 +1,11 @@
 """Smoke tests for the FastAPI application skeleton."""
 
+import os
+
+# Disable auth for tests - MUST be before any remembra imports
+os.environ["REMEMBRA_AUTH_ENABLED"] = "false"
+os.environ["REMEMBRA_RATE_LIMIT_ENABLED"] = "false"
+
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 
@@ -42,10 +48,39 @@ def mock_memory_service():
 
 
 @pytest.fixture()
-async def client(mock_memory_service):
+def mock_security_services():
+    """Create mock security services for testing."""
+    from remembra.auth.keys import APIKeyManager
+    from remembra.security.audit import AuditLogger
+    from remembra.security.sanitizer import ContentSanitizer
+    
+    audit_logger = MagicMock(spec=AuditLogger)
+    audit_logger.log_memory_store = AsyncMock()
+    audit_logger.log_memory_recall = AsyncMock()
+    audit_logger.log_memory_forget = AsyncMock()
+    
+    api_key_manager = MagicMock(spec=APIKeyManager)
+    sanitizer = ContentSanitizer()
+    
+    return {
+        "audit_logger": audit_logger,
+        "api_key_manager": api_key_manager,
+        "sanitizer": sanitizer,
+    }
+
+
+@pytest.fixture()
+async def client(mock_memory_service, mock_security_services):
     """Test client with mocked services."""
-    # Inject mock service into app state
+    # Inject mock services into app state
     app.state.memory_service = mock_memory_service
+    app.state.audit_logger = mock_security_services["audit_logger"]
+    app.state.api_key_manager = mock_security_services["api_key_manager"]
+    app.state.sanitizer = mock_security_services["sanitizer"]
+    
+    # Reset settings to pick up env vars
+    import remembra.config
+    remembra.config._settings = None
     
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -78,6 +113,8 @@ async def test_store_memory_returns_201(client: AsyncClient, mock_memory_service
         "/api/v1/memories",
         json={"user_id": "test-user", "content": "John is the CTO at Acme Corp."},
     )
+    if r.status_code != 201:
+        print(f"ERROR RESPONSE: {r.text}")
     assert r.status_code == 201
     data = r.json()
     assert "id" in data
