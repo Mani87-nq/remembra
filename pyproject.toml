@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "remembra"
-version = "0.6.7"
+version = "0.7.0"
 description = "Universal memory layer for AI applications. Self-host in 5 minutes."
 readme = "README.md"
 license = { text = "MIT" }
@@ -64,6 +64,7 @@ server = [
     "tiktoken>=0.7.0",
     "bcrypt>=4.0.0",
     "slowapi>=0.1.9",
+    "python-multipart>=0.0.9",
 ]
 
 # MCP server dependencies

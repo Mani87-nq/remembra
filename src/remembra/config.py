@@ -158,6 +158,18 @@ class Settings(BaseSettings):
     recall_score_threshold: float = 0.70
 
     # -----------------------------------------------------------------------
+    # Conflict Resolution
+    # -----------------------------------------------------------------------
+    conflict_detection_enabled: bool = Field(
+        True,
+        description="Track conflicts detected during memory consolidation",
+    )
+    conflict_strategy: str = Field(
+        "update",
+        description="Default resolution strategy: update | version | flag",
+    )
+
+    # -----------------------------------------------------------------------
     # Cloud / SaaS
     # -----------------------------------------------------------------------
     cloud_enabled: bool = Field(
@@ -183,6 +195,22 @@ class Settings(BaseSettings):
     billing_portal_return_url: str = Field(
         "https://remembra.dev/dashboard",
         description="URL to return to after billing portal session",
+    )
+
+    # -----------------------------------------------------------------------
+    # Webhooks
+    # -----------------------------------------------------------------------
+    webhooks_enabled: bool = Field(
+        False,
+        description="Enable the webhook event system for memory lifecycle events",
+    )
+    webhook_timeout: float = Field(
+        10.0,
+        description="Timeout in seconds for webhook HTTP delivery",
+    )
+    webhook_max_retries: int = Field(
+        3,
+        description="Maximum delivery attempts before marking a webhook delivery as failed",
     )
 
     # -----------------------------------------------------------------------

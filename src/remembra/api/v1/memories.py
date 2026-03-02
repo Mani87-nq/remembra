@@ -1,5 +1,6 @@
 """Memory CRUD endpoints – /api/v1/memories."""
 
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -26,6 +27,14 @@ from remembra.models.memory import (
 from remembra.security.audit import AuditLogger
 from remembra.security.sanitizer import ContentSanitizer
 from remembra.services.memory import MemoryService
+from remembra.webhooks.events import (
+    WebhookEvent,
+    memory_deleted_event,
+    memory_recalled_event,
+    memory_stored_event,
+)
+
+_webhook_log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/memories", tags=["memories"])
 
@@ -50,6 +59,17 @@ def get_sanitizer(request: Request) -> ContentSanitizer:
 MemoryServiceDep = Annotated[MemoryService, Depends(get_memory_service)]
 AuditLoggerDep = Annotated[AuditLogger, Depends(get_audit_logger)]
 SanitizerDep = Annotated[ContentSanitizer, Depends(get_sanitizer)]
+
+
+async def _dispatch_webhook(request: Request, event: WebhookEvent) -> None:
+    """Fire-and-forget webhook dispatch. No-ops if webhooks are disabled."""
+    manager = getattr(request.app.state, "webhook_manager", None)
+    if manager is None:
+        return
+    try:
+        await manager.dispatch(event)
+    except Exception as exc:  # noqa: BLE001
+        _webhook_log.warning("Webhook dispatch failed: %s", exc)
 
 
 # ---------------------------------------------------------------------------
@@ -113,8 +133,20 @@ async def store_memory(
         # Record usage for metering (no-op if cloud disabled)
         await record_store_usage(request, current_user.user_id)
 
+        # Dispatch webhook event (no-op if webhooks disabled)
+        await _dispatch_webhook(
+            request,
+            memory_stored_event(
+                user_id=current_user.user_id,
+                memory_id=result.id,
+                extracted_facts=getattr(result, "facts", None),
+                entities=getattr(result, "entities", None),
+                project_id=body.project_id or "default",
+            ),
+        )
+
         return result
-        
+
     except ValueError as e:
         await audit_logger.log_memory_store(
             user_id=current_user.user_id,
@@ -194,8 +226,19 @@ async def recall_memories(
         # Record usage for metering (no-op if cloud disabled)
         await record_recall_usage(request, current_user.user_id)
 
+        # Dispatch webhook event (no-op if webhooks disabled)
+        await _dispatch_webhook(
+            request,
+            memory_recalled_event(
+                user_id=current_user.user_id,
+                query=body.query,
+                result_count=len(result.memories) if result.memories else 0,
+                project_id=body.project_id or "default",
+            ),
+        )
+
         return result
-        
+
     except Exception as e:
         await audit_logger.log_memory_recall(
             user_id=current_user.user_id,
@@ -383,8 +426,18 @@ async def forget_memories(
         # Record usage for metering (no-op if cloud disabled)
         await record_delete_usage(request, current_user.user_id)
 
+        # Dispatch webhook event (no-op if webhooks disabled)
+        await _dispatch_webhook(
+            request,
+            memory_deleted_event(
+                user_id=current_user.user_id,
+                memory_id=memory_id,
+                deleted_count=result.deleted_count if hasattr(result, "deleted_count") else 1,
+            ),
+        )
+
         return result
-        
+
     except Exception as e:
         await audit_logger.log_memory_forget(
             user_id=current_user.user_id,

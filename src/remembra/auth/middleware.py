@@ -19,11 +19,13 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 @dataclass
 class AuthenticatedUser:
     """Represents an authenticated user from API key validation."""
-    
+
     user_id: str
     api_key_id: str
     rate_limit_tier: str
     name: str | None = None
+    role: str = "editor"  # Populated by RBAC layer if enabled
+    scopes: list[str] | None = None  # Explicit scope restrictions
 
 
 def get_client_ip(request: Request) -> str:

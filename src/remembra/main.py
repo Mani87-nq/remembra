@@ -16,8 +16,12 @@ from slowapi.util import get_remote_address
 from remembra import __version__
 from remembra.api.router import api_router
 from remembra.auth.keys import APIKeyManager
+from remembra.auth.rbac import RoleManager
 from remembra.cloud.metering import UsageMeter
 from remembra.config import get_settings
+from remembra.extraction.conflicts import ConflictManager, ConflictStrategy
+from remembra.webhooks.delivery import WebhookDelivery
+from remembra.webhooks.manager import WebhookManager
 from remembra.core.health import build_health_response, check_qdrant
 from remembra.core.logging import configure_logging
 from remembra.security.audit import AuditLogger
@@ -55,6 +59,9 @@ class AppState:
     audit_logger: AuditLogger
     sanitizer: ContentSanitizer
     usage_meter: UsageMeter | None
+    webhook_manager: WebhookManager | None
+    conflict_manager: ConflictManager | None
+    role_manager: RoleManager | None
 
 
 # ---------------------------------------------------------------------------
@@ -97,6 +104,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         log_suspicious=True,
     )
 
+    # RBAC role manager
+    app.state.role_manager = RoleManager(app.state.db)
+    await app.state.role_manager.init_schema()
+    log.info("rbac_enabled")
+
     # Memory service (business logic)
     app.state.memory_service = MemoryService(
         settings=settings,
@@ -115,6 +127,38 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         )
     else:
         app.state.usage_meter = None
+
+    # Conflict resolution
+    if settings.conflict_detection_enabled:
+        try:
+            strategy = ConflictStrategy(settings.conflict_strategy)
+        except ValueError:
+            strategy = ConflictStrategy.UPDATE
+        app.state.conflict_manager = ConflictManager(
+            db=app.state.db,
+            default_strategy=strategy,
+        )
+        await app.state.conflict_manager.init_schema()
+        log.info("conflict_detection_enabled", strategy=strategy.value)
+        # Inject into memory service so conflicts are tracked during store
+        app.state.memory_service.conflict_manager = app.state.conflict_manager
+    else:
+        app.state.conflict_manager = None
+
+    # Webhook event system
+    if settings.webhooks_enabled:
+        delivery = WebhookDelivery(
+            timeout=settings.webhook_timeout,
+            max_retries=settings.webhook_max_retries,
+        )
+        app.state.webhook_manager = WebhookManager(
+            db=app.state.db,
+            delivery=delivery,
+        )
+        await app.state.webhook_manager.init_schema()
+        log.info("webhooks_enabled")
+    else:
+        app.state.webhook_manager = None
 
     log.info("storage_layer_ready")
 

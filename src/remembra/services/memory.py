@@ -26,6 +26,12 @@ from remembra.extraction.consolidator import (
     ConsolidationAction,
     ExistingMemory,
 )
+from remembra.extraction.conflicts import (
+    ConflictManager,
+    ConflictStrategy,
+    ConflictStatus,
+    MemoryConflict,
+)
 from remembra.extraction.entities import EntityExtractor, ExtractedEntity
 from remembra.extraction.matcher import EntityMatcher, ExistingEntity, MatchResult
 from remembra.models.memory import Entity, Relationship
@@ -93,11 +99,13 @@ class MemoryService:
         qdrant: QdrantStore,
         db: Database,
         embeddings: EmbeddingService,
+        conflict_manager: ConflictManager | None = None,
     ):
         self.settings = settings
         self.qdrant = qdrant
         self.db = db
         self.embeddings = embeddings
+        self.conflict_manager = conflict_manager
         
         # Initialize intelligent extraction (Week 4)
         extraction_config = ExtractionConfig(
@@ -301,25 +309,81 @@ class MemoryService:
         
         # Consolidate: decide ADD/UPDATE/DELETE/NOOP
         result = await self.consolidator.consolidate(fact, existing_memories)
-        
+
         if result.action == ConsolidationAction.NOOP:
             log.debug("fact_skipped_noop", fact=fact[:50])
             return None
-        
+
+        # ── Conflict detection ───────────────────────────────────────────
+        # When the consolidator detects a contradiction (DELETE) or update,
+        # record the conflict and apply the configured strategy.
+        is_conflict = result.action in (
+            ConsolidationAction.DELETE,
+            ConsolidationAction.UPDATE,
+        ) and result.target_id is not None
+
+        conflict_target = None  # The existing memory that was contradicted
+        if is_conflict:
+            conflict_target = next(
+                (m for m in existing_memories if m.id == result.target_id), None
+            )
+
+        strategy = ConflictStrategy.UPDATE  # default: overwrite
+        if is_conflict and self.conflict_manager is not None:
+            strategy = self.conflict_manager.default_strategy
+            try:
+                conflict = MemoryConflict(
+                    user_id=user_id,
+                    project_id=project_id,
+                    new_fact=fact,
+                    existing_memory_id=result.target_id or "",
+                    existing_content=conflict_target.content if conflict_target else "",
+                    similarity_score=conflict_target.score if conflict_target else 0.0,
+                    reason=result.reason,
+                    strategy_applied=strategy,
+                    status=(
+                        ConflictStatus.RESOLVED
+                        if strategy == ConflictStrategy.UPDATE
+                        else ConflictStatus.OPEN
+                    ),
+                )
+                await self.conflict_manager.record(conflict)
+            except Exception as exc:
+                log.warning("conflict_recording_failed", error=str(exc))
+
+        # ── Apply conflict strategy ──────────────────────────────────────
         old_memory_id = None
-        
-        if result.action == ConsolidationAction.DELETE and result.target_id:
-            # Delete old memory, then add new
-            old_memory_id = result.target_id
-            log.debug("old_memory_will_be_deleted", memory_id=result.target_id)
-        
-        if result.action == ConsolidationAction.UPDATE and result.target_id:
-            # Update existing memory with merged content
+
+        if strategy == ConflictStrategy.VERSION and is_conflict:
+            # Keep both memories — don't delete the old one.
+            # Store the new fact as-is alongside the existing one.
             content = result.content or fact
-            old_memory_id = result.target_id
-            log.debug("memory_will_be_updated", old_id=result.target_id)
+            log.debug(
+                "conflict_versioned",
+                old_id=result.target_id,
+                fact=fact[:50],
+            )
+        elif strategy == ConflictStrategy.FLAG and is_conflict:
+            # Store the new fact but don't delete the old one.
+            # Both are kept; the conflict record stays open for review.
+            content = result.content or fact
+            log.debug(
+                "conflict_flagged",
+                old_id=result.target_id,
+                fact=fact[:50],
+            )
         else:
-            content = result.content or fact
+            # strategy == UPDATE (or no conflict): original behaviour
+            if result.action == ConsolidationAction.DELETE and result.target_id:
+                old_memory_id = result.target_id
+                log.debug("old_memory_will_be_deleted", memory_id=result.target_id)
+
+            if result.action == ConsolidationAction.UPDATE and result.target_id:
+                content = result.content or fact
+                old_memory_id = result.target_id
+                log.debug("memory_will_be_updated", old_id=result.target_id)
+            else:
+                content = result.content or fact
         
         # Create and store the memory
         memory = Memory(
