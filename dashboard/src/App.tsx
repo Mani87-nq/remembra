@@ -28,7 +28,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    api.clearApiKey();
+    api.clearAll();
     setIsAuthenticated(false);
   };
 

@@ -8,6 +8,8 @@ interface ApiKeyFormProps {
 
 export function ApiKeyForm({ onAuthenticated }: ApiKeyFormProps) {
   const [apiKey, setApiKey] = useState('');
+  const [userId, setUserId] = useState(api.getUserId());
+  const [projectId, setProjectId] = useState(api.getProjectId());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,15 +24,17 @@ export function ApiKeyForm({ onAuthenticated }: ApiKeyFormProps) {
     setLoading(true);
     setError(null);
 
-    // Test the API key by trying to list memories
+    // Set credentials
     api.setApiKey(apiKey.trim());
+    if (userId.trim()) api.setUserId(userId.trim());
+    if (projectId.trim()) api.setProjectId(projectId.trim());
     
     try {
       await api.listMemories({ limit: 1 });
       onAuthenticated();
     } catch (err) {
-      api.clearApiKey();
-      setError(err instanceof Error ? err.message : 'Invalid API key');
+      api.clearAll();
+      setError(err instanceof Error ? err.message : 'Invalid API key or credentials');
     } finally {
       setLoading(false);
     }
@@ -62,9 +66,38 @@ export function ApiKeyForm({ onAuthenticated }: ApiKeyFormProps) {
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="rmb_..."
+                placeholder="rem_..."
                 className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="userId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  User ID
+                </label>
+                <input
+                  id="userId"
+                  type="text"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  placeholder="default_user"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Project ID
+                </label>
+                <input
+                  id="projectId"
+                  type="text"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  placeholder="default"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
             </div>
 
             {error && (

@@ -81,6 +81,11 @@ crewai = [
     "crewai>=0.80.0",
 ]
 
+# Cloud / SaaS dependencies (billing, metering)
+cloud = [
+    "stripe>=8.0.0",
+]
+
 # Advanced retrieval (optional reranking)
 rerank = [
     "sentence-transformers>=2.5.0",
@@ -97,9 +102,9 @@ dev = [
     "twine>=5.0.0",
 ]
 
-# All dependencies (SDK + Server + Rerank + MCP + Integrations)
+# All dependencies (SDK + Server + Rerank + MCP + Integrations + Cloud)
 all = [
-    "remembra[server,rerank,mcp,langchain,crewai]",
+    "remembra[server,rerank,mcp,langchain,crewai,cloud]",
 ]
 
 [project.urls]

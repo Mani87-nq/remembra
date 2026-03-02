@@ -78,6 +78,8 @@ export interface CleanupResponse {
 
 class ApiClient {
   private apiKey: string | null = null;
+  private userId: string | null = null;
+  private projectId: string | null = null;
 
   setApiKey(key: string) {
     this.apiKey = key;
@@ -94,6 +96,39 @@ class ApiClient {
   clearApiKey() {
     this.apiKey = null;
     localStorage.removeItem('remembra_api_key');
+  }
+
+  setUserId(userId: string) {
+    this.userId = userId;
+    localStorage.setItem('remembra_user_id', userId);
+  }
+
+  getUserId(): string {
+    if (!this.userId) {
+      this.userId = localStorage.getItem('remembra_user_id') || 'default_user';
+    }
+    return this.userId;
+  }
+
+  setProjectId(projectId: string) {
+    this.projectId = projectId;
+    localStorage.setItem('remembra_project_id', projectId);
+  }
+
+  getProjectId(): string {
+    if (!this.projectId) {
+      this.projectId = localStorage.getItem('remembra_project_id') || 'default';
+    }
+    return this.projectId;
+  }
+
+  clearAll() {
+    this.apiKey = null;
+    this.userId = null;
+    this.projectId = null;
+    localStorage.removeItem('remembra_api_key');
+    localStorage.removeItem('remembra_user_id');
+    localStorage.removeItem('remembra_project_id');
   }
 
   private async fetchApi<T>(
@@ -130,8 +165,8 @@ class ApiClient {
         query: '*',  // Broad query to get all memories
         limit: params.limit || 20,
         threshold: 0.0,  // Low threshold to include all
-        project_id: params.project_id || 'default',
-        user_id: 'default_user',  // Required by API
+        project_id: params.project_id || this.getProjectId(),
+        user_id: this.getUserId(),
       }),
     });
     return result.memories || [];
@@ -144,8 +179,8 @@ class ApiClient {
         query: params.query,
         limit: params.limit || 10,
         threshold: params.threshold || 0.4,
-        project_id: params.project_id || 'default',
-        user_id: 'default_user',  // Required by API
+        project_id: params.project_id || this.getProjectId(),
+        user_id: this.getUserId(),
       }),
     });
     return {
@@ -176,8 +211,8 @@ class ApiClient {
   async storeMemory(content: string, projectId?: string, ttl?: string): Promise<Memory> {
     const body: Record<string, string> = {
       content,
-      project_id: projectId || 'default',
-      user_id: 'default_user',  // Required by API
+      project_id: projectId || this.getProjectId(),
+      user_id: this.getUserId(),
     };
     if (ttl) {
       body.ttl = ttl;
@@ -237,6 +272,41 @@ class ApiClient {
   async getEntityMemories(entityId: string, limit: number = 20): Promise<EntityMemoriesResponse> {
     return this.fetchApi<EntityMemoriesResponse>(`/entities/${entityId}/memories?limit=${limit}`);
   }
+
+  // Debug / Analytics methods
+  async debugRecall(query: string, limit: number = 10, threshold: number = 0.3): Promise<DebugRecallResponse> {
+    return this.fetchApi<DebugRecallResponse>('/debug/recall', {
+      method: 'POST',
+      body: JSON.stringify({
+        query,
+        limit,
+        threshold,
+        user_id: this.getUserId(),
+        project_id: this.getProjectId(),
+      }),
+    });
+  }
+
+  async getAnalytics(): Promise<AnalyticsResponse> {
+    return this.fetchApi<AnalyticsResponse>('/debug/analytics');
+  }
+
+  async getEntityGraph(projectId: string = 'default'): Promise<EntityGraphResponse> {
+    return this.fetchApi<EntityGraphResponse>(`/debug/entities/graph?project_id=${projectId}`);
+  }
+
+  async getMemoryTimeline(page: number = 1, pageSize: number = 50): Promise<MemoryTimelineResponse> {
+    return this.fetchApi<MemoryTimelineResponse>(`/debug/timeline?page=${page}&page_size=${pageSize}`);
+  }
+
+  // Cloud / Usage methods
+  async getUsage(): Promise<UsageResponse> {
+    return this.fetchApi<UsageResponse>('/cloud/usage');
+  }
+
+  async getPlanInfo(): Promise<PlanInfoResponse> {
+    return this.fetchApi<PlanInfoResponse>('/cloud/plan');
+  }
 }
 
 // Entity types
@@ -280,6 +350,110 @@ export interface EntityMemoriesResponse {
     created_at: string;
   }>;
   total: number;
+}
+
+// Debug / Analytics types
+export interface ScoringBreakdown {
+  memory_id: string;
+  content: string;
+  created_at: string | null;
+  semantic_score: number;
+  keyword_score: number;
+  hybrid_score: number;
+  rerank_score: number | null;
+  recency_score: number;
+  entity_score: number;
+  access_score: number;
+  final_score: number;
+  matched_entities: string[];
+  matched_keywords: string[];
+  age_days: number | null;
+}
+
+export interface DebugRecallResponse {
+  query: string;
+  latency_ms: number;
+  config: Record<string, unknown>;
+  results: ScoringBreakdown[];
+  context_tokens: number;
+  context_truncated: number;
+  context_dropped: number;
+  matched_entities: Array<{ id: string; name: string; type: string; confidence: number }>;
+  related_entities: Array<{ id: string; name: string; type: string; confidence: number }>;
+  pipeline_stages: string[];
+  total_candidates: number;
+  filtered_count: number;
+}
+
+export interface AnalyticsResponse {
+  total_memories: number;
+  total_entities: number;
+  total_relationships: number;
+  entities_by_type: Record<string, number>;
+  age_distribution: Record<string, number>;
+  avg_decay_score: number;
+  healthy_memories: number;
+  stale_memories: number;
+  critical_memories: number;
+  stores_today: number;
+  recalls_today: number;
+}
+
+export interface EntityGraphNode {
+  id: string;
+  label: string;
+  type: string;
+  confidence: number;
+  memory_count: number;
+}
+
+export interface EntityGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  type: string;
+  confidence: number;
+}
+
+export interface EntityGraphDataResponse {
+  nodes: EntityGraphNode[];
+  edges: EntityGraphEdge[];
+  stats: Record<string, unknown>;
+}
+
+export interface TimelineMemory {
+  id: string;
+  content: string;
+  created_at: string;
+  project_id: string;
+  access_count: number;
+  last_accessed: string | null;
+  entities: Array<{ name: string; type: string }>;
+}
+
+export interface MemoryTimelineResponse {
+  memories: TimelineMemory[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface UsageResponse {
+  user_id: string;
+  plan: string;
+  period: string;
+  stores: number;
+  recalls: number;
+  deletes: number;
+  active_days: number;
+  limits: Record<string, number>;
+}
+
+export interface PlanInfoResponse {
+  plan: string;
+  limits: Record<string, unknown>;
+  usage: Record<string, number>;
+  limit_checks: Record<string, { allowed: boolean; reason?: string; limit?: number; current?: number }>;
 }
 
 export const api = new ApiClient();

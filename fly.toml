@@ -1,0 +1,57 @@
+# Remembra Cloud — Fly.io deployment config
+# Deploy: fly launch --copy-config --name remembra-cloud
+# Docs:   https://fly.io/docs/reference/configuration/
+
+app = "remembra-cloud"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.cloud"
+
+[env]
+  REMEMBRA_HOST = "0.0.0.0"
+  REMEMBRA_PORT = "8787"
+  REMEMBRA_LOG_LEVEL = "info"
+  REMEMBRA_CLOUD_ENABLED = "true"
+  REMEMBRA_AUTH_ENABLED = "true"
+  REMEMBRA_STATIC_DIR = "/app/static"
+  # Qdrant Cloud URL set via fly secrets
+  # REMEMBRA_QDRANT_URL = <set via fly secrets>
+  # REMEMBRA_QDRANT_API_KEY = <set via fly secrets>
+  # REMEMBRA_OPENAI_API_KEY = <set via fly secrets>
+  # REMEMBRA_STRIPE_SECRET_KEY = <set via fly secrets>
+  # REMEMBRA_STRIPE_WEBHOOK_SECRET = <set via fly secrets>
+  # REMEMBRA_AUTH_MASTER_KEY = <set via fly secrets>
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[checks]
+  [checks.health]
+    port = 8787
+    type = "http"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+# Persistent volume for SQLite database
+[mounts]
+  source = "remembra_data"
+  destination = "/data"

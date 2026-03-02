@@ -5,6 +5,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from remembra.auth.middleware import AuthenticatedUser, CurrentUser, get_client_ip
+from remembra.cloud.limits import (
+    EnforceRecallLimit,
+    EnforceStoreLimit,
+    record_delete_usage,
+    record_recall_usage,
+    record_store_usage,
+)
 from remembra.config import Settings, get_settings
 from remembra.core.limiter import limiter
 from remembra.models.memory import (
@@ -65,6 +72,7 @@ async def store_memory(
     sanitizer: SanitizerDep,
     current_user: CurrentUser,
     settings: SettingsDep,
+    _limit: EnforceStoreLimit = None,
 ) -> StoreResponse:
     """
     Accept raw text, extract facts and entities, embed, and persist.
@@ -101,7 +109,10 @@ async def store_memory(
             ip_address=get_client_ip(request),
             success=True,
         )
-        
+
+        # Record usage for metering (no-op if cloud disabled)
+        await record_store_usage(request, current_user.user_id)
+
         return result
         
     except ValueError as e:
@@ -146,6 +157,7 @@ async def recall_memories(
     memory_service: MemoryServiceDep,
     audit_logger: AuditLoggerDep,
     current_user: CurrentUser,
+    _limit: EnforceRecallLimit = None,
 ) -> RecallResponse:
     """
     Embed the query, perform semantic search, synthesise a context string.
@@ -178,7 +190,10 @@ async def recall_memories(
             ip_address=get_client_ip(request),
             success=True,
         )
-        
+
+        # Record usage for metering (no-op if cloud disabled)
+        await record_recall_usage(request, current_user.user_id)
+
         return result
         
     except Exception as e:
@@ -364,7 +379,10 @@ async def forget_memories(
             ip_address=get_client_ip(request),
             success=True,
         )
-        
+
+        # Record usage for metering (no-op if cloud disabled)
+        await record_delete_usage(request, current_user.user_id)
+
         return result
         
     except Exception as e:

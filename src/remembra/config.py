@@ -158,6 +158,34 @@ class Settings(BaseSettings):
     recall_score_threshold: float = 0.70
 
     # -----------------------------------------------------------------------
+    # Cloud / SaaS
+    # -----------------------------------------------------------------------
+    cloud_enabled: bool = Field(
+        False,
+        description="Enable cloud features (billing, usage metering, plan enforcement)",
+    )
+    stripe_secret_key: str | None = Field(
+        None,
+        description="Stripe secret key (sk_live_xxx or sk_test_xxx)",
+    )
+    stripe_webhook_secret: str | None = Field(
+        None,
+        description="Stripe webhook signing secret (whsec_xxx)",
+    )
+    stripe_success_url: str = Field(
+        "https://remembra.dev/dashboard?checkout=success",
+        description="URL to redirect after successful Stripe checkout",
+    )
+    stripe_cancel_url: str = Field(
+        "https://remembra.dev/pricing?checkout=cancelled",
+        description="URL to redirect when user cancels Stripe checkout",
+    )
+    billing_portal_return_url: str = Field(
+        "https://remembra.dev/dashboard",
+        description="URL to return to after billing portal session",
+    )
+
+    # -----------------------------------------------------------------------
     # Security & Authentication (Week 7)
     # -----------------------------------------------------------------------
     auth_enabled: bool = Field(

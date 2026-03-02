@@ -7,11 +7,14 @@ import { DecayReport } from '../components/DecayReport';
 import { StoreMemory } from '../components/StoreMemory';
 import { EntityList } from '../components/EntityList';
 import { EntityGraph } from '../components/EntityGraph';
-import type { Memory } from '../lib/api';
-import { RefreshCw, Database, TrendingDown, Users, Share2 } from 'lucide-react';
+import { QueryDebugger } from '../components/QueryDebugger';
+import { UsageAnalytics } from '../components/UsageAnalytics';
+import { MemoryTimeline } from '../components/MemoryTimeline';
+import { api, type Memory } from '../lib/api';
+import { RefreshCw, Database, TrendingDown, Users, Share2, Bug, BarChart3, History } from 'lucide-react';
 import clsx from 'clsx';
 
-type TabType = 'memories' | 'entities' | 'graph' | 'decay';
+type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline';
 
 export function Dashboard() {
   const { memories, loading, error, hasMore, refresh, loadMore } = useMemories();
@@ -107,7 +110,43 @@ export function Dashboard() {
             )}
           >
             <TrendingDown className="w-4 h-4" />
-            Decay Report
+            Decay
+          </button>
+          <button
+            onClick={() => setActiveTab('debugger')}
+            className={clsx(
+              'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
+              activeTab === 'debugger'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            )}
+          >
+            <Bug className="w-4 h-4" />
+            Debugger
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={clsx(
+              'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
+              activeTab === 'analytics'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            )}
+          >
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </button>
+          <button
+            onClick={() => setActiveTab('timeline')}
+            className={clsx(
+              'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
+              activeTab === 'timeline'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            )}
+          >
+            <History className="w-4 h-4" />
+            Timeline
           </button>
         </nav>
       </div>
@@ -186,19 +225,31 @@ export function Dashboard() {
       )}
 
       {activeTab === 'entities' && (
-        <EntityList projectId="default" />
+        <EntityList projectId={api.getProjectId()} />
       )}
 
       {activeTab === 'graph' && (
-        <EntityGraph projectId="default" />
+        <EntityGraph projectId={api.getProjectId()} />
       )}
 
       {activeTab === 'decay' && (
-        <DecayReport projectId="default" />
+        <DecayReport projectId={api.getProjectId()} />
+      )}
+
+      {activeTab === 'debugger' && (
+        <QueryDebugger />
+      )}
+
+      {activeTab === 'analytics' && (
+        <UsageAnalytics />
+      )}
+
+      {activeTab === 'timeline' && (
+        <MemoryTimeline />
       )}
 
       {/* Floating Add Memory Button */}
-      <StoreMemory onStored={refresh} projectId="default" />
+      <StoreMemory onStored={refresh} projectId={api.getProjectId()} />
     </div>
   );
 }

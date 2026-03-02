@@ -1,0 +1,86 @@
+# Remembra Cloud — Production Dockerfile for Fly.io
+# Optimized for managed cloud deployment with Stripe billing
+
+# =============================================================================
+# Stage 1: Build Dashboard
+# =============================================================================
+FROM node:20-alpine AS dashboard-builder
+
+WORKDIR /app/dashboard
+
+COPY dashboard/package*.json ./
+RUN npm ci --production=false
+
+COPY dashboard/ ./
+RUN npm run build
+
+# =============================================================================
+# Stage 2: Python Dependencies
+# =============================================================================
+FROM python:3.11-slim AS python-builder
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
+
+# Install with cloud extras (stripe, etc.)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir ".[server,cloud]"
+
+# =============================================================================
+# Stage 3: Production Image
+# =============================================================================
+FROM python:3.11-slim AS production
+
+LABEL org.opencontainers.image.title="Remembra Cloud"
+LABEL org.opencontainers.image.description="AI Memory Layer — Managed Cloud"
+LABEL org.opencontainers.image.url="https://remembra.dev"
+LABEL org.opencontainers.image.vendor="Remembra"
+
+# Create non-root user
+RUN groupadd -r remembra && useradd -r -g remembra remembra
+
+# Install curl for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy Python environment
+COPY --from=python-builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy dashboard build
+COPY --from=dashboard-builder /app/dashboard/dist /app/static
+
+# Copy application code
+COPY src/ ./src/
+
+# Create data directory (Fly.io mounts volume here)
+RUN mkdir -p /data && chown -R remembra:remembra /data
+
+# Environment
+ENV REMEMBRA_HOST=0.0.0.0
+ENV REMEMBRA_PORT=8787
+ENV REMEMBRA_DATABASE_URL=sqlite+aiosqlite:////data/remembra.db
+ENV REMEMBRA_STATIC_DIR=/app/static
+ENV REMEMBRA_CLOUD_ENABLED=true
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+EXPOSE 8787
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8787/health || exit 1
+
+USER remembra
+
+CMD ["python", "-m", "remembra.main"]

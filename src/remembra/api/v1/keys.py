@@ -13,6 +13,7 @@ from remembra.auth.middleware import (
     RequireMasterKey,
     get_client_ip,
 )
+from remembra.cloud.limits import EnforceKeyLimit
 from remembra.core.limiter import limiter
 from remembra.security.audit import AuditLogger
 
@@ -113,6 +114,7 @@ async def create_api_key(
     key_manager: APIKeyManagerDep,
     audit_logger: AuditLoggerDep,
     _: RequireMasterKey,  # Require master key for key creation
+    _limit: EnforceKeyLimit = None,
 ) -> CreateKeyResponse:
     """
     Create a new API key for a user.

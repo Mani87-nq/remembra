@@ -16,6 +16,7 @@ from slowapi.util import get_remote_address
 from remembra import __version__
 from remembra.api.router import api_router
 from remembra.auth.keys import APIKeyManager
+from remembra.cloud.metering import UsageMeter
 from remembra.config import get_settings
 from remembra.core.health import build_health_response, check_qdrant
 from remembra.core.logging import configure_logging
@@ -53,6 +54,7 @@ class AppState:
     api_key_manager: APIKeyManager
     audit_logger: AuditLogger
     sanitizer: ContentSanitizer
+    usage_meter: UsageMeter | None
 
 
 # ---------------------------------------------------------------------------
@@ -102,6 +104,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         db=app.state.db,
         embeddings=app.state.embeddings,
     )
+
+    # Cloud services (billing, metering, limits)
+    if settings.cloud_enabled:
+        app.state.usage_meter = UsageMeter(app.state.db)
+        await app.state.usage_meter.init_schema()
+        log.info(
+            "cloud_enabled",
+            stripe_configured=bool(settings.stripe_secret_key),
+        )
+    else:
+        app.state.usage_meter = None
 
     log.info("storage_layer_ready")
 
