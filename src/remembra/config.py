@@ -39,11 +39,31 @@ class Settings(BaseSettings):
     # -----------------------------------------------------------------------
     # Embeddings
     # -----------------------------------------------------------------------
-    embedding_provider: str = Field("openai", description="openai | cohere | ollama")
+    embedding_provider: str = Field(
+        "openai",
+        description="openai | azure_openai | cohere | ollama | voyage | jina",
+    )
     embedding_model: str = "text-embedding-3-small"
     embedding_dimensions: int = 1536
     openai_api_key: str | None = None
     ollama_url: str = "http://localhost:11434"
+
+    # Additional embedding provider keys
+    cohere_api_key: str | None = None
+    voyage_api_key: str | None = None
+    jina_api_key: str | None = None
+
+    # Azure OpenAI
+    azure_openai_api_key: str | None = None
+    azure_openai_endpoint: str = Field(
+        "",
+        description="Azure OpenAI endpoint (https://{resource}.openai.azure.com)",
+    )
+    azure_openai_deployment: str = Field(
+        "",
+        description="Azure OpenAI deployment name for embeddings",
+    )
+    azure_openai_api_version: str = "2024-02-01"
 
     # -----------------------------------------------------------------------
     # LLM (extraction / recall synthesis)

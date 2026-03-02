@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from remembra.api.v1 import admin, cloud, conflicts, debug, keys, memories, ingest, temporal, entities, transfer, webhooks
+from remembra.api.v1 import admin, cloud, conflicts, debug, embeddings, keys, memories, ingest, plugins, spaces, temporal, entities, transfer, webhooks
 
 api_router = APIRouter(prefix="/api")
 api_router.include_router(memories.router, prefix="/v1")
@@ -16,3 +16,6 @@ api_router.include_router(webhooks.router, prefix="/v1")
 api_router.include_router(conflicts.router, prefix="/v1")
 api_router.include_router(admin.router, prefix="/v1")
 api_router.include_router(transfer.router, prefix="/v1")
+api_router.include_router(spaces.router, prefix="/v1")
+api_router.include_router(embeddings.router, prefix="/v1")
+api_router.include_router(plugins.router, prefix="/v1")

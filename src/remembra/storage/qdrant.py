@@ -134,6 +134,24 @@ class QdrantStore:
 
         log.debug("qdrant_upserted", memory_id=memory.id, user_id=memory.user_id)
 
+    async def upsert_vector(self, memory_id: str, vector: list[float]) -> None:
+        """Update only the vector for an existing point (used by re-indexer).
+
+        Qdrant's ``update_vectors`` API modifies the vector without
+        touching the payload, which is exactly what we want during
+        re-embedding.
+        """
+        client = await self._get_client()
+        await client.update_vectors(
+            collection_name=self.collection_name,
+            points=[
+                qmodels.PointVectors(
+                    id=memory_id,
+                    vector=vector,
+                )
+            ],
+        )
+
     async def search(
         self,
         query_vector: list[float],

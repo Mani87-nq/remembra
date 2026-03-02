@@ -20,6 +20,9 @@ from remembra.auth.rbac import RoleManager
 from remembra.cloud.metering import UsageMeter
 from remembra.config import get_settings
 from remembra.extraction.conflicts import ConflictManager, ConflictStrategy
+from remembra.plugins.manager import PluginManager
+from remembra.spaces.manager import SpaceManager
+from remembra.storage.reindex import ReindexManager
 from remembra.webhooks.delivery import WebhookDelivery
 from remembra.webhooks.manager import WebhookManager
 from remembra.core.health import build_health_response, check_qdrant
@@ -62,6 +65,9 @@ class AppState:
     webhook_manager: WebhookManager | None
     conflict_manager: ConflictManager | None
     role_manager: RoleManager | None
+    space_manager: SpaceManager | None
+    reindex_manager: ReindexManager | None
+    plugin_manager: PluginManager | None
 
 
 # ---------------------------------------------------------------------------
@@ -160,12 +166,39 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     else:
         app.state.webhook_manager = None
 
+    # Memory Spaces (cross-agent sharing)
+    app.state.space_manager = SpaceManager(app.state.db)
+    await app.state.space_manager.init_schema()
+    app.state.memory_service.space_manager = app.state.space_manager
+    log.info("memory_spaces_enabled")
+
+    # Re-indexing manager (embedding model migration)
+    app.state.reindex_manager = ReindexManager(
+        db=app.state.db,
+        qdrant=app.state.qdrant,
+        embeddings=app.state.embeddings,
+    )
+    await app.state.reindex_manager.init_schema()
+
+    # Plugin system
+    app.state.plugin_manager = PluginManager()
+    # Register built-in plugin classes in the marketplace
+    from remembra.plugins.builtin.slack_notifier import SlackNotifierPlugin
+    from remembra.plugins.builtin.auto_tagger import AutoTaggerPlugin
+    from remembra.plugins.builtin.recall_logger import RecallLoggerPlugin
+    app.state.plugin_manager.register_class(SlackNotifierPlugin)
+    app.state.plugin_manager.register_class(AutoTaggerPlugin)
+    app.state.plugin_manager.register_class(RecallLoggerPlugin)
+    log.info("plugin_system_enabled", registered=3)
+
     log.info("storage_layer_ready")
 
     yield
 
     # Cleanup
     log.info("remembra_shutdown")
+    if app.state.plugin_manager:
+        await app.state.plugin_manager.shutdown()
     await app.state.db.close()
     await app.state.qdrant.close()
 

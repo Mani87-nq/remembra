@@ -85,12 +85,13 @@ def parse_ttl(ttl: str | None) -> timedelta | None:
 class MemoryService:
     """
     Core memory operations: store, recall, update, forget.
-    
+
     This is the main business logic layer that coordinates:
     - Embedding generation
     - Vector storage (Qdrant)
     - Metadata storage (SQLite)
     - Entity extraction (future: LLM-powered)
+    - Cross-agent memory sharing via spaces
     """
 
     def __init__(
@@ -100,12 +101,14 @@ class MemoryService:
         db: Database,
         embeddings: EmbeddingService,
         conflict_manager: ConflictManager | None = None,
+        space_manager: Any | None = None,
     ):
         self.settings = settings
         self.qdrant = qdrant
         self.db = db
         self.embeddings = embeddings
         self.conflict_manager = conflict_manager
+        self.space_manager = space_manager  # Injected after init
         
         # Initialize intelligent extraction (Week 4)
         extraction_config = ExtractionConfig(
@@ -948,6 +951,131 @@ class MemoryService:
             context=optimized.context,
             memories=memories,
             entities=all_entities,
+        )
+
+    # -----------------------------------------------------------------------
+    # Cross-Space Recall
+    # -----------------------------------------------------------------------
+
+    async def recall_across_spaces(
+        self,
+        query: str,
+        agent_id: str,
+        project_id: str = "default",
+        limit: int = 10,
+        threshold: float = 0.4,
+        max_tokens: int | None = None,
+    ) -> RecallResponse:
+        """Recall memories from all spaces the agent has access to.
+
+        This enables cross-agent knowledge sharing: if agent A stores
+        memories in a space that agent B can read, agent B will surface
+        those memories alongside its own.
+
+        Steps:
+        1. Get all space IDs the agent has read access to
+        2. Collect all memory IDs across those spaces
+        3. Run standard recall scoped to those memory IDs + the agent's
+           own memories
+        4. De-duplicate and rank
+        """
+        if self.space_manager is None:
+            # Spaces not enabled — fall back to standard recall
+            return await self.recall(RecallRequest(
+                query=query,
+                user_id=agent_id,
+                project_id=project_id,
+                limit=limit,
+                threshold=threshold,
+                max_tokens=max_tokens,
+            ))
+
+        log.info(
+            "recall_across_spaces",
+            agent_id=agent_id,
+            query_length=len(query),
+        )
+
+        # 1. Get accessible spaces
+        space_ids = await self.space_manager.get_accessible_space_ids(agent_id)
+
+        # 2. Collect memory IDs from all accessible spaces
+        space_memory_ids: set[str] = set()
+        for sid in space_ids:
+            mids = await self.space_manager.get_space_memory_ids(sid, limit=500)
+            space_memory_ids.update(mids)
+
+        # 3. Run the agent's own recall first
+        own_result = await self.recall(RecallRequest(
+            query=query,
+            user_id=agent_id,
+            project_id=project_id,
+            limit=limit,
+            threshold=threshold,
+            max_tokens=max_tokens,
+        ))
+
+        if not space_memory_ids:
+            return own_result
+
+        # 4. Embed the query and search space memories
+        query_vector = await self.embeddings.embed(query)
+
+        # Fetch each space memory from Qdrant and compute similarity
+        space_results: list[RecallResult] = []
+        seen_ids = {m.id for m in (own_result.memories or [])}
+
+        for mem_id in space_memory_ids:
+            if mem_id in seen_ids:
+                continue
+            try:
+                mem_data = await self.qdrant.get_by_id(mem_id)
+                if mem_data is None:
+                    continue
+                # Compute cosine similarity using the stored embedding
+                stored_vec = mem_data.get("embedding")
+                if stored_vec:
+                    from numpy import dot
+                    from numpy.linalg import norm
+                    sim = float(dot(query_vector, stored_vec) / (norm(query_vector) * norm(stored_vec) + 1e-9))
+                else:
+                    sim = 0.5  # Default if no embedding stored
+                if sim < threshold:
+                    continue
+                space_results.append(RecallResult(
+                    id=mem_id,
+                    content=mem_data.get("content", ""),
+                    relevance=sim,
+                    created_at=datetime.fromisoformat(mem_data["created_at"]) if mem_data.get("created_at") else datetime.utcnow(),
+                ))
+                seen_ids.add(mem_id)
+            except Exception as e:
+                log.debug("space_memory_fetch_failed", mem_id=mem_id, error=str(e))
+                continue
+
+        # 5. Merge and re-sort by relevance
+        all_memories = list(own_result.memories or []) + space_results
+        all_memories.sort(key=lambda m: m.relevance, reverse=True)
+        final_memories = all_memories[:limit]
+
+        # Rebuild context from merged results
+        context_parts = []
+        for m in final_memories:
+            context_parts.append(m.content)
+        merged_context = "\n\n".join(context_parts)
+
+        log.info(
+            "recall_across_spaces_done",
+            agent_id=agent_id,
+            own_count=len(own_result.memories or []),
+            space_count=len(space_results),
+            total=len(final_memories),
+        )
+
+        return RecallResponse(
+            context=merged_context,
+            memories=final_memories,
+            entities=own_result.entities or [],
         )
 
     # -----------------------------------------------------------------------
