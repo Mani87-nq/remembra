@@ -24,6 +24,8 @@ keywords = [
     "embeddings",
     "chatbot",
     "agent",
+    "mcp",
+    "model-context-protocol",
     "langchain",
     "openai",
 ]
@@ -64,6 +66,11 @@ server = [
     "slowapi>=0.1.9",
 ]
 
+# MCP server dependencies
+mcp = [
+    "mcp>=1.0.0",
+]
+
 # Advanced retrieval (optional reranking)
 rerank = [
     "sentence-transformers>=2.5.0",
@@ -80,9 +87,9 @@ dev = [
     "twine>=5.0.0",
 ]
 
-# All dependencies (SDK + Server + Rerank)
+# All dependencies (SDK + Server + Rerank + MCP)
 all = [
-    "remembra[server,rerank]",
+    "remembra[server,rerank,mcp]",
 ]
 
 [project.urls]
@@ -95,6 +102,7 @@ Changelog = "https://github.com/AskDolphy/remembra/blob/main/CHANGELOG.md"
 [project.scripts]
 remembra = "remembra.main:run"
 remembra-server = "remembra.main:run"
+remembra-mcp = "remembra.mcp.server:main"
 
 # ---------------------------------------------------------------------------
 # Hatch build config

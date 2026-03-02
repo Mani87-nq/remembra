@@ -1,0 +1,11 @@
+Your AI forgets everything between sessions. Let's fix that.
+
+Remembra gives your AI persistent memory. Install in seconds.
+
+Store information in plain English. Remembra automatically extracts entities, facts, and relationships. No schemas. No setup.
+
+Ask anything in natural language. Semantic search finds relevant memories and synthesizes context. Your AI finally has long-term memory.
+
+Works natively with Claude Desktop via MCP. One line config.
+
+Star us on GitHub. Ship memory today.
