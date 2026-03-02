@@ -124,10 +124,6 @@ async def create_api_key(
     
     Rate limit: 5 requests/minute.
     """
-    # Apply rate limiting (5/minute for key creation)
-    limiter = get_limiter(request)
-    await limiter._check_request_limit(request, None, "5/minute")
-    
     try:
         api_key = await key_manager.create_key(
             user_id=body.user_id,
