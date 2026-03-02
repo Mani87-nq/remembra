@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Remembra | AI Memory That Actually Works</title>
+    <meta name="description" content="The story behind Remembra - why we're building AI memory that actually works. Born from a question a 10-year-old asked.">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="About Remembra - Our Story">
+    <meta property="og:description" content="Why doesn't AI remember? A 10-year-old asked, and we built the answer.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://remembra.dev/about">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Remembra" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        'primary-dark': '#7C3AED',
+                        secondary: '#A78BFA',
+                        dark: '#0F0F0F',
+                        'dark-lighter': '#1A1A1A',
+                        'dark-card': '#1F1F1F',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 50%, #C4B5FD 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-dark text-white antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-dark/80 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="flex items-center gap-3">
+                    <img src="/logo.jpg" alt="Remembra" class="h-8 w-8 rounded-lg">
+                    <span class="text-xl font-bold">Remembra</span>
+                </a>
+                <div class="flex items-center gap-4">
+                    <a href="https://docs.remembra.dev" class="text-gray-300 hover:text-white transition">Docs</a>
+                    <a href="https://github.com/remembra-ai/remembra" target="_blank" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition">
+                        Get Started →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-16 px-6">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+                Why doesn't AI<br>
+                <span class="gradient-text">remember anything?</span>
+            </h1>
+            <p class="text-xl text-gray-400">
+                A 10-year-old asked. We built the answer.
+            </p>
+        </div>
+    </section>
+
+    <!-- Origin Story Section -->
+    <section class="py-16 px-6">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-dark-card border border-white/10 rounded-2xl p-8 md:p-12 mb-12">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center text-3xl">💡</div>
+                    <div>
+                        <h2 class="text-2xl font-bold">The Moment That Started It All</h2>
+                        <p class="text-gray-400">A child's observation that adults ignored</p>
+                    </div>
+                </div>
+                
+                <div class="prose prose-invert max-w-none">
+                    <p class="text-lg text-gray-300 leading-relaxed mb-6">
+                        It was a regular evening. The computer had just rebooted after an update. The AI assistant that had been helping with homework? Gone. All the context, all the conversation history, all the preferences it had learned — vanished.
+                    </p>
+                    
+                    <p class="text-lg text-gray-300 leading-relaxed mb-6">
+                        <strong class="text-white">Khaleesi, a 10-year-old, watched this happen and asked a simple question:</strong>
+                    </p>
+                    
+                    <blockquote class="border-l-4 border-primary pl-6 py-4 my-8 bg-primary/5 rounded-r-lg">
+                        <p class="text-2xl font-medium text-white italic">
+                            "Why doesn't it remember what we were doing? We have to tell it everything all over again."
+                        </p>
+                    </blockquote>
+                    
+                    <p class="text-lg text-gray-300 leading-relaxed mb-6">
+                        That question hit different. Here was a child who immediately spotted what developers, researchers, and AI companies have been dancing around: <strong class="text-white">AI has a memory problem.</strong>
+                    </p>
+                    
+                    <p class="text-lg text-gray-300 leading-relaxed mb-6">
+                        Every session ends, and it's back to square one. Every computer restart, every context switch, every new conversation — the AI forgets everything. You tell it your preferences a hundred times. You explain the same project over and over. You lose all that context you painstakingly built up.
+                    </p>
+                    
+                    <p class="text-lg text-gray-300 leading-relaxed">
+                        If a 10-year-old can see the problem, why hasn't anyone fixed it?
+                    </p>
+                </div>
+            </div>
+            
+            <!-- The Solution -->
+            <div class="mb-12">
+                <h2 class="text-3xl font-bold mb-6">So We Built the Fix</h2>
+                
+                <div class="space-y-6 text-lg text-gray-300">
+                    <p>
+                        Remembra is AI memory that <strong class="text-white">actually works</strong>. Not a hack. Not a workaround. A proper memory layer that persists across sessions, survives reboots, and keeps context intact.
+                    </p>
+                    
+                    <p>
+                        It extracts entities from conversations (people, organizations, locations). It understands relationships. It knows that "Mr. Kim" and "David Kim" are the same person. It remembers what matters and lets the noise decay naturally.
+                    </p>
+                    
+                    <p>
+                        And because we believe this should be accessible to everyone building AI — not just companies with enterprise budgets — it's <strong class="text-white">open source and free to self-host</strong>.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Mission -->
+            <div class="bg-gradient-to-br from-primary/20 to-purple-500/10 border border-primary/30 rounded-2xl p-8 md:p-12 mb-12">
+                <h2 class="text-3xl font-bold mb-6">Our Mission</h2>
+                <p class="text-xl text-gray-200 leading-relaxed">
+                    To make AI that truly understands context — AI that remembers your preferences, your projects, your relationships, and your history. AI that doesn't make you repeat yourself.
+                </p>
+                <p class="text-xl text-gray-200 leading-relaxed mt-4">
+                    Because if a 10-year-old can identify the problem, then maybe it's obvious enough that it's time to actually solve it.
+                </p>
+            </div>
+            
+            <!-- Values -->
+            <div class="mb-12">
+                <h2 class="text-3xl font-bold mb-8">What We Believe</h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-dark-card border border-white/10 rounded-xl p-6">
+                        <div class="text-2xl mb-3">🔓</div>
+                        <h3 class="text-xl font-bold mb-2">Open Source First</h3>
+                        <p class="text-gray-400">Core infrastructure should be open. Run it yourself, inspect the code, contribute back.</p>
+                    </div>
+                    
+                    <div class="bg-dark-card border border-white/10 rounded-xl p-6">
+                        <div class="text-2xl mb-3">🏠</div>
+                        <h3 class="text-xl font-bold mb-2">Your Data, Your Control</h3>
+                        <p class="text-gray-400">Self-host on your infrastructure. No vendor lock-in. No data leaving your servers.</p>
+                    </div>
+                    
+                    <div class="bg-dark-card border border-white/10 rounded-xl p-6">
+                        <div class="text-2xl mb-3">🎯</div>
+                        <h3 class="text-xl font-bold mb-2">Solve Real Problems</h3>
+                        <p class="text-gray-400">Features that matter in production. Not demos. Not vaporware. Working solutions.</p>
+                    </div>
+                    
+                    <div class="bg-dark-card border border-white/10 rounded-xl p-6">
+                        <div class="text-2xl mb-3">💰</div>
+                        <h3 class="text-xl font-bold mb-2">Accessible Pricing</h3>
+                        <p class="text-gray-400">Enterprise features shouldn't cost enterprise prices. Graph, entities, RBAC — free for everyone.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Note -->
+            <div class="text-center py-12 border-t border-white/10">
+                <p class="text-gray-400 mb-4">Built by</p>
+                <p class="text-xl font-bold">DolphyTech</p>
+                <p class="text-gray-400 mt-2">Building tools that should exist.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-16 px-6 bg-dark-lighter">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-3xl font-bold mb-4">Ready to Give Your AI Memory?</h2>
+            <p class="text-xl text-gray-400 mb-8">
+                Start building with Remembra today. It's free and open source.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="https://docs.remembra.dev/getting-started/quickstart" class="px-8 py-4 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition">
+                    Get Started Free →
+                </a>
+                <a href="https://github.com/remembra-ai/remembra" target="_blank" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-semibold rounded-xl transition">
+                    View on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-6 border-t border-white/5">
+        <div class="max-w-6xl mx-auto">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-3">
+                    <img src="/logo.jpg" alt="Remembra" class="h-8 w-8 rounded-lg">
+                    <span class="font-bold">Remembra</span>
+                </div>
+                <div class="flex items-center gap-6 text-sm text-gray-400">
+                    <a href="/about" class="hover:text-white transition">About</a>
+                    <a href="/contact" class="hover:text-white transition">Contact</a>
+                    <a href="/privacy" class="hover:text-white transition">Privacy</a>
+                    <a href="/terms" class="hover:text-white transition">Terms</a>
+                </div>
+                <p class="text-sm text-gray-500">© 2026 DolphyTech. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
