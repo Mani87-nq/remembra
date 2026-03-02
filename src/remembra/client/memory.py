@@ -85,7 +85,7 @@ class Memory:
             "User-Agent": "remembra-python/0.1.0",
         }
         if api_key:
-            self._headers["Authorization"] = f"Bearer {api_key}"
+            self._headers["X-API-Key"] = api_key
     
     def _request(
         self,
