@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - Remembra</title>
-    <meta name="description" content="Remembra Privacy Policy. How we handle your data when you use our services.">
+    <meta name="description" content="Remembra Privacy Policy. Learn how we handle your data with transparency and respect for your privacy.">
     
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -45,6 +45,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+        .prose h2 { scroll-margin-top: 100px; }
     </style>
 </head>
 <body class="bg-dark text-white antialiased">
@@ -57,6 +58,7 @@
                     <span class="text-xl font-bold">Remembra</span>
                 </a>
                 <div class="flex items-center gap-4">
+                    <a href="/about.html" class="hidden md:block text-gray-300 hover:text-white transition">About</a>
                     <a href="https://docs.remembra.dev" class="text-gray-300 hover:text-white transition">Docs</a>
                     <a href="https://github.com/remembra-ai/remembra" target="_blank" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition">
                         Get Started →
@@ -66,140 +68,258 @@
         </div>
     </nav>
 
-    <!-- Content -->
-    <section class="pt-32 pb-20 px-6">
+    <!-- Hero -->
+    <section class="pt-32 pb-8 px-6">
         <div class="max-w-3xl mx-auto">
             <h1 class="text-4xl md:text-5xl font-bold mb-4">Privacy Policy</h1>
-            <p class="text-gray-400 mb-12">Last updated: March 2, 2026</p>
-            
-            <div class="prose prose-invert max-w-none space-y-8">
+            <p class="text-gray-400">Last updated: March 2, 2026</p>
+        </div>
+    </section>
+
+    <!-- Table of Contents -->
+    <section class="py-4 px-6">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-dark-card border border-white/10 rounded-xl p-6">
+                <h2 class="text-lg font-semibold mb-4">Quick Navigation</h2>
+                <div class="grid md:grid-cols-2 gap-2 text-sm">
+                    <a href="#tldr" class="text-gray-400 hover:text-primary transition">→ TL;DR Summary</a>
+                    <a href="#information-we-collect" class="text-gray-400 hover:text-primary transition">→ Information We Collect</a>
+                    <a href="#how-we-use" class="text-gray-400 hover:text-primary transition">→ How We Use Information</a>
+                    <a href="#self-hosted" class="text-gray-400 hover:text-primary transition">→ Self-Hosted Deployments</a>
+                    <a href="#data-security" class="text-gray-400 hover:text-primary transition">→ Data Security</a>
+                    <a href="#your-rights" class="text-gray-400 hover:text-primary transition">→ Your Rights</a>
+                    <a href="#cookies" class="text-gray-400 hover:text-primary transition">→ Cookies</a>
+                    <a href="#contact" class="text-gray-400 hover:text-primary transition">→ Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content -->
+    <section class="py-8 px-6">
+        <div class="max-w-3xl mx-auto">
+            <div class="prose prose-invert max-w-none space-y-12">
+                
+                <!-- TL;DR -->
+                <section id="tldr">
+                    <div class="bg-primary/10 border border-primary/20 rounded-xl p-6 mb-8">
+                        <h2 class="text-2xl font-bold mb-4 text-white flex items-center gap-2">
+                            <span>⚡</span> TL;DR - The Short Version
+                        </h2>
+                        <ul class="space-y-2 text-gray-300">
+                            <li><strong class="text-white">Self-hosted?</strong> We collect nothing. Your data stays on your servers.</li>
+                            <li><strong class="text-white">Using our cloud?</strong> We collect only what's needed to run the service.</li>
+                            <li><strong class="text-white">We don't sell your data.</strong> Ever. To anyone.</li>
+                            <li><strong class="text-white">You own your data.</strong> Export or delete it anytime.</li>
+                            <li><strong class="text-white">Open source.</strong> Audit our code yourself.</li>
+                        </ul>
+                    </div>
+                </section>
+
                 <!-- Introduction -->
                 <section>
                     <h2 class="text-2xl font-bold mb-4 text-white">Introduction</h2>
                     <p class="text-gray-300 leading-relaxed">
-                        At DolphyTech ("we", "us", "our"), we operate Remembra, an open-source AI memory layer. This Privacy Policy explains how we collect, use, and protect your information when you use our website (remembra.dev), documentation, and cloud services.
+                        At DolphyTech ("we", "us", "our"), we build Remembra, an open-source AI memory layer. We believe in transparency about how we handle data—especially since we're building tools that help AI systems remember things.
                     </p>
                     <p class="text-gray-300 leading-relaxed mt-4">
-                        <strong class="text-white">Important:</strong> If you self-host Remembra, your data never touches our servers. This policy primarily applies to our website and cloud-hosted services.
+                        This Privacy Policy explains what information we collect, how we use it, and your rights regarding your data when you use our website (remembra.dev), documentation (docs.remembra.dev), and cloud services.
                     </p>
                 </section>
-                
+
                 <!-- Information We Collect -->
-                <section>
+                <section id="information-we-collect">
                     <h2 class="text-2xl font-bold mb-4 text-white">Information We Collect</h2>
                     
-                    <h3 class="text-xl font-semibold mb-3 text-white">Website Visitors</h3>
+                    <h3 class="text-xl font-semibold mb-3 text-white mt-6">Website Visitors</h3>
+                    <p class="text-gray-300 mb-4">When you visit our website, we may collect:</p>
                     <ul class="list-disc list-inside text-gray-300 space-y-2">
-                        <li>Basic analytics (page views, referrer, browser type)</li>
-                        <li>IP address (anonymized)</li>
-                        <li>Cookies for site functionality</li>
+                        <li>Basic analytics data (pages visited, time on site, referral source)</li>
+                        <li>Device and browser information</li>
+                        <li>IP address (anonymized for analytics)</li>
+                        <li>Cookies for site functionality (see Cookies section)</li>
                     </ul>
                     
-                    <h3 class="text-xl font-semibold mb-3 mt-6 text-white">Cloud Service Users</h3>
+                    <h3 class="text-xl font-semibold mb-3 text-white mt-6">Cloud Service Users</h3>
+                    <p class="text-gray-300 mb-4">If you use Remembra Cloud, we collect:</p>
                     <ul class="list-disc list-inside text-gray-300 space-y-2">
-                        <li>Account information (email, name)</li>
-                        <li>Payment information (processed by Stripe)</li>
-                        <li>Usage data (API calls, storage used)</li>
-                        <li>Memory data you choose to store</li>
+                        <li><strong class="text-white">Account information:</strong> Email address, name, company (optional)</li>
+                        <li><strong class="text-white">Payment information:</strong> Processed securely by Stripe (we don't store card numbers)</li>
+                        <li><strong class="text-white">Usage data:</strong> API calls, storage usage, feature usage for billing and optimization</li>
+                        <li><strong class="text-white">Memory data:</strong> The memories, entities, and relationships you choose to store</li>
                     </ul>
                     
-                    <h3 class="text-xl font-semibold mb-3 mt-6 text-white">Self-Hosted Users</h3>
-                    <p class="text-gray-300">
-                        We collect <strong class="text-white">nothing</strong>. Your data stays on your infrastructure. We have no access to your memories, entities, or any other data.
-                    </p>
+                    <h3 class="text-xl font-semibold mb-3 text-white mt-6">Contact & Support</h3>
+                    <p class="text-gray-300 mb-4">When you contact us, we collect:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li>Your name and email address</li>
+                        <li>Any information you provide in your message</li>
+                        <li>Support ticket history</li>
+                    </ul>
                 </section>
-                
+
+                <!-- Self-Hosted -->
+                <section id="self-hosted">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Self-Hosted Deployments</h2>
+                    <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-6">
+                        <p class="text-gray-300 leading-relaxed">
+                            <strong class="text-white">If you self-host Remembra, we collect absolutely nothing.</strong>
+                        </p>
+                        <p class="text-gray-300 leading-relaxed mt-4">
+                            The software runs entirely on your infrastructure. Your memories, entities, API keys, and all other data stay on your servers. We have no access to it, no visibility into it, and no way to retrieve it. That's the whole point of self-hosting.
+                        </p>
+                        <p class="text-gray-300 leading-relaxed mt-4">
+                            The only time we might know you're using Remembra is if you choose to contact us for support or participate in our community.
+                        </p>
+                    </div>
+                </section>
+
                 <!-- How We Use Information -->
-                <section>
+                <section id="how-we-use">
                     <h2 class="text-2xl font-bold mb-4 text-white">How We Use Your Information</h2>
+                    <p class="text-gray-300 mb-4">We use information we collect to:</p>
                     <ul class="list-disc list-inside text-gray-300 space-y-2">
-                        <li>To provide and maintain our services</li>
-                        <li>To process payments and manage subscriptions</li>
-                        <li>To send important service updates</li>
-                        <li>To improve our products and user experience</li>
-                        <li>To respond to support requests</li>
-                        <li>To comply with legal obligations</li>
+                        <li><strong class="text-white">Provide our services:</strong> Run the Remembra Cloud platform and process your requests</li>
+                        <li><strong class="text-white">Process payments:</strong> Manage subscriptions and billing through Stripe</li>
+                        <li><strong class="text-white">Improve our products:</strong> Understand how features are used and identify areas for improvement</li>
+                        <li><strong class="text-white">Communicate with you:</strong> Respond to support requests, send important service updates</li>
+                        <li><strong class="text-white">Ensure security:</strong> Detect and prevent fraud, abuse, and security incidents</li>
+                        <li><strong class="text-white">Comply with law:</strong> Meet legal obligations when required</li>
                     </ul>
+                    
+                    <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mt-6">
+                        <h3 class="text-lg font-semibold text-white mb-2">What We Don't Do</h3>
+                        <ul class="list-disc list-inside text-gray-300 space-y-2">
+                            <li>We <strong class="text-white">don't sell</strong> your personal data to anyone</li>
+                            <li>We <strong class="text-white">don't use</strong> your stored memories to train AI models</li>
+                            <li>We <strong class="text-white">don't share</strong> your data with third parties for marketing</li>
+                            <li>We <strong class="text-white">don't access</strong> your stored memories unless required for support (with your permission) or legal compliance</li>
+                        </ul>
+                    </div>
                 </section>
-                
-                <!-- Data Storage -->
-                <section>
-                    <h2 class="text-2xl font-bold mb-4 text-white">Data Storage & Security</h2>
-                    <p class="text-gray-300 leading-relaxed">
-                        For cloud service users, your data is stored on secure servers with encryption at rest and in transit. We use industry-standard security practices including:
+
+                <!-- Data Security -->
+                <section id="data-security">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Data Security</h2>
+                    <p class="text-gray-300 mb-4">We take security seriously. Our cloud infrastructure includes:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li><strong class="text-white">Encryption in transit:</strong> All connections use TLS 1.3</li>
+                        <li><strong class="text-white">Encryption at rest:</strong> Data stored with AES-256 encryption</li>
+                        <li><strong class="text-white">Access controls:</strong> Strict internal access policies and audit logging</li>
+                        <li><strong class="text-white">Regular audits:</strong> Periodic security reviews and penetration testing</li>
+                        <li><strong class="text-white">Secure infrastructure:</strong> Hosted on reputable cloud providers with SOC 2 compliance</li>
+                    </ul>
+                    <p class="text-gray-300 mt-4">
+                        No system is 100% secure. If we discover a security breach affecting your data, we will notify you promptly as required by applicable law.
                     </p>
-                    <ul class="list-disc list-inside text-gray-300 space-y-2 mt-4">
-                        <li>TLS 1.3 encryption for all connections</li>
-                        <li>AES-256 encryption for data at rest</li>
-                        <li>Regular security audits</li>
-                        <li>Access controls and audit logging</li>
-                    </ul>
                 </section>
-                
+
                 <!-- Data Sharing -->
                 <section>
                     <h2 class="text-2xl font-bold mb-4 text-white">Data Sharing</h2>
-                    <p class="text-gray-300 leading-relaxed">
-                        We do <strong class="text-white">not</strong> sell your personal data. We may share data with:
-                    </p>
-                    <ul class="list-disc list-inside text-gray-300 space-y-2 mt-4">
-                        <li><strong class="text-white">Service providers:</strong> Payment processing (Stripe), hosting infrastructure</li>
-                        <li><strong class="text-white">Legal requirements:</strong> When required by law or to protect our rights</li>
+                    <p class="text-gray-300 mb-4">We may share data with:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li><strong class="text-white">Service providers:</strong> Companies that help us operate (e.g., Stripe for payments, hosting providers). They're bound by confidentiality agreements.</li>
+                        <li><strong class="text-white">Legal requirements:</strong> When required by law, court order, or to protect our rights and safety</li>
+                        <li><strong class="text-white">Business transfers:</strong> If we're acquired or merged, your data may transfer to the new entity (we'll notify you)</li>
                     </ul>
                 </section>
-                
+
                 <!-- Your Rights -->
-                <section>
+                <section id="your-rights">
                     <h2 class="text-2xl font-bold mb-4 text-white">Your Rights</h2>
-                    <p class="text-gray-300 leading-relaxed">You have the right to:</p>
-                    <ul class="list-disc list-inside text-gray-300 space-y-2 mt-4">
-                        <li><strong class="text-white">Access:</strong> Request a copy of your data</li>
-                        <li><strong class="text-white">Correction:</strong> Update inaccurate information</li>
-                        <li><strong class="text-white">Deletion:</strong> Request deletion of your data</li>
-                        <li><strong class="text-white">Export:</strong> Download your data in a portable format</li>
-                        <li><strong class="text-white">Opt-out:</strong> Unsubscribe from marketing communications</li>
+                    <p class="text-gray-300 mb-4">Depending on your location, you may have the right to:</p>
+                    <div class="grid md:grid-cols-2 gap-4 mt-4">
+                        <div class="bg-dark-card border border-white/10 rounded-lg p-4">
+                            <h4 class="font-semibold text-white mb-2">Access</h4>
+                            <p class="text-gray-400 text-sm">Request a copy of your personal data</p>
+                        </div>
+                        <div class="bg-dark-card border border-white/10 rounded-lg p-4">
+                            <h4 class="font-semibold text-white mb-2">Correction</h4>
+                            <p class="text-gray-400 text-sm">Update inaccurate or incomplete data</p>
+                        </div>
+                        <div class="bg-dark-card border border-white/10 rounded-lg p-4">
+                            <h4 class="font-semibold text-white mb-2">Deletion</h4>
+                            <p class="text-gray-400 text-sm">Request deletion of your data ("right to be forgotten")</p>
+                        </div>
+                        <div class="bg-dark-card border border-white/10 rounded-lg p-4">
+                            <h4 class="font-semibold text-white mb-2">Portability</h4>
+                            <p class="text-gray-400 text-sm">Export your data in a machine-readable format</p>
+                        </div>
+                        <div class="bg-dark-card border border-white/10 rounded-lg p-4">
+                            <h4 class="font-semibold text-white mb-2">Restriction</h4>
+                            <p class="text-gray-400 text-sm">Limit how we process your data</p>
+                        </div>
+                        <div class="bg-dark-card border border-white/10 rounded-lg p-4">
+                            <h4 class="font-semibold text-white mb-2">Objection</h4>
+                            <p class="text-gray-400 text-sm">Object to certain types of processing</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 mt-4">
+                        To exercise these rights, contact us at <a href="mailto:privacy@remembra.dev" class="text-primary hover:underline">privacy@remembra.dev</a>. We'll respond within 30 days.
+                    </p>
+                </section>
+
+                <!-- Cookies -->
+                <section id="cookies">
+                    <h2 class="text-2xl font-bold mb-4 text-white">Cookies</h2>
+                    <p class="text-gray-300 mb-4">We use cookies for:</p>
+                    <ul class="list-disc list-inside text-gray-300 space-y-2">
+                        <li><strong class="text-white">Essential cookies:</strong> Required for the website to function (authentication, preferences)</li>
+                        <li><strong class="text-white">Analytics cookies:</strong> Help us understand how visitors use our site (can be disabled)</li>
                     </ul>
                     <p class="text-gray-300 mt-4">
-                        To exercise these rights, contact us at <a href="mailto:privacy@remembra.dev" class="text-primary hover:underline">privacy@remembra.dev</a>.
+                        You can control cookies through your browser settings. Disabling essential cookies may affect site functionality.
                     </p>
                 </section>
-                
-                <!-- Cookies -->
+
+                <!-- Data Retention -->
                 <section>
-                    <h2 class="text-2xl font-bold mb-4 text-white">Cookies</h2>
+                    <h2 class="text-2xl font-bold mb-4 text-white">Data Retention</h2>
                     <p class="text-gray-300 leading-relaxed">
-                        We use essential cookies for site functionality and optional analytics cookies to understand how visitors use our site. You can disable cookies in your browser settings.
+                        We retain your data as long as your account is active or as needed to provide services. If you delete your account, we'll delete your data within 30 days, except where we're legally required to retain it (e.g., financial records for tax purposes).
                     </p>
                 </section>
-                
+
                 <!-- Children -->
                 <section>
                     <h2 class="text-2xl font-bold mb-4 text-white">Children's Privacy</h2>
                     <p class="text-gray-300 leading-relaxed">
-                        Our services are not directed to children under 13. We do not knowingly collect personal information from children under 13. If you believe we have collected such information, please contact us immediately.
+                        Remembra is not directed to children under 13 (or 16 in some jurisdictions). We don't knowingly collect personal information from children. If you believe we have, please contact us and we'll delete it promptly.
                     </p>
                 </section>
-                
+
+                <!-- International -->
+                <section>
+                    <h2 class="text-2xl font-bold mb-4 text-white">International Data Transfers</h2>
+                    <p class="text-gray-300 leading-relaxed">
+                        Our servers are located in the United States. If you're accessing from outside the US, your data will be transferred to and processed in the US. We use standard contractual clauses and other safeguards to ensure adequate protection for international transfers.
+                    </p>
+                </section>
+
                 <!-- Changes -->
                 <section>
                     <h2 class="text-2xl font-bold mb-4 text-white">Changes to This Policy</h2>
                     <p class="text-gray-300 leading-relaxed">
-                        We may update this Privacy Policy from time to time. We will notify you of significant changes by posting the new policy on this page and updating the "Last updated" date.
+                        We may update this Privacy Policy from time to time. We'll notify you of significant changes by posting the new policy on this page and updating the "Last updated" date. For major changes, we may also send an email notification.
                     </p>
                 </section>
-                
+
                 <!-- Contact -->
-                <section>
+                <section id="contact">
                     <h2 class="text-2xl font-bold mb-4 text-white">Contact Us</h2>
-                    <p class="text-gray-300 leading-relaxed">
-                        If you have questions about this Privacy Policy, please contact us:
-                    </p>
-                    <div class="bg-dark-card border border-white/10 rounded-xl p-6 mt-4">
-                        <p class="text-white font-medium">DolphyTech</p>
-                        <p class="text-gray-400">515 Centerpoint Drive, Suite #212</p>
+                    <p class="text-gray-300 mb-4">Questions about this Privacy Policy? Contact us:</p>
+                    <div class="bg-dark-card border border-white/10 rounded-xl p-6">
+                        <p class="text-white font-semibold">DolphyTech</p>
+                        <p class="text-gray-400 mt-2">515 Centerpoint Drive, Suite #212</p>
                         <p class="text-gray-400">Middletown, CT 06457</p>
+                        <p class="text-gray-400 mt-4">
+                            <strong class="text-white">Privacy inquiries:</strong> 
+                            <a href="mailto:privacy@remembra.dev" class="text-primary hover:underline">privacy@remembra.dev</a>
+                        </p>
                         <p class="text-gray-400 mt-2">
-                            Email: <a href="mailto:privacy@remembra.dev" class="text-primary hover:underline">privacy@remembra.dev</a>
+                            <strong class="text-white">General contact:</strong> 
+                            <a href="mailto:hello@remembra.dev" class="text-primary hover:underline">hello@remembra.dev</a>
                         </p>
                     </div>
                 </section>
@@ -208,7 +328,7 @@
     </section>
 
     <!-- Footer -->
-    <footer class="py-12 px-6 border-t border-white/5">
+    <footer class="py-12 px-6 border-t border-white/5 mt-12">
         <div class="max-w-6xl mx-auto">
             <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="flex items-center gap-3">
@@ -216,10 +336,10 @@
                     <span class="font-bold">Remembra</span>
                 </div>
                 <div class="flex items-center gap-6 text-sm text-gray-400">
-                    <a href="/about" class="hover:text-white transition">About</a>
-                    <a href="/contact" class="hover:text-white transition">Contact</a>
-                    <a href="/privacy" class="hover:text-white transition">Privacy</a>
-                    <a href="/terms" class="hover:text-white transition">Terms</a>
+                    <a href="/about.html" class="hover:text-white transition">About</a>
+                    <a href="/contact.html" class="hover:text-white transition">Contact</a>
+                    <a href="/privacy.html" class="hover:text-white transition">Privacy</a>
+                    <a href="/terms.html" class="hover:text-white transition">Terms</a>
                 </div>
                 <p class="text-sm text-gray-500">© 2026 DolphyTech. All rights reserved.</p>
             </div>

@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact - Remembra | Get in Touch</title>
-    <meta name="description" content="Get in touch with the Remembra team. Questions, feedback, enterprise inquiries, or just say hello.">
+    <meta name="description" content="Get in touch with the Remembra team. Questions, feedback, enterprise inquiries, or partnership opportunities.">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Contact Remembra">
+    <meta property="og:description" content="Questions? Feedback? Enterprise needs? We're here to help.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://remembra.dev/contact">
     
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -57,6 +63,7 @@
                     <span class="text-xl font-bold">Remembra</span>
                 </a>
                 <div class="flex items-center gap-4">
+                    <a href="/about.html" class="hidden md:block text-gray-300 hover:text-white transition">About</a>
                     <a href="https://docs.remembra.dev" class="text-gray-300 hover:text-white transition">Docs</a>
                     <a href="https://github.com/remembra-ai/remembra" target="_blank" class="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white font-medium rounded-lg transition">
                         Get Started →
@@ -67,93 +74,221 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="pt-32 pb-16 px-6">
+    <section class="pt-32 pb-12 px-6">
         <div class="max-w-4xl mx-auto text-center">
             <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-                Get in <span class="gradient-text">Touch</span>
+                Let's <span class="gradient-text">Connect</span>
             </h1>
             <p class="text-xl text-gray-400">
-                Questions? Feedback? Enterprise needs? We're here to help.
+                Questions about Remembra? Want to discuss enterprise needs? We'd love to hear from you.
             </p>
         </div>
     </section>
 
-    <!-- Contact Options -->
-    <section class="py-16 px-6">
-        <div class="max-w-4xl mx-auto">
-            <div class="grid md:grid-cols-2 gap-8 mb-16">
-                <!-- General Inquiries -->
+    <!-- Main Content -->
+    <section class="py-12 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid lg:grid-cols-2 gap-12">
+                
+                <!-- Contact Form -->
                 <div class="bg-dark-card border border-white/10 rounded-2xl p-8">
-                    <div class="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center text-2xl mb-6">📧</div>
-                    <h2 class="text-2xl font-bold mb-3">General Inquiries</h2>
-                    <p class="text-gray-400 mb-6">Questions, feedback, or just want to say hello.</p>
-                    <a href="mailto:hello@remembra.dev" class="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition font-medium">
-                        hello@remembra.dev
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                    </a>
+                    <h2 class="text-2xl font-bold mb-6">Send us a message</h2>
+                    
+                    <form action="https://formsubmit.co/hello@remembra.dev" method="POST" class="space-y-6">
+                        <!-- Honeypot -->
+                        <input type="text" name="_honey" style="display:none">
+                        <!-- Disable captcha -->
+                        <input type="hidden" name="_captcha" value="false">
+                        <!-- Subject -->
+                        <input type="hidden" name="_subject" value="📧 New Contact Form Submission - Remembra">
+                        <!-- Success page -->
+                        <input type="hidden" name="_next" value="https://remembra.dev/contact.html?success=true">
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">First Name *</label>
+                                <input type="text" name="first_name" required 
+                                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary focus:outline-none transition"
+                                    placeholder="John">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Last Name *</label>
+                                <input type="text" name="last_name" required 
+                                    class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary focus:outline-none transition"
+                                    placeholder="Doe">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email *</label>
+                            <input type="email" name="email" required 
+                                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary focus:outline-none transition"
+                                placeholder="john@company.com">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Company</label>
+                            <input type="text" name="company" 
+                                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary focus:outline-none transition"
+                                placeholder="Acme Inc.">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">What can we help with? *</label>
+                            <select name="inquiry_type" required
+                                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary focus:outline-none transition">
+                                <option value="" disabled selected>Select an option</option>
+                                <option value="general">General Inquiry</option>
+                                <option value="technical">Technical Support</option>
+                                <option value="enterprise">Enterprise / Custom Deployment</option>
+                                <option value="partnership">Partnership Opportunity</option>
+                                <option value="feedback">Product Feedback</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Message *</label>
+                            <textarea name="message" required rows="5"
+                                class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-primary focus:outline-none transition resize-none"
+                                placeholder="Tell us more about your needs..."></textarea>
+                        </div>
+                        
+                        <button type="submit" 
+                            class="w-full py-4 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition flex items-center justify-center gap-2">
+                            <span>Send Message</span>
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                            </svg>
+                        </button>
+                    </form>
+                    
+                    <p class="text-center text-xs text-gray-500 mt-4">
+                        We typically respond within 24-48 hours.
+                    </p>
                 </div>
                 
-                <!-- Enterprise -->
-                <div class="bg-dark-card border border-white/10 rounded-2xl p-8">
-                    <div class="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center text-2xl mb-6">🏢</div>
-                    <h2 class="text-2xl font-bold mb-3">Enterprise</h2>
-                    <p class="text-gray-400 mb-6">Custom deployments, SLAs, and dedicated support.</p>
-                    <a href="mailto:enterprise@remembra.dev" class="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition font-medium">
-                        enterprise@remembra.dev
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                    </a>
+                <!-- Contact Info & Quick Links -->
+                <div class="space-y-8">
+                    <!-- Direct Contact -->
+                    <div class="bg-dark-card border border-white/10 rounded-2xl p-8">
+                        <h2 class="text-2xl font-bold mb-6">Direct Contact</h2>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-xl flex-shrink-0">📧</div>
+                                <div>
+                                    <h3 class="font-semibold mb-1">General Inquiries</h3>
+                                    <a href="mailto:hello@remembra.dev" class="text-primary hover:underline">hello@remembra.dev</a>
+                                    <p class="text-gray-400 text-sm mt-1">Questions, feedback, or just saying hi</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center text-xl flex-shrink-0">🏢</div>
+                                <div>
+                                    <h3 class="font-semibold mb-1">Enterprise Sales</h3>
+                                    <a href="mailto:enterprise@remembra.dev" class="text-primary hover:underline">enterprise@remembra.dev</a>
+                                    <p class="text-gray-400 text-sm mt-1">Custom deployments, SLAs, and dedicated support</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-4">
+                                <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-xl flex-shrink-0">🤝</div>
+                                <div>
+                                    <h3 class="font-semibold mb-1">Partnerships</h3>
+                                    <a href="mailto:partnerships@remembra.dev" class="text-primary hover:underline">partnerships@remembra.dev</a>
+                                    <p class="text-gray-400 text-sm mt-1">Integration partners and collaborations</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Community -->
+                    <div class="bg-dark-card border border-white/10 rounded-2xl p-8">
+                        <h2 class="text-2xl font-bold mb-6">Community & Support</h2>
+                        
+                        <div class="space-y-4">
+                            <a href="https://github.com/remembra-ai/remembra/issues" target="_blank" 
+                                class="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition group">
+                                <div class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold group-hover:text-primary transition">GitHub Issues</h3>
+                                    <p class="text-gray-400 text-sm">Bug reports and feature requests</p>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-400 group-hover:text-primary transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                            
+                            <a href="https://discord.gg/remembra" target="_blank" 
+                                class="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition group">
+                                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold group-hover:text-primary transition">Discord Community</h3>
+                                    <p class="text-gray-400 text-sm">Chat with the community and get help</p>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-400 group-hover:text-primary transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                            
+                            <a href="https://twitter.com/remembra_ai" target="_blank" 
+                                class="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition group">
+                                <div class="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold group-hover:text-primary transition">Twitter / X</h3>
+                                    <p class="text-gray-400 text-sm">Follow for updates and announcements</p>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-400 group-hover:text-primary transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Office Location -->
+                    <div class="bg-dark-card border border-white/10 rounded-2xl p-8">
+                        <h2 class="text-2xl font-bold mb-6">Office</h2>
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center text-xl flex-shrink-0">📍</div>
+                            <div>
+                                <h3 class="font-semibold mb-1">DolphyTech</h3>
+                                <p class="text-gray-400">515 Centerpoint Drive, Suite #212</p>
+                                <p class="text-gray-400">Middletown, CT 06457</p>
+                                <p class="text-gray-400 mt-2">
+                                    <a href="tel:+12038870943" class="hover:text-white transition">(203) 887-0943</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Support -->
-                <div class="bg-dark-card border border-white/10 rounded-2xl p-8">
-                    <div class="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center text-2xl mb-6">🛠️</div>
-                    <h2 class="text-2xl font-bold mb-3">Technical Support</h2>
-                    <p class="text-gray-400 mb-6">Bug reports, feature requests, and technical help.</p>
-                    <a href="https://github.com/remembra-ai/remembra/issues" target="_blank" class="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition font-medium">
-                        GitHub Issues
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                    </a>
-                </div>
-                
-                <!-- Community -->
-                <div class="bg-dark-card border border-white/10 rounded-2xl p-8">
-                    <div class="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center text-2xl mb-6">💬</div>
-                    <h2 class="text-2xl font-bold mb-3">Community</h2>
-                    <p class="text-gray-400 mb-6">Join the conversation, share ideas, get help from the community.</p>
-                    <a href="https://discord.gg/remembra" target="_blank" class="inline-flex items-center gap-2 text-primary hover:text-primary-dark transition font-medium">
-                        Discord Server
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Social Links -->
-            <div class="text-center py-12 border-t border-white/10">
-                <h3 class="text-xl font-bold mb-6">Follow Us</h3>
-                <div class="flex items-center justify-center gap-6">
-                    <a href="https://github.com/remembra-ai/remembra" target="_blank" class="w-12 h-12 bg-dark-card border border-white/10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 transition">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    </a>
-                    <a href="https://twitter.com/remembra_ai" target="_blank" class="w-12 h-12 bg-dark-card border border-white/10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 transition">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                    </a>
-                    <a href="https://discord.gg/remembra" target="_blank" class="w-12 h-12 bg-dark-card border border-white/10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:border-white/30 transition">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Company Info -->
-            <div class="bg-dark-card border border-white/10 rounded-2xl p-8 text-center">
-                <h3 class="text-xl font-bold mb-4">DolphyTech</h3>
-                <p class="text-gray-400 mb-2">515 Centerpoint Drive, Suite #212</p>
-                <p class="text-gray-400 mb-4">Middletown, CT 06457</p>
-                <p class="text-gray-400">
-                    <a href="tel:+12038870943" class="hover:text-white transition">(203) 887-0943</a>
-                </p>
             </div>
         </div>
     </section>
+
+    <!-- Success Message (shown via URL param) -->
+    <script>
+        if (window.location.search.includes('success=true')) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3';
+            successDiv.innerHTML = `
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="font-medium">Message sent! We'll get back to you soon.</span>
+            `;
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 5000);
+            history.replaceState(null, '', '/contact.html');
+        }
+    </script>
 
     <!-- Footer -->
     <footer class="py-12 px-6 border-t border-white/5">
@@ -164,10 +299,10 @@
                     <span class="font-bold">Remembra</span>
                 </div>
                 <div class="flex items-center gap-6 text-sm text-gray-400">
-                    <a href="/about" class="hover:text-white transition">About</a>
-                    <a href="/contact" class="hover:text-white transition">Contact</a>
-                    <a href="/privacy" class="hover:text-white transition">Privacy</a>
-                    <a href="/terms" class="hover:text-white transition">Terms</a>
+                    <a href="/about.html" class="hover:text-white transition">About</a>
+                    <a href="/contact.html" class="hover:text-white transition">Contact</a>
+                    <a href="/privacy.html" class="hover:text-white transition">Privacy</a>
+                    <a href="/terms.html" class="hover:text-white transition">Terms</a>
                 </div>
                 <p class="text-sm text-gray-500">© 2026 DolphyTech. All rights reserved.</p>
             </div>
