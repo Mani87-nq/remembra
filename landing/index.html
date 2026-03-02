@@ -303,12 +303,117 @@ memories = client.recall(
         </div>
     </section>
 
+    <!-- Enterprise Features Section (v0.7.0) -->
+    <section class="py-20 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-full text-green-400 text-sm font-medium mb-4">
+                    NEW in v0.7.0
+                </div>
+                <h2 class="text-4xl font-bold mb-4">Enterprise Features, Free</h2>
+                <p class="text-xl text-gray-400">Everything you need for production. No paywall.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-dark-card border border-white/10 rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center text-2xl mb-4">🔔</div>
+                    <h3 class="text-lg font-bold mb-2">Webhooks</h3>
+                    <p class="text-gray-400 text-sm">Real-time event notifications with HMAC-SHA256 signing and automatic retry delivery.</p>
+                </div>
+                
+                <div class="bg-dark-card border border-white/10 rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-2xl mb-4">🔐</div>
+                    <h3 class="text-lg font-bold mb-2">RBAC</h3>
+                    <p class="text-gray-400 text-sm">Admin, Editor, Viewer roles with 12 granular permissions. Scoped API keys included.</p>
+                </div>
+                
+                <div class="bg-dark-card border border-white/10 rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center text-2xl mb-4">📦</div>
+                    <h3 class="text-lg font-bold mb-2">Import / Export</h3>
+                    <p class="text-gray-400 text-sm">Migrate from ChatGPT, Claude, or other providers. Export to JSON, CSV, JSONL.</p>
+                </div>
+                
+                <div class="bg-dark-card border border-white/10 rounded-2xl p-6 card-hover">
+                    <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center text-2xl mb-4">🔌</div>
+                    <h3 class="text-lg font-bold mb-2">Plugins</h3>
+                    <p class="text-gray-400 text-sm">Extend with auto-tagging, Slack notifications, or build your own custom plugins.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MCP Integration Section -->
+    <section class="py-20 px-6 bg-gradient-to-b from-dark to-dark-lighter">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-sm font-medium mb-4">
+                        Claude Code • Cursor • Claude Desktop
+                    </div>
+                    <h2 class="text-4xl font-bold mb-6">MCP-Native Memory</h2>
+                    <p class="text-xl text-gray-400 mb-6">
+                        One command to give Claude or Cursor persistent memory across all your sessions.
+                    </p>
+                    <div class="bg-dark-card border border-white/10 rounded-xl p-4 mb-6">
+                        <code class="text-sm text-gray-300">
+                            <span class="text-gray-500"># Add to Claude Code</span><br>
+                            claude mcp add remembra -e REMEMBRA_URL=<span class="text-green-400">http://localhost:8787</span> -- remembra-mcp
+                        </code>
+                    </div>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-center gap-3">
+                            <span class="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-primary text-sm">✓</span>
+                            Works with Claude Code, Cursor, Claude Desktop
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-primary text-sm">✓</span>
+                            Automatic memory storage and recall
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="w-6 h-6 bg-primary/20 rounded-full flex items-center justify-center text-primary text-sm">✓</span>
+                            No code changes needed
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-dark-card border border-white/10 rounded-2xl p-6">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span class="ml-2 text-sm text-gray-400">Claude Code</span>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex gap-3">
+                            <span class="text-primary font-bold">You:</span>
+                            <span class="text-gray-300">Remember that I prefer TypeScript and use Tailwind</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-green-400 font-bold">Claude:</span>
+                            <span class="text-gray-300">✓ Stored to memory. I'll remember your preferences.</span>
+                        </div>
+                        <div class="border-t border-white/10 pt-4 mt-4">
+                            <span class="text-gray-500 text-xs">Next session...</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-primary font-bold">You:</span>
+                            <span class="text-gray-300">Set up a new project for me</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-green-400 font-bold">Claude:</span>
+                            <span class="text-gray-300">I remember you prefer TypeScript + Tailwind. I'll set that up...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Comparison Section -->
     <section class="py-20 px-6">
         <div class="max-w-6xl mx-auto">
             <div class="text-center mb-16">
                 <h2 class="text-4xl font-bold mb-4">How We Compare</h2>
-                <p class="text-xl text-gray-400">Remembra vs. the alternatives</p>
+                <p class="text-xl text-gray-400">Why developers choose Remembra</p>
             </div>
             
             <div class="overflow-x-auto">
@@ -319,31 +424,57 @@ memories = client.recall(
                             <th class="py-4 px-4 font-semibold text-primary">Remembra</th>
                             <th class="py-4 px-4 font-semibold text-gray-400">Mem0</th>
                             <th class="py-4 px-4 font-semibold text-gray-400">Zep</th>
+                            <th class="py-4 px-4 font-semibold text-gray-400">LangMem</th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
+                        <tr class="border-b border-white/5 bg-primary/5">
+                            <td class="py-4 px-4 text-gray-300 font-medium">Price for Graph + Entities</td>
+                            <td class="py-4 px-4 text-center text-green-400 font-bold">Free</td>
+                            <td class="py-4 px-4 text-center text-red-400">$249/mo</td>
+                            <td class="py-4 px-4 text-center text-yellow-400">$25/mo+</td>
+                            <td class="py-4 px-4 text-center text-yellow-400">DIY</td>
+                        </tr>
                         <tr class="border-b border-white/5">
                             <td class="py-4 px-4 text-gray-300">Entity Resolution</td>
-                            <td class="py-4 px-4 text-center text-green-400">✓ Built-in</td>
-                            <td class="py-4 px-4 text-center text-yellow-400">Partial</td>
+                            <td class="py-4 px-4 text-center text-green-400">✓ Free</td>
+                            <td class="py-4 px-4 text-center text-yellow-400">Pro ($249)</td>
+                            <td class="py-4 px-4 text-center text-green-400">✓</td>
                             <td class="py-4 px-4 text-center text-red-400">✗</td>
                         </tr>
                         <tr class="border-b border-white/5">
-                            <td class="py-4 px-4 text-gray-300">Temporal Features (TTL, Decay)</td>
+                            <td class="py-4 px-4 text-gray-300">Temporal Features</td>
                             <td class="py-4 px-4 text-center text-green-400">✓ Full</td>
                             <td class="py-4 px-4 text-center text-red-400">✗</td>
-                            <td class="py-4 px-4 text-center text-yellow-400">TTL only</td>
-                        </tr>
-                        <tr class="border-b border-white/5">
-                            <td class="py-4 px-4 text-gray-300">Hybrid Search (BM25 + Vector)</td>
                             <td class="py-4 px-4 text-center text-green-400">✓</td>
                             <td class="py-4 px-4 text-center text-red-400">✗</td>
-                            <td class="py-4 px-4 text-center text-green-400">✓</td>
                         </tr>
                         <tr class="border-b border-white/5">
-                            <td class="py-4 px-4 text-gray-300">Graph-Aware Recall</td>
+                            <td class="py-4 px-4 text-gray-300">MCP Server</td>
                             <td class="py-4 px-4 text-center text-green-400">✓</td>
-                            <td class="py-4 px-4 text-center text-yellow-400">Graph Memory</td>
+                            <td class="py-4 px-4 text-center text-green-400">✓</td>
+                            <td class="py-4 px-4 text-center text-green-400">✓</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-4 px-4 text-gray-300">Webhooks</td>
+                            <td class="py-4 px-4 text-center text-green-400">✓ Free</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-4 px-4 text-gray-300">RBAC / Permissions</td>
+                            <td class="py-4 px-4 text-center text-green-400">✓ Free</td>
+                            <td class="py-4 px-4 text-center text-yellow-400">Enterprise</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
+                        </tr>
+                        <tr class="border-b border-white/5">
+                            <td class="py-4 px-4 text-gray-300">Import from ChatGPT/Claude</td>
+                            <td class="py-4 px-4 text-center text-green-400">✓</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
+                            <td class="py-4 px-4 text-center text-red-400">✗</td>
                             <td class="py-4 px-4 text-center text-red-400">✗</td>
                         </tr>
                         <tr class="border-b border-white/5">
@@ -370,8 +501,85 @@ memories = client.recall(
         </div>
     </section>
 
+    <!-- Getting Started Journey Section -->
+    <section class="py-20 px-6 bg-dark-lighter">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold mb-4">Up and Running in 5 Minutes</h2>
+                <p class="text-xl text-gray-400">From zero to AI memory in three steps</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="relative">
+                    <div class="absolute -left-4 -top-4 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-xl font-bold">1</div>
+                    <div class="bg-dark-card border border-white/10 rounded-2xl p-8 pt-10">
+                        <h3 class="text-xl font-bold mb-4">Deploy</h3>
+                        <p class="text-gray-400 mb-4">One command to run Remembra with Docker:</p>
+                        <div class="bg-black/50 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
+                            docker run -d -p 8787:8787 \<br>
+                            &nbsp;&nbsp;remembra/remembra
+                        </div>
+                        <p class="text-gray-500 text-sm mt-4">Or use docker-compose for production with Qdrant included.</p>
+                    </div>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="relative">
+                    <div class="absolute -left-4 -top-4 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-xl font-bold">2</div>
+                    <div class="bg-dark-card border border-white/10 rounded-2xl p-8 pt-10">
+                        <h3 class="text-xl font-bold mb-4">Integrate</h3>
+                        <p class="text-gray-400 mb-4">Choose your integration method:</p>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 text-sm">
+                                <span class="w-8 h-8 bg-blue-500/20 rounded flex items-center justify-center">🐍</span>
+                                <span class="text-gray-300">pip install remembra</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
+                                <span class="w-8 h-8 bg-yellow-500/20 rounded flex items-center justify-center">📦</span>
+                                <span class="text-gray-300">npm install @remembra/client</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
+                                <span class="w-8 h-8 bg-purple-500/20 rounded flex items-center justify-center">🤖</span>
+                                <span class="text-gray-300">claude mcp add remembra</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
+                                <span class="w-8 h-8 bg-green-500/20 rounded flex items-center justify-center">🌐</span>
+                                <span class="text-gray-300">REST API (any language)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="relative">
+                    <div class="absolute -left-4 -top-4 w-12 h-12 bg-primary rounded-full flex items-center justify-center text-xl font-bold">3</div>
+                    <div class="bg-dark-card border border-white/10 rounded-2xl p-8 pt-10">
+                        <h3 class="text-xl font-bold mb-4">Use</h3>
+                        <p class="text-gray-400 mb-4">Store and recall memories:</p>
+                        <div class="bg-black/50 rounded-lg p-4 font-mono text-xs text-gray-300 overflow-x-auto">
+                            <span class="text-gray-500"># Store</span><br>
+                            memory.store(<span class="text-green-400">"User likes dark mode"</span>)<br><br>
+                            <span class="text-gray-500"># Recall</span><br>
+                            memory.recall(<span class="text-green-400">"preferences"</span>)<br>
+                            <span class="text-gray-500"># → "User likes dark mode"</span>
+                        </div>
+                        <p class="text-gray-500 text-sm mt-4">Entities extracted. Graph built. All automatic.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="https://docs.remembra.dev/getting-started/quickstart" class="inline-flex items-center gap-2 px-8 py-4 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition">
+                    Read the Full Guide
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Use Cases Section -->
-    <section id="usecases" class="py-20 px-6 bg-dark-lighter">
+    <section id="usecases" class="py-20 px-6">
         <div class="max-w-6xl mx-auto">
             <div class="text-center mb-16">
                 <h2 class="text-4xl font-bold mb-4">Use Cases</h2>
