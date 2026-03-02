@@ -169,15 +169,15 @@ class QdrantStore:
             ),
         ]
 
-        results = await client.search(
+        results = await client.query_points(
             collection_name=self.collection_name,
-            query_vector=query_vector,
+            query=query_vector,
             query_filter=qmodels.Filter(must=must_conditions),
             limit=limit,
             score_threshold=score_threshold,
         )
 
-        return [(r.id, r.score, r.payload or {}) for r in results]
+        return [(r.id, r.score, r.payload or {}) for r in results.points]
 
     async def delete(self, memory_id: str) -> bool:
         """Delete a single memory by ID."""
