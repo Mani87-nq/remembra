@@ -26,7 +26,12 @@ class Settings(BaseSettings):
 
     # CORS
     cors_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000", "http://localhost:8787"],
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://localhost:8787",
+            "https://app.remembra.dev",
+            "https://remembra.dev",
+        ],
         description="Allowed CORS origins. Set to ['*'] only for development.",
     )
 
