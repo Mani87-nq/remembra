@@ -278,6 +278,113 @@ def health_check() -> str:
         )
 
 
+@mcp.tool()
+def ingest_conversation(
+    messages: list[dict[str, Any]],
+    session_id: str | None = None,
+    min_importance: float = 0.5,
+    extract_from: str = "both",
+    store: bool = True,
+) -> str:
+    """Ingest a conversation and automatically extract memories.
+
+    Processes a list of conversation messages and intelligently extracts
+    facts worth remembering long-term. Includes deduplication against
+    existing memories and entity extraction.
+
+    This is the primary method for AI agents to add conversation context
+    to persistent memory without manually calling store for each fact.
+
+    Args:
+        messages: List of message dicts with 'role' and 'content'.
+                  Optional: 'name' (speaker name), 'timestamp' (ISO format).
+                  Example: [{"role": "user", "content": "I work at Google"}]
+        session_id: Optional session ID for grouping related conversations.
+        min_importance: Minimum importance threshold (0.0-1.0, default: 0.5).
+                        Facts below this threshold are filtered out.
+        extract_from: Which messages to extract from: "user", "assistant", or "both".
+        store: If False, returns extraction results without storing (dry run).
+
+    Returns:
+        JSON string with extracted facts, entities, deduplication results, and stats.
+    """
+    import httpx
+
+    try:
+        client = _get_client()
+
+        # Build request payload
+        payload = {
+            "messages": messages,
+            "user_id": client.user_id,
+            "session_id": session_id,
+            "project_id": client.project,
+            "options": {
+                "extract_from": extract_from,
+                "min_importance": min_importance,
+                "dedupe": True,
+                "store": store,
+                "infer": True,
+            },
+        }
+
+        # Call the conversation ingestion endpoint
+        with httpx.Client(timeout=120.0) as http_client:
+            headers = {}
+            if client.api_key:
+                headers["X-API-Key"] = client.api_key
+
+            response = http_client.post(
+                f"{client.base_url}/api/v1/ingest/conversation",
+                json=payload,
+                headers=headers,
+            )
+
+            if response.status_code == 201:
+                result = response.json()
+                return json.dumps(
+                    {
+                        "status": result.get("status", "ok"),
+                        "session_id": result.get("session_id"),
+                        "facts_extracted": result.get("stats", {}).get("facts_extracted", 0),
+                        "facts_stored": result.get("stats", {}).get("facts_stored", 0),
+                        "facts_deduped": result.get("stats", {}).get("facts_deduped", 0),
+                        "entities_found": result.get("stats", {}).get("entities_found", 0),
+                        "processing_time_ms": result.get("stats", {}).get("processing_time_ms", 0),
+                        "facts": [
+                            {
+                                "content": f.get("content"),
+                                "importance": f.get("importance"),
+                                "speaker": f.get("speaker"),
+                                "action": f.get("action"),
+                                "stored": f.get("stored"),
+                            }
+                            for f in result.get("facts", [])
+                        ],
+                        "entities": [
+                            {
+                                "name": e.get("name"),
+                                "type": e.get("type"),
+                            }
+                            for e in result.get("entities", [])
+                        ],
+                    },
+                    indent=2,
+                )
+            else:
+                error_detail = response.json().get("detail", response.text)
+                return json.dumps(
+                    {
+                        "status": "error",
+                        "code": response.status_code,
+                        "error": error_detail,
+                    }
+                )
+
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
 # ---------------------------------------------------------------------------
 # Resources
 # ---------------------------------------------------------------------------

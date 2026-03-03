@@ -27,8 +27,12 @@ import httpx
 
 from remembra.client.types import (
     ChangelogIngestResult,
+    ConversationIngestResult,
     EntityItem,
+    ExtractedEntityItem,
+    ExtractedFactItem,
     ForgetResult,
+    IngestStatsItem,
     MemoryItem,
     RecallResult,
     StoreResult,
@@ -363,6 +367,118 @@ class Memory:
             memories_stored=data.get("memories_stored", 0),
             memory_ids=data.get("memory_ids", []),
             errors=data.get("errors", []),
+        )
+    
+    def ingest_conversation(
+        self,
+        messages: list[dict[str, Any]],
+        session_id: str | None = None,
+        extract_from: str = "both",
+        min_importance: float = 0.5,
+        dedupe: bool = True,
+        store: bool = True,
+        infer: bool = True,
+    ) -> ConversationIngestResult:
+        """
+        Ingest a conversation and automatically extract memories.
+        
+        Processes a list of conversation messages and intelligently extracts
+        facts worth remembering long-term. Includes deduplication against
+        existing memories and entity extraction.
+        
+        This is the primary method for AI agents to add conversation context
+        to persistent memory without manually calling store for each fact.
+        
+        Args:
+            messages: List of message dicts with 'role' and 'content'.
+                      Each message should have:
+                      - role: "user" | "assistant" | "system"
+                      - content: The message text
+                      Optional fields:
+                      - name: Speaker name (for multi-user chats)
+                      - timestamp: ISO format datetime string
+            session_id: Optional session ID for grouping related conversations
+            extract_from: Which messages to extract from: "user", "assistant", or "both"
+            min_importance: Minimum importance threshold (0.0-1.0, default: 0.5)
+            dedupe: Enable deduplication against existing memories (default: True)
+            store: If False, returns extraction without storing (dry run)
+            infer: If False, stores raw messages without LLM extraction
+        
+        Returns:
+            ConversationIngestResult with extracted facts, entities, and stats
+        
+        Example:
+            >>> result = memory.ingest_conversation([
+            ...     {"role": "user", "content": "My wife Suzan and I are planning a trip to Japan"},
+            ...     {"role": "assistant", "content": "That sounds exciting! When are you going?"},
+            ...     {"role": "user", "content": "We're thinking April next year"},
+            ... ])
+            >>> print(f"Extracted {result.stats.facts_extracted} facts")
+            >>> print(f"Stored {result.stats.facts_stored} new memories")
+            >>> for fact in result.facts:
+            ...     print(f"- {fact.content} (importance: {fact.importance})")
+        """
+        payload: dict[str, Any] = {
+            "messages": messages,
+            "user_id": self.user_id,
+            "session_id": session_id,
+            "project_id": self.project,
+            "options": {
+                "extract_from": extract_from,
+                "min_importance": min_importance,
+                "dedupe": dedupe,
+                "store": store,
+                "infer": infer,
+            },
+        }
+        
+        data = self._request("POST", "/api/v1/ingest/conversation", json=payload)
+        
+        # Parse facts
+        facts = [
+            ExtractedFactItem(
+                content=f.get("content", ""),
+                confidence=f.get("confidence", 1.0),
+                importance=f.get("importance", 0.5),
+                source_message_index=f.get("source_message_index", 0),
+                speaker=f.get("speaker"),
+                stored=f.get("stored", False),
+                memory_id=f.get("memory_id"),
+                action=f.get("action", "add"),
+                action_reason=f.get("action_reason"),
+            )
+            for f in data.get("facts", [])
+        ]
+        
+        # Parse entities
+        entities = [
+            ExtractedEntityItem(
+                name=e.get("name", ""),
+                type=e.get("type", ""),
+                relationship=e.get("relationship"),
+            )
+            for e in data.get("entities", [])
+        ]
+        
+        # Parse stats
+        stats_data = data.get("stats", {})
+        stats = IngestStatsItem(
+            messages_processed=stats_data.get("messages_processed", 0),
+            facts_extracted=stats_data.get("facts_extracted", 0),
+            facts_stored=stats_data.get("facts_stored", 0),
+            facts_updated=stats_data.get("facts_updated", 0),
+            facts_deduped=stats_data.get("facts_deduped", 0),
+            facts_skipped=stats_data.get("facts_skipped", 0),
+            entities_found=stats_data.get("entities_found", 0),
+            processing_time_ms=stats_data.get("processing_time_ms", 0),
+        )
+        
+        return ConversationIngestResult(
+            status=data.get("status", "ok"),
+            session_id=data.get("session_id"),
+            facts=facts,
+            entities=entities,
+            stats=stats,
         )
     
     def __repr__(self) -> str:

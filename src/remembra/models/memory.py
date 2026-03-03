@@ -162,3 +162,137 @@ class ForgetResponse(BaseModel):
     deleted_memories: int
     deleted_entities: int
     deleted_relationships: int
+
+
+# ---------------------------------------------------------------------------
+# Conversation Ingestion Models (Phase 1)
+# ---------------------------------------------------------------------------
+
+
+class ConversationMessage(BaseModel):
+    """A single message in a conversation."""
+
+    role: str = Field(description="'user' | 'assistant' | 'system'")
+    content: str
+    timestamp: datetime | None = None
+    name: str | None = Field(default=None, description="Speaker name for multi-user chats")
+    metadata: dict[str, Any] | None = None
+
+    @field_validator("content")
+    @classmethod
+    def content_length_limit(cls, v: str) -> str:
+        if len(v) > 50000:
+            raise ValueError("Content exceeds maximum length of 50,000 characters")
+        return v
+
+
+class IngestOptions(BaseModel):
+    """Options for conversation ingestion."""
+
+    extract_from: str = Field(
+        default="both",
+        description="'user' | 'assistant' | 'both' - which messages to extract from",
+    )
+    min_importance: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum importance threshold for facts",
+    )
+    dedupe: bool = Field(default=True, description="Enable deduplication")
+    store: bool = Field(default=True, description="False = dry run mode")
+    infer: bool = Field(
+        default=True,
+        description="True = full extraction, False = store raw messages",
+    )
+
+
+class ConversationIngestRequest(BaseModel):
+    """Request to ingest a conversation."""
+
+    messages: list[ConversationMessage] = Field(..., min_length=1, max_length=200)
+    user_id: str
+    session_id: str | None = Field(default=None, description="Conversation session ID")
+    project_id: str = "default"
+    context: dict[str, Any] | None = Field(
+        default=None,
+        description="Context metadata (channel, timezone, etc.)",
+    )
+    options: IngestOptions = Field(default_factory=IngestOptions)
+
+
+class ExtractedFact(BaseModel):
+    """A fact extracted from conversation."""
+
+    content: str
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    importance: float = Field(default=0.5, ge=0.0, le=1.0)
+    source_message_index: int
+    speaker: str | None = None
+    stored: bool = False
+    memory_id: str | None = None
+    action: str = Field(
+        default="add",
+        description="'add' | 'update' | 'delete' | 'noop' | 'skipped'",
+    )
+    action_reason: str | None = None
+
+
+class ExtractedEntityResult(BaseModel):
+    """An entity extracted from conversation."""
+
+    name: str
+    type: str
+    relationship: str | None = None
+    subtype: str | None = None
+
+
+class DedupeResult(BaseModel):
+    """Result of deduplication for a fact."""
+
+    content: str
+    existing_memory_id: str
+    action: str = Field(description="'merged' | 'updated' | 'skipped'")
+
+
+class IngestStats(BaseModel):
+    """Statistics from conversation ingestion."""
+
+    messages_processed: int = 0
+    facts_extracted: int = 0
+    facts_stored: int = 0
+    facts_updated: int = 0
+    facts_deduped: int = 0
+    facts_skipped: int = 0
+    entities_found: int = 0
+    processing_time_ms: int = 0
+
+
+class ConversationIngestResponse(BaseModel):
+    """Response from conversation ingestion."""
+
+    status: str = Field(default="ok", description="'ok' | 'partial' | 'error'")
+    session_id: str | None = None
+    facts: list[ExtractedFact] = Field(default_factory=list)
+    entities: list[ExtractedEntityResult] = Field(default_factory=list)
+    deduped: list[DedupeResult] = Field(default_factory=list)
+    stats: IngestStats = Field(default_factory=IngestStats)
+
+
+# ---------------------------------------------------------------------------
+# Sleep-Time Consolidation Models (Phase 3)
+# ---------------------------------------------------------------------------
+
+
+class ConsolidationReport(BaseModel):
+    """Report from sleep-time consolidation."""
+
+    started_at: datetime = Field(default_factory=datetime.utcnow)
+    completed_at: datetime | None = None
+    memories_scanned: int = 0
+    duplicates_merged: int = 0
+    entities_resolved: int = 0
+    relationships_discovered: int = 0
+    importance_rescored: int = 0
+    memories_decayed: int = 0
+    errors: list[str] = Field(default_factory=list)

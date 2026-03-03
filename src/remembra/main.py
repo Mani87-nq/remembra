@@ -191,6 +191,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.plugin_manager.register_class(RecallLoggerPlugin)
     log.info("plugin_system_enabled", registered=3)
 
+    # Conversation Ingestion Service (Phase 1 - Critical Feature)
+    from remembra.services.conversation_ingest import ConversationIngestService
+    app.state.conversation_ingest = ConversationIngestService(
+        settings=settings,
+        memory_service=app.state.memory_service,
+    )
+    log.info("conversation_ingest_service_enabled")
+
     log.info("storage_layer_ready")
 
     yield

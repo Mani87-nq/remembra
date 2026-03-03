@@ -9,9 +9,15 @@ from remembra.auth.middleware import CurrentUser, get_client_ip
 from remembra.config import Settings, get_settings
 from remembra.core.limiter import limiter
 from remembra.ingestion.changelog import ChangelogParser, ChangelogRelease
-from remembra.models.memory import StoreRequest
+from remembra.models.memory import (
+    ConversationIngestRequest,
+    ConversationIngestResponse,
+    StoreRequest,
+)
 from remembra.security.audit import AuditLogger
+from remembra.security.sanitizer import ContentSanitizer
 from remembra.services.memory import MemoryService
+from remembra.services.conversation_ingest import ConversationIngestService
 
 router = APIRouter(prefix="/ingest", tags=["ingestion"])
 
@@ -26,8 +32,20 @@ def get_audit_logger(request: Request) -> AuditLogger:
     return request.app.state.audit_logger
 
 
+def get_conversation_ingest(request: Request) -> ConversationIngestService:
+    """Dependency to get the conversation ingest service from app state."""
+    return request.app.state.conversation_ingest
+
+
+def get_sanitizer(request: Request) -> ContentSanitizer:
+    """Dependency to get the content sanitizer from app state."""
+    return request.app.state.sanitizer
+
+
 MemoryServiceDep = Annotated[MemoryService, Depends(get_memory_service)]
 AuditLoggerDep = Annotated[AuditLogger, Depends(get_audit_logger)]
+ConversationIngestDep = Annotated[ConversationIngestService, Depends(get_conversation_ingest)]
+SanitizerDep = Annotated[ContentSanitizer, Depends(get_sanitizer)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
@@ -217,3 +235,130 @@ async def ingest_changelog(
         memory_ids=memory_ids,
         errors=errors,
     )
+
+
+# ---------------------------------------------------------------------------
+# Conversation Ingestion (Phase 1 - Critical Feature)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/conversation",
+    response_model=ConversationIngestResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ingest a conversation and extract memories automatically",
+)
+@limiter.limit("20/minute")
+async def ingest_conversation(
+    request: Request,
+    body: ConversationIngestRequest,
+    conversation_ingest: ConversationIngestDep,
+    audit_logger: AuditLoggerDep,
+    sanitizer: SanitizerDep,
+    current_user: CurrentUser,
+    settings: SettingsDep,
+) -> ConversationIngestResponse:
+    """
+    Parse a conversation and automatically extract memorable facts.
+    
+    This is the primary ingestion endpoint for AI agents. It accepts a list
+    of messages and intelligently extracts facts worth remembering long-term.
+    
+    **Features:**
+    - Automatic fact extraction with importance scoring
+    - Entity extraction (people, organizations, locations, etc.)
+    - Deduplication against existing memories
+    - Speaker attribution
+    - Pronoun resolution using conversation context
+    
+    **Modes:**
+    - `options.infer=true` (default): Full extraction pipeline
+    - `options.infer=false`: Store raw messages without extraction
+    - `options.store=false`: Dry run - returns extraction without storing
+    
+    **Example:**
+    ```json
+    {
+      "messages": [
+        {"role": "user", "content": "My wife Suzan and I are planning a trip to Japan"},
+        {"role": "assistant", "content": "That sounds exciting! When are you planning to go?"},
+        {"role": "user", "content": "We're thinking April next year"}
+      ],
+      "options": {"min_importance": 0.5}
+    }
+    ```
+    
+    **Response includes:**
+    - `facts`: Extracted facts with importance scores and storage status
+    - `entities`: People, organizations, locations found
+    - `deduped`: Facts that matched existing memories
+    - `stats`: Processing statistics
+    
+    Rate limit: 20 requests/minute.
+    """
+    # Override user_id with authenticated user (security: prevent spoofing)
+    body.user_id = current_user.user_id
+    
+    # Sanitize all message content
+    if settings.sanitization_enabled:
+        for msg in body.messages:
+            sanitization = sanitizer.analyze(msg.content, source="conversation_ingest")
+            if sanitization.trust_score < 0.3:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Message content failed security check: {sanitization.warnings}",
+                )
+    
+    try:
+        # Process conversation through the ingest service
+        result = await conversation_ingest.ingest(body)
+        
+        # Audit log
+        await audit_logger.log_memory_store(
+            user_id=current_user.user_id,
+            memory_id=f"conversation:{result.stats.facts_stored}_facts",
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=result.status in ["ok", "partial"],
+            error=None if result.status == "ok" else "Partial processing",
+        )
+        
+        # Dispatch webhook if configured
+        webhook_manager = getattr(request.app.state, "webhook_manager", None)
+        if webhook_manager and result.stats.facts_stored > 0:
+            try:
+                from remembra.webhooks.events import WebhookEvent
+                await webhook_manager.dispatch(WebhookEvent(
+                    event_type="conversation_ingested",
+                    user_id=current_user.user_id,
+                    data={
+                        "session_id": result.session_id,
+                        "facts_stored": result.stats.facts_stored,
+                        "entities_found": result.stats.entities_found,
+                        "project_id": body.project_id,
+                    },
+                ))
+            except Exception:
+                pass  # Don't fail the request on webhook error
+        
+        return result
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        )
+    except Exception as e:
+        # Log error and return partial result if possible
+        await audit_logger.log_memory_store(
+            user_id=current_user.user_id,
+            memory_id="conversation:error",
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=False,
+            error=str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Conversation ingestion failed: {str(e)}",
+        )
