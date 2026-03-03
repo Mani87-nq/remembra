@@ -309,6 +309,30 @@ class Settings(BaseSettings):
         description="Max memories per hour before flagging anomaly",
     )
 
+    # -----------------------------------------------------------------------
+    # Sleep-Time Compute (Phase 3)
+    # -----------------------------------------------------------------------
+    sleep_time_enabled: bool = Field(
+        True,
+        description="Enable background sleep-time consolidation",
+    )
+    sleep_time_trigger: str = Field(
+        "interval",
+        description="Trigger mode: 'interval' | 'event' | 'manual'",
+    )
+    sleep_time_interval_hours: float = Field(
+        6.0,
+        description="Hours between automatic consolidation runs",
+    )
+    sleep_time_event_threshold: int = Field(
+        50,
+        description="Run consolidation after every N ingestion events",
+    )
+    sleep_time_model: str | None = Field(
+        None,
+        description="Model for background consolidation (uses cheaper model if set)",
+    )
+
 
 _settings: Settings | None = None
 

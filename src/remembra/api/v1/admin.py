@@ -293,3 +293,99 @@ async def list_permissions(request: Request) -> dict[str, Any]:
             }.items()
         },
     }
+
+
+# ---------------------------------------------------------------------------
+# Sleep-Time Compute (Phase 3)
+# ---------------------------------------------------------------------------
+
+
+def get_sleep_worker(request: Request):
+    """Get sleep-time worker from app state."""
+    return getattr(request.app.state, "sleep_worker", None)
+
+
+@router.post(
+    "/sleep-time/run",
+    summary="Trigger sleep-time consolidation",
+)
+@limiter.limit("1/minute")
+async def trigger_consolidation(
+    request: Request,
+    current_user: CurrentUser,
+    _perm: RequireAdmin,
+    user_id: str | None = Query(None, description="Consolidate specific user only"),
+) -> dict[str, Any]:
+    """
+    Manually trigger sleep-time consolidation.
+    
+    This runs the background memory improvement process:
+    - Deduplication across sessions
+    - Entity resolution
+    - Importance rescoring
+    - Decay cleanup
+    
+    **Admin only.** Rate limited to 1 per minute.
+    """
+    sleep_worker = get_sleep_worker(request)
+    
+    if sleep_worker is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Sleep-time compute is not enabled. Set REMEMBRA_SLEEP_TIME_ENABLED=true",
+        )
+    
+    try:
+        report = await sleep_worker.run_consolidation(user_id=user_id)
+        
+        return {
+            "status": "completed",
+            "started_at": report.started_at.isoformat(),
+            "completed_at": report.completed_at.isoformat() if report.completed_at else None,
+            "stats": {
+                "memories_scanned": report.memories_scanned,
+                "duplicates_merged": report.duplicates_merged,
+                "entities_resolved": report.entities_resolved,
+                "relationships_discovered": report.relationships_discovered,
+                "importance_rescored": report.importance_rescored,
+                "memories_decayed": report.memories_decayed,
+            },
+            "errors": report.errors,
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Consolidation failed: {str(e)}",
+        )
+
+
+@router.get(
+    "/sleep-time/status",
+    summary="Get sleep-time consolidation status",
+)
+async def consolidation_status(
+    request: Request,
+    current_user: CurrentUser,
+) -> dict[str, Any]:
+    """
+    Get the status of sleep-time consolidation.
+    
+    Returns:
+    - Whether sleep-time compute is enabled
+    - Last run timestamp
+    - Whether a consolidation is currently running
+    """
+    sleep_worker = get_sleep_worker(request)
+    
+    if sleep_worker is None:
+        return {
+            "enabled": False,
+            "message": "Sleep-time compute is not enabled",
+        }
+    
+    return {
+        "enabled": True,
+        "running": sleep_worker.running,
+        "last_run": sleep_worker.last_run.isoformat() if sleep_worker.last_run else None,
+    }

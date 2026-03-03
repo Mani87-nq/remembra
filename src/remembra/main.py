@@ -218,6 +218,43 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     log.info("conversation_ingest_service_enabled")
 
+    # Sleep-Time Compute Worker (Phase 3 - Major Differentiator)
+    if settings.sleep_time_enabled:
+        from remembra.services.sleep_time import SleepTimeWorker
+        app.state.sleep_worker = SleepTimeWorker(
+            settings=settings,
+            memory_service=app.state.memory_service,
+        )
+        log.info(
+            "sleep_time_worker_enabled",
+            trigger=settings.sleep_time_trigger,
+            interval_hours=settings.sleep_time_interval_hours,
+        )
+        
+        # Schedule automatic runs if interval mode
+        if settings.sleep_time_trigger == "interval":
+            async def scheduled_consolidation():
+                """Background task for scheduled consolidation."""
+                import asyncio
+                while True:
+                    await asyncio.sleep(settings.sleep_time_interval_hours * 3600)
+                    try:
+                        report = await app.state.sleep_worker.run_consolidation()
+                        log.info(
+                            "scheduled_consolidation_completed",
+                            memories_scanned=report.memories_scanned,
+                            duplicates_merged=report.duplicates_merged,
+                        )
+                    except Exception as e:
+                        log.error("scheduled_consolidation_failed", error=str(e))
+            
+            # Start background task
+            import asyncio
+            asyncio.create_task(scheduled_consolidation())
+            log.info("sleep_time_scheduler_started")
+    else:
+        app.state.sleep_worker = None
+
     log.info("storage_layer_ready")
 
     yield
