@@ -358,6 +358,7 @@ async def get_api_key_info(
     response_model=UpdateKeyResponse,
     summary="Update an API key",
 )
+@limiter.limit("10/minute")  # Prevent abuse
 async def update_api_key(
     request: Request,
     key_id: str,
@@ -442,6 +443,7 @@ async def update_api_key(
     response_model=RevokeKeyResponse,
     summary="Revoke an API key",
 )
+@limiter.limit("5/minute")  # Prevent abuse
 async def revoke_api_key(
     request: Request,
     key_id: str,

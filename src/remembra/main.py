@@ -79,6 +79,25 @@ class AppState:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
     configure_logging(settings.log_level)
+    
+    # CRITICAL: Force unique JWT secret in production (OWASP compliance)
+    if not settings.debug:
+        default_secrets = [
+            "remembra-jwt-secret-change-in-production",
+            "changeme",
+            "secret",
+            "your-secret-key",
+        ]
+        if settings.jwt_secret in default_secrets:
+            raise RuntimeError(
+                "CRITICAL SECURITY ERROR: You must set REMEMBRA_JWT_SECRET to a unique value in production.\n"
+                "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+            )
+        if len(settings.jwt_secret) < 32:
+            raise RuntimeError(
+                "CRITICAL SECURITY ERROR: REMEMBRA_JWT_SECRET must be at least 32 characters."
+            )
+    
     log.info(
         "remembra_starting",
         version=__version__,

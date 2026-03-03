@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from remembra.auth.users import UserManager
 from remembra.config import get_settings
+from remembra.core.limiter import limiter
 
 log = structlog.get_logger(__name__)
 
@@ -178,6 +179,7 @@ CurrentUser = Annotated[dict, Depends(get_current_user_from_jwt)]
     status_code=status.HTTP_201_CREATED,
     responses={400: {"model": ErrorResponse}},
 )
+@limiter.limit("5/minute")  # Prevent account spam
 async def signup(
     request: Request,
     body: SignupRequest,
@@ -215,6 +217,7 @@ async def signup(
     response_model=LoginResponse,
     responses={401: {"model": ErrorResponse}},
 )
+@limiter.limit("10/minute")  # Prevent brute force
 async def login(
     request: Request,
     body: LoginRequest,
@@ -278,6 +281,7 @@ async def logout(
     "/forgot-password",
     response_model=ForgotPasswordResponse,
 )
+@limiter.limit("3/minute")  # Prevent abuse
 async def forgot_password(
     request: Request,
     body: ForgotPasswordRequest,
@@ -313,6 +317,7 @@ async def forgot_password(
     response_model=ResetPasswordResponse,
     responses={400: {"model": ErrorResponse}},
 )
+@limiter.limit("5/minute")  # Prevent brute force token guessing
 async def reset_password(
     request: Request,
     body: ResetPasswordRequest,

@@ -277,6 +277,38 @@ class Settings(BaseSettings):
         description="Content below this trust score is flagged as suspicious"
     )
 
+    # -----------------------------------------------------------------------
+    # Security Hardening (Phase 2 - OWASP 2026)
+    # -----------------------------------------------------------------------
+    max_memory_content_length: int = Field(
+        50000,
+        description="Maximum content length per memory (50KB default)",
+    )
+    
+    # PII Detection (OWASP ASI06)
+    pii_detection_enabled: bool = Field(
+        True,
+        description="Enable PII pattern detection in content",
+    )
+    pii_mode: str = Field(
+        "detect",
+        description="PII handling mode: 'detect' | 'redact' | 'block'",
+    )
+    pii_exclusions: list[str] = Field(
+        default_factory=list,
+        description="PII pattern types to exclude from detection",
+    )
+    
+    # Anomaly Detection
+    anomaly_detection_enabled: bool = Field(
+        True,
+        description="Enable memory acquisition anomaly detection",
+    )
+    anomaly_rate_threshold: int = Field(
+        100,
+        description="Max memories per hour before flagging anomaly",
+    )
+
 
 _settings: Settings | None = None
 
