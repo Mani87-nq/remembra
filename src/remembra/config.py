@@ -1,6 +1,6 @@
 """Application settings resolved from environment variables."""
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -205,14 +205,17 @@ class Settings(BaseSettings):
     stripe_secret_key: str | None = Field(
         None,
         description="Stripe secret key (sk_live_xxx or sk_test_xxx)",
+        validation_alias=AliasChoices("REMEMBRA_STRIPE_SECRET_KEY", "STRIPE_SECRET_KEY"),
     )
     stripe_publishable_key: str | None = Field(
         None,
         description="Stripe publishable key (pk_live_xxx or pk_test_xxx)",
+        validation_alias=AliasChoices("REMEMBRA_STRIPE_PUBLISHABLE_KEY", "STRIPE_PUBLISHABLE_KEY"),
     )
     stripe_webhook_secret: str | None = Field(
         None,
         description="Stripe webhook signing secret (whsec_xxx)",
+        validation_alias=AliasChoices("REMEMBRA_STRIPE_WEBHOOK_SECRET", "STRIPE_WEBHOOK_SECRET"),
     )
     stripe_success_url: str = Field(
         "https://remembra.dev/dashboard?checkout=success",
