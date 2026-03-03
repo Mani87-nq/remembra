@@ -20,7 +20,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 
-from remembra.auth.middleware import AuthenticatedUser, get_current_user
+from remembra.auth.middleware import AuthenticatedUser, get_current_user, get_user_from_jwt_or_api_key
 from remembra.cloud.metering import UsageMeter
 from remembra.config import get_settings
 
@@ -110,16 +110,20 @@ async def enforce_recall_limit(
 
 async def enforce_key_limit(
     request: Request,
-    current_user: AuthenticatedUser = Depends(get_current_user),
+    current_user: AuthenticatedUser | None = Depends(get_user_from_jwt_or_api_key),
 ) -> None:
     """Dependency that enforces API key creation limits.
 
     Raises 429 if the user has reached their plan's max API keys.
 
-    This is a no-op when cloud features are disabled.
+    This is a no-op when cloud features are disabled or user is not authenticated.
     """
     meter = _get_meter_or_none(request)
     if meter is None:
+        return
+    
+    # Skip limit check if user not authenticated (endpoint will handle auth)
+    if current_user is None:
         return
 
     snapshot = await meter.get_usage_snapshot(current_user.user_id)
