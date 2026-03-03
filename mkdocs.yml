@@ -89,6 +89,8 @@ nav:
   - Integrations:
     - MCP Server: integrations/mcp-server.md
   - Guides:
+    - Conversation Ingestion: guides/conversation-ingestion.md
+    - Sleep-Time Compute: guides/sleep-time-compute.md
     - Entity Resolution: guides/entity-resolution.md
     - Temporal Memory: guides/temporal.md
     - Webhooks: guides/webhooks.md

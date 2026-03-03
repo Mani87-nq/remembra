@@ -2,6 +2,11 @@
 
 **Persistent memory for AI applications. Self-host in 5 minutes.**
 
+<div class="admonition tip" markdown>
+<p class="admonition-title">🚀 v0.7.0 Released!</p>
+<p>Now with <strong>Conversation Ingestion</strong>, <strong>Sleep-Time Compute</strong>, <strong>PII Detection</strong>, <strong>Anomaly Detection</strong>, and <strong>TypeScript SDK</strong>. <a href="#whats-new-in-v070">See what's new →</a></p>
+</div>
+
 ---
 
 ## What is Remembra?
@@ -196,6 +201,64 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 [Get Started :material-arrow-right:](getting-started/quickstart.md){ .md-button .md-button--primary }
 [View on GitHub :material-github:](https://github.com/remembra-ai/remembra){ .md-button }
 
+## What's New in v0.7.0
+
+<div class="grid cards" markdown>
+
+-   :material-chat-processing:{ .lg .middle } __Conversation Ingestion__
+
+    ---
+
+    Automatically extract memories from chat conversations. Pipe in your conversation history and get structured memories out.
+
+    [Learn more →](guides/conversation-ingestion.md)
+
+-   :material-sleep:{ .lg .middle } __Sleep-Time Compute__
+
+    ---
+
+    Background consolidation that runs during idle time. Deduplicates memories, resolves entity aliases, and improves quality automatically.
+
+    [Learn more →](guides/sleep-time-compute.md)
+
+-   :material-shield-check:{ .lg .middle } __PII Detection__
+
+    ---
+
+    OWASP ASI06 compliant. Automatically detect, redact, or block sensitive data (SSN, credit cards, API keys) before storage.
+
+    [Learn more →](guides/security.md#pii-detection)
+
+-   :material-alert-circle:{ .lg .middle } __Anomaly Detection__
+
+    ---
+
+    Monitor for unusual patterns that could indicate memory poisoning attacks, bulk scraping, or system abuse.
+
+    [Learn more →](guides/security.md#anomaly-detection)
+
+-   :material-language-typescript:{ .lg .middle } __TypeScript SDK__
+
+    ---
+
+    First-class JavaScript/TypeScript support. `npm install remembra` and you're ready.
+
+    ```typescript
+    import { Remembra } from 'remembra';
+    const memory = new Remembra({ url, userId });
+    await memory.store('...');
+    ```
+
+-   :material-chart-bar:{ .lg .middle } __Enterprise Features (Free)__
+
+    ---
+
+    Webhooks, RBAC, Import/Export, Audit Logging — all included in the open source version. No paywall.
+
+    [See all features →](guides/enterprise.md)
+
+</div>
+
 ## Architecture
 
 ```
@@ -209,6 +272,9 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 ├──────────────┬──────────────┬───────────────┬───────────────┤
 │  Extraction  │   Entities   │    Retrieval  │   Temporal    │
 │  (LLM-based) │ (Resolution) │(Hybrid Search)│  (TTL/Decay)  │
+├──────────────┼──────────────┼───────────────┼───────────────┤
+│  Ingestion   │  Sleep-Time  │  PII Detect   │   Anomaly     │
+│  (v0.7.0)    │  Compute     │  (OWASP)      │   Detection   │
 ├──────────────┴──────────────┴───────────────┴───────────────┤
 │                      Storage Layer                           │
 │         Qdrant (vectors) + SQLite (metadata/graph)          │
