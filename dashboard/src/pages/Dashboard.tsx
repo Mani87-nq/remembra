@@ -12,13 +12,18 @@ import { UsageAnalytics } from '../components/UsageAnalytics';
 import { MemoryTimeline } from '../components/MemoryTimeline';
 import { ApiKeyManager } from '../components/ApiKeyManager';
 import { Billing } from '../components/Billing';
+import { Settings } from './Settings';
 import { api, type Memory } from '../lib/api';
-import { RefreshCw, Database, TrendingDown, Users, Share2, Bug, BarChart3, History, Key, CreditCard } from 'lucide-react';
+import { RefreshCw, Database, TrendingDown, Users, Share2, Bug, BarChart3, History, Key, CreditCard, Settings as SettingsIcon } from 'lucide-react';
 import clsx from 'clsx';
 
-type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing';
+type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings';
 
-export function Dashboard() {
+interface DashboardProps {
+  onLogout?: () => void;
+}
+
+export function Dashboard({ onLogout }: DashboardProps) {
   const { memories, loading, error, hasMore, refresh, loadMore } = useMemories();
   const { results, loading: searchLoading, error: searchError, search, clear } = useSearch();
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
@@ -174,6 +179,18 @@ export function Dashboard() {
             <CreditCard className="w-4 h-4" />
             Billing
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={clsx(
+              'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
+              activeTab === 'settings'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            )}
+          >
+            <SettingsIcon className="w-4 h-4" />
+            Settings
+          </button>
         </nav>
       </div>
 
@@ -282,8 +299,14 @@ export function Dashboard() {
         <Billing />
       )}
 
+      {activeTab === 'settings' && onLogout && (
+        <Settings onLogout={onLogout} />
+      )}
+
       {/* Floating Add Memory Button */}
-      <StoreMemory onStored={refresh} projectId={api.getProjectId()} />
+      {activeTab === 'memories' && (
+        <StoreMemory onStored={refresh} projectId={api.getProjectId()} />
+      )}
     </div>
   );
 }

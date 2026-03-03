@@ -200,3 +200,18 @@ class APIKeyManager:
             active=key["active"],
             rate_limit_tier=key["rate_limit_tier"],
         )
+    
+    async def update_key_name(self, key_id: str, name: str) -> bool:
+        """
+        Update the name of an API key.
+        
+        Returns True if the key was updated successfully.
+        """
+        success = await self.db.update_api_key_name(key_id, name)
+        
+        if success:
+            log.info("api_key_name_updated", key_id=key_id, new_name=name)
+        else:
+            log.warning("api_key_name_update_failed", key_id=key_id)
+        
+        return success

@@ -68,6 +68,40 @@ CREATE TABLE IF NOT EXISTS audit_log (
 CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_log(user_id, timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action, timestamp);
 
+-- Users table (User Authentication)
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    name TEXT,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMP,
+    email_verified BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Password reset tokens
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    user_id TEXT PRIMARY KEY,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Token blacklist (for logout/invalidation)
+CREATE TABLE IF NOT EXISTS token_blacklist (
+    token_hash TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_token_blacklist_expires ON token_blacklist(expires_at);
+
 -- FTS5 full-text search index for BM25 keyword matching
 CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
     id UNINDEXED,
@@ -925,6 +959,15 @@ class Database:
         row = await cursor.fetchone()
         return dict(row) if row else None
 
+    async def update_api_key_name(self, key_id: str, name: str) -> bool:
+        """Update the name of an API key. Returns True if updated."""
+        cursor = await self.conn.execute(
+            "UPDATE api_keys SET name = ? WHERE id = ?",
+            (name, key_id),
+        )
+        await self.conn.commit()
+        return cursor.rowcount > 0
+
     # -----------------------------------------------------------------------
     # Audit Log operations (Week 7 - Security)
     # -----------------------------------------------------------------------
@@ -985,6 +1028,168 @@ class Database:
         cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
+
+    # -----------------------------------------------------------------------
+    # User operations (User Authentication)
+    # -----------------------------------------------------------------------
+
+    async def create_user(
+        self,
+        user_id: str,
+        email: str,
+        password_hash: str,
+        name: str | None = None,
+        created_at: datetime | None = None,
+    ) -> None:
+        """Create a new user."""
+        now = created_at or datetime.utcnow()
+        await self.conn.execute(
+            """
+            INSERT INTO users (id, email, password_hash, name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (user_id, email, password_hash, name, now.isoformat(), now.isoformat()),
+        )
+        await self.conn.commit()
+
+    async def get_user_by_email(self, email: str) -> dict[str, Any] | None:
+        """Get user by email."""
+        cursor = await self.conn.execute(
+            "SELECT * FROM users WHERE email = ?",
+            (email.lower(),),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    async def get_user_by_id(self, user_id: str) -> dict[str, Any] | None:
+        """Get user by ID."""
+        cursor = await self.conn.execute(
+            "SELECT * FROM users WHERE id = ?",
+            (user_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    async def update_user_last_login(self, user_id: str) -> None:
+        """Update user's last login timestamp."""
+        await self.conn.execute(
+            "UPDATE users SET last_login_at = ? WHERE id = ?",
+            (datetime.utcnow().isoformat(), user_id),
+        )
+        await self.conn.commit()
+
+    async def update_user_password(self, user_id: str, password_hash: str) -> None:
+        """Update user's password hash."""
+        await self.conn.execute(
+            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+            (password_hash, datetime.utcnow().isoformat(), user_id),
+        )
+        await self.conn.commit()
+
+    async def update_user_email_verified(self, user_id: str, verified: bool = True) -> None:
+        """Update user's email verification status."""
+        await self.conn.execute(
+            "UPDATE users SET email_verified = ?, updated_at = ? WHERE id = ?",
+            (verified, datetime.utcnow().isoformat(), user_id),
+        )
+        await self.conn.commit()
+
+    async def update_user_profile(self, user_id: str, name: str | None = None) -> bool:
+        """Update user's profile information (name)."""
+        cursor = await self.conn.execute(
+            "UPDATE users SET name = ?, updated_at = ? WHERE id = ?",
+            (name, datetime.utcnow().isoformat(), user_id),
+        )
+        await self.conn.commit()
+        return cursor.rowcount > 0
+
+    async def deactivate_user(self, user_id: str) -> bool:
+        """Deactivate a user account."""
+        cursor = await self.conn.execute(
+            "UPDATE users SET is_active = FALSE, updated_at = ? WHERE id = ?",
+            (datetime.utcnow().isoformat(), user_id),
+        )
+        await self.conn.commit()
+        return cursor.rowcount > 0
+
+    # -----------------------------------------------------------------------
+    # Password reset token operations
+    # -----------------------------------------------------------------------
+
+    async def save_password_reset_token(
+        self,
+        user_id: str,
+        token_hash: str,
+        expires_at: datetime,
+    ) -> None:
+        """Save a password reset token (replaces existing)."""
+        await self.conn.execute(
+            """
+            INSERT INTO password_reset_tokens (user_id, token_hash, expires_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                token_hash = excluded.token_hash,
+                expires_at = excluded.expires_at,
+                created_at = CURRENT_TIMESTAMP
+            """,
+            (user_id, token_hash, expires_at.isoformat()),
+        )
+        await self.conn.commit()
+
+    async def get_password_reset_token(self, user_id: str) -> dict[str, Any] | None:
+        """Get password reset token for a user."""
+        cursor = await self.conn.execute(
+            "SELECT * FROM password_reset_tokens WHERE user_id = ?",
+            (user_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    async def delete_password_reset_token(self, user_id: str) -> None:
+        """Delete password reset token for a user."""
+        await self.conn.execute(
+            "DELETE FROM password_reset_tokens WHERE user_id = ?",
+            (user_id,),
+        )
+        await self.conn.commit()
+
+    # -----------------------------------------------------------------------
+    # Token blacklist operations (for logout)
+    # -----------------------------------------------------------------------
+
+    async def add_token_to_blacklist(
+        self,
+        token_hash: str,
+        user_id: str,
+        expires_at: datetime,
+    ) -> None:
+        """Add a token to the blacklist."""
+        await self.conn.execute(
+            """
+            INSERT OR REPLACE INTO token_blacklist (token_hash, user_id, expires_at)
+            VALUES (?, ?, ?)
+            """,
+            (token_hash, user_id, expires_at.isoformat()),
+        )
+        await self.conn.commit()
+
+    async def is_token_blacklisted(self, token_hash: str) -> bool:
+        """Check if a token is blacklisted."""
+        cursor = await self.conn.execute(
+            "SELECT 1 FROM token_blacklist WHERE token_hash = ?",
+            (token_hash,),
+        )
+        row = await cursor.fetchone()
+        return row is not None
+
+    async def cleanup_expired_blacklist_tokens(self) -> int:
+        """Remove expired tokens from the blacklist."""
+        cursor = await self.conn.execute(
+            "DELETE FROM token_blacklist WHERE expires_at < ?",
+            (datetime.utcnow().isoformat(),),
+        )
+        await self.conn.commit()
+        return cursor.rowcount
 
 
 # ---------------------------------------------------------------------------

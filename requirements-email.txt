@@ -1,0 +1,10 @@
+# Email delivery dependencies for Remembra Cloud
+# Install with: pip install -r requirements-email.txt
+
+# Resend - Modern transactional email (recommended)
+# Get API key from: https://resend.com/api-keys
+resend>=0.7.0
+
+# SMTP support (alternative to Resend)
+# For Gmail, Google Workspace, or other SMTP servers
+aiosmtplib>=3.0.0

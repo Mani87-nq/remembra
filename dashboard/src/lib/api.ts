@@ -387,6 +387,41 @@ class ApiClient {
       method: 'DELETE',
     });
   }
+
+  // User Profile / Settings methods
+  async updateProfile(name: string | null): Promise<UserResponse> {
+    return this.fetchApi<UserResponse>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
+    });
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await this.fetchApi<{ message: string }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    });
+  }
+
+  async deleteAccount(password: string): Promise<void> {
+    await this.fetchApi<{ message: string }>('/auth/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    });
+  }
+}
+
+// User Response type (for settings)
+export interface UserResponse {
+  id: string;
+  email: string;
+  name: string | null;
+  email_verified: boolean;
+  is_active: boolean;
+  created_at: string;
 }
 
 // Entity types

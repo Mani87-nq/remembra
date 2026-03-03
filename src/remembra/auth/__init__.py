@@ -6,10 +6,13 @@ from remembra.auth.middleware import (
     get_current_user,
     get_optional_user,
 )
+from remembra.auth.users import UserManager, User
 
 __all__ = [
     "APIKeyManager",
     "AuthenticatedUser",
     "get_current_user",
     "get_optional_user",
+    "UserManager",
+    "User",
 ]

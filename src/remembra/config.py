@@ -200,6 +200,10 @@ class Settings(BaseSettings):
         None,
         description="Stripe secret key (sk_live_xxx or sk_test_xxx)",
     )
+    stripe_publishable_key: str | None = Field(
+        None,
+        description="Stripe publishable key (pk_live_xxx or pk_test_xxx)",
+    )
     stripe_webhook_secret: str | None = Field(
         None,
         description="Stripe webhook signing secret (whsec_xxx)",
@@ -243,6 +247,14 @@ class Settings(BaseSettings):
     auth_master_key: str | None = Field(
         None,
         description="Master key for admin operations (key management)"
+    )
+    jwt_secret: str = Field(
+        "remembra-jwt-secret-change-in-production",
+        description="Secret key for JWT token signing (MUST change in production)"
+    )
+    jwt_expiration_hours: int = Field(
+        168,  # 7 days
+        description="JWT token expiration in hours"
     )
     
     # Rate Limiting

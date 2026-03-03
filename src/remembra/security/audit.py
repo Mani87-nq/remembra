@@ -23,6 +23,7 @@ class AuditAction(str, Enum):
     
     # API key operations
     KEY_CREATED = "key_created"
+    KEY_UPDATED = "key_updated"
     KEY_REVOKED = "key_revoked"
     KEY_LISTED = "key_listed"
     
@@ -204,6 +205,23 @@ class AuditLogger:
             success=True,
         )
     
+    async def log_key_updated(
+        self,
+        user_id: str,
+        key_id: str,
+        ip_address: str | None = None,
+        details: dict | None = None,
+    ) -> AuditEvent:
+        """Log API key update."""
+        return await self.log(
+            user_id=user_id,
+            action=AuditAction.KEY_UPDATED,
+            resource_id=key_id,
+            ip_address=ip_address,
+            success=True,
+            error_message=str(details) if details else None,
+        )
+    
     async def log_key_revoked(
         self,
         user_id: str,
@@ -218,6 +236,45 @@ class AuditLogger:
             resource_id=key_id,
             ip_address=ip_address,
             success=success,
+        )
+    
+    async def log_event(
+        self,
+        user_id: str,
+        action: str,
+        resource_id: str | None = None,
+        ip_address: str | None = None,
+        success: bool = True,
+        details: dict | None = None,
+    ) -> AuditEvent:
+        """
+        Generic event logging for custom actions.
+        
+        Args:
+            user_id: The user performing the action
+            action: Action name string
+            resource_id: ID of affected resource
+            ip_address: Client IP address
+            success: Whether the action succeeded
+            details: Additional context (stored in error_message field)
+        """
+        # Try to match to known action, fall back to KEY_UPDATED for key ops
+        try:
+            audit_action = AuditAction(action)
+        except ValueError:
+            # Use KEY_UPDATED as fallback for key-related ops
+            if "key" in action.lower():
+                audit_action = AuditAction.KEY_UPDATED
+            else:
+                audit_action = AuditAction.MEMORY_STORE  # Generic fallback
+        
+        return await self.log(
+            user_id=user_id,
+            action=audit_action,
+            resource_id=resource_id,
+            ip_address=ip_address,
+            success=success,
+            error_message=str(details) if details else None,
         )
     
     async def log_auth_failed(

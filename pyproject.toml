@@ -65,6 +65,8 @@ server = [
     "bcrypt>=4.0.0",
     "slowapi>=0.1.9",
     "python-multipart>=0.0.9",
+    "PyJWT>=2.8.0",
+    "email-validator>=2.0.0",
 ]
 
 # MCP server dependencies

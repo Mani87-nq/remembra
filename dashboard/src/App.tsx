@@ -174,7 +174,7 @@ function App() {
           userName={currentUser?.name || currentUser?.email}
         />
         <main>
-          <Dashboard />
+          <Dashboard onLogout={handleLogout} />
         </main>
       </div>
     </div>

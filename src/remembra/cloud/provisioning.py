@@ -5,7 +5,8 @@ Handles the signup → API key → ready flow:
   1. Register tenant in cloud_tenants table
   2. Create Stripe customer (if billing enabled)
   3. Generate initial API key
-  4. Return credentials to the user
+  4. Send welcome email
+  5. Return credentials to the user
 
 Also handles post-checkout activation (Stripe webhook → upgrade plan).
 """
@@ -22,6 +23,14 @@ from remembra.cloud.metering import UsageMeter
 from remembra.cloud.plans import PlanTier
 
 logger = logging.getLogger(__name__)
+
+# Import email service if available
+try:
+    from remembra.cloud.email import EmailService
+    EMAIL_AVAILABLE = True
+except ImportError:
+    EMAIL_AVAILABLE = False
+    logger.warning("Email service not available - emails will not be sent")
 
 
 @dataclass
@@ -51,15 +60,18 @@ class TenantProvisioner:
     Args:
         meter: UsageMeter for tenant registration and plan tracking.
         key_manager: APIKeyManager for generating API keys.
+        email_service: Optional EmailService for sending transactional emails.
     """
 
     def __init__(
         self,
         meter: UsageMeter,
         key_manager: APIKeyManager,
+        email_service: Any | None = None,
     ) -> None:
         self._meter = meter
         self._key_manager = key_manager
+        self._email_service = email_service
 
     async def provision(
         self,
@@ -118,6 +130,20 @@ class TenantProvisioner:
             user_id,
             plan.value,
         )
+
+        # Send welcome email if email service is available and email provided
+        if self._email_service and email:
+            try:
+                await self._email_service.send_welcome_email(
+                    to=email,
+                    api_key=api_key_result.key,
+                    user_id=user_id,
+                    plan=plan.value,
+                )
+                logger.info("Welcome email sent to %s", email)
+            except Exception as e:
+                # Don't fail provisioning if email fails
+                logger.error("Failed to send welcome email to %s: %s", email, str(e))
 
         return ProvisionResult(
             user_id=user_id,
