@@ -1,6 +1,6 @@
 # Sleep-Time Compute
 
-**NEW in v0.7.0** — Background memory consolidation that runs during idle time.
+**NEW in v0.7.1** — Background memory consolidation that runs during idle time.
 
 Inspired by Letta/MemGPT's approach — your AI "thinks" between conversations to improve memory quality.
 

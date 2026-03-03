@@ -3,7 +3,7 @@
 **Persistent memory for AI applications. Self-host in 5 minutes.**
 
 <div class="admonition tip" markdown>
-<p class="admonition-title">🚀 v0.7.0 Released!</p>
+<p class="admonition-title">🚀 v0.7.1 Released!</p>
 <p>Now with <strong>Conversation Ingestion</strong>, <strong>Sleep-Time Compute</strong>, <strong>PII Detection</strong>, <strong>Anomaly Detection</strong>, and <strong>TypeScript SDK</strong>. <a href="#whats-new-in-v070">See what's new →</a></p>
 </div>
 
@@ -201,7 +201,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 [Get Started :material-arrow-right:](getting-started/quickstart.md){ .md-button .md-button--primary }
 [View on GitHub :material-github:](https://github.com/remembra-ai/remembra){ .md-button }
 
-## What's New in v0.7.0
+## What's New in v0.7.1
 
 <div class="grid cards" markdown>
 
@@ -274,7 +274,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 │  (LLM-based) │ (Resolution) │(Hybrid Search)│  (TTL/Decay)  │
 ├──────────────┼──────────────┼───────────────┼───────────────┤
 │  Ingestion   │  Sleep-Time  │  PII Detect   │   Anomaly     │
-│  (v0.7.0)    │  Compute     │  (OWASP)      │   Detection   │
+│  (v0.7.1)    │  Compute     │  (OWASP)      │   Detection   │
 ├──────────────┴──────────────┴───────────────┴───────────────┤
 │                      Storage Layer                           │
 │         Qdrant (vectors) + SQLite (metadata/graph)          │

@@ -1,6 +1,6 @@
 # Security Features
 
-**NEW in v0.7.0** — OWASP 2026 ASI compliance with PII detection and anomaly monitoring.
+**NEW in v0.7.1** — OWASP 2026 ASI compliance with PII detection and anomaly monitoring.
 
 Remembra includes production-grade security features to protect your AI memory system from attacks and data leaks.
 
