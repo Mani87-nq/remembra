@@ -81,7 +81,7 @@ class Memory(BaseModel):
 
 
 class StoreRequest(BaseModel):
-    content: str
+    content: str = Field(..., max_length=50000, description="Content to memorize (max 50,000 characters)")
     project_id: str = "default"
     user_id: str | None = Field(
         default=None,
@@ -93,6 +93,11 @@ class StoreRequest(BaseModel):
     def content_not_empty(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("content must not be empty")
+        if len(v) > 50000:
+            raise ValueError("Content exceeds maximum length of 50,000 characters")
+        # Remove null bytes and other control characters (except newlines/tabs)
+        import re
+        v = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', v)
         return v.strip()
     metadata: dict[str, Any] = Field(default_factory=dict)
     ttl: str | None = Field(
@@ -109,7 +114,7 @@ class StoreResponse(BaseModel):
 
 
 class RecallRequest(BaseModel):
-    query: str
+    query: str = Field(..., max_length=10000, description="Search query (max 10,000 characters)")
     project_id: str = "default"
     user_id: str | None = Field(
         default=None,
