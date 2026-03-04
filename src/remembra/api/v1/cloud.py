@@ -454,9 +454,25 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
             from remembra.cloud.provisioning import TenantProvisioner
             
             key_manager = request.app.state.api_key_manager
-            provisioner = TenantProvisioner(meter=meter, key_manager=key_manager)
             
-            # Provision new account with their paid plan
+            # Initialize email service for welcome email
+            email_service = None
+            try:
+                from remembra.cloud.email import EmailService, EmailProvider
+                email_service = EmailService.create(provider=EmailProvider.RESEND)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "Email service not available, skipping welcome email: %s", str(e)
+                )
+            
+            provisioner = TenantProvisioner(
+                meter=meter, 
+                key_manager=key_manager,
+                email_service=email_service,
+            )
+            
+            # Provision new account with their paid plan (sends welcome email)
             provision_result = await provisioner.provision(
                 email=result.customer_email,
                 name=result.customer_name,
@@ -465,15 +481,12 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
             )
             user_id = provision_result.user_id
             
-            # Send welcome email with API key
-            # TODO: Integrate with email service to send credentials
             import logging
             logging.getLogger(__name__).info(
-                "New paid customer provisioned: email=%s user_id=%s plan=%s api_key=%s",
+                "New paid customer provisioned: email=%s user_id=%s plan=%s",
                 result.customer_email,
                 user_id,
                 result.plan.value if result.plan else "pro",
-                provision_result.api_key[:8] + "...",  # Log partial key for debugging
             )
         
         if user_id:
