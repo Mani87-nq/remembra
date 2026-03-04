@@ -3,6 +3,8 @@
 Remembra Demo Script (FAST VERSION for recording)
 No typing delays - just clean output for screen recording.
 
+import os
+
 Usage:
     cd /Users/dolphy/Projects/remembra
     uv run python demo/demo_fast.py
@@ -31,7 +33,7 @@ def main():
     
     memory = Memory(
         base_url="http://178.156.226.84:8787",
-        api_key="rem_7YOIHXRfmylw6VnzQZLoPnohhnYMlxSlDmyyMz3aQQk",
+        api_key=os.getenv("REMEMBRA_API_KEY", "YOUR_API_KEY_HERE"),
         user_id="demo_video",
         project="demo"
     )
