@@ -87,6 +87,7 @@ crewai = [
 # Cloud / SaaS dependencies (billing, metering)
 cloud = [
     "stripe>=8.0.0",
+    "resend>=0.7.0",
 ]
 
 # Advanced retrieval (optional reranking)

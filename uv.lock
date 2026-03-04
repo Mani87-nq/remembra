@@ -3751,6 +3751,7 @@ all = [
     { name = "python-multipart" },
     { name = "python-ulid" },
     { name = "qdrant-client" },
+    { name = "resend" },
     { name = "sentence-transformers" },
     { name = "slowapi" },
     { name = "stripe" },
@@ -3759,6 +3760,7 @@ all = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 cloud = [
+    { name = "resend" },
     { name = "stripe" },
 ]
 crewai = [
@@ -3840,6 +3842,7 @@ requires-dist = [
     { name = "python-ulid", marker = "extra == 'server'", specifier = ">=3.0.0" },
     { name = "qdrant-client", marker = "extra == 'server'", specifier = ">=1.12.0,<2.0.0" },
     { name = "remembra", extras = ["server", "rerank", "mcp", "langchain", "crewai", "cloud"], marker = "extra == 'all'" },
+    { name = "resend", marker = "extra == 'cloud'", specifier = ">=0.7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
     { name = "sentence-transformers", marker = "extra == 'rerank'", specifier = ">=2.5.0" },
     { name = "slowapi", specifier = ">=0.1.9" },
@@ -3896,6 +3899,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f3/61/d7545dafb7ac2230c70d38d31cbfe4cc64f7144dc41f6e4e4b78ecd9f5bb/requests-toolbelt-1.0.0.tar.gz", hash = "sha256:7681a0a3d047012b5bdc0ee37d7f8f07ebe76ab08caeccfc3921ce23c88d5bc6", size = 206888, upload-time = "2023-05-01T04:11:33.229Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl", hash = "sha256:cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06", size = 54481, upload-time = "2023-05-01T04:11:28.427Z" },
+]
+
+[[package]]
+name = "resend"
+version = "2.23.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/96/a3/20003e7d14604fef778bd30c69604df3560a657a95a5c29a9688610759b6/resend-2.23.0.tar.gz", hash = "sha256:df613827dcc40eb1c9de2e5ff600cd4081b89b206537dec8067af1a5016d23c7", size = 31416, upload-time = "2026-02-23T19:01:57.603Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/35/64df775b8cd95e89798fd7b1b7fcafa975b6b09f559c10c0650e65b33580/resend-2.23.0-py2.py3-none-any.whl", hash = "sha256:eca6d28a1ffd36c1fc489fa83cb6b511f384792c9f07465f7c92d96c8b4d5636", size = 52599, upload-time = "2026-02-23T19:01:55.962Z" },
 ]
 
 [[package]]
