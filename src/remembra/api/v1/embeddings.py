@@ -62,6 +62,7 @@ class SwitchProviderRequest(BaseModel):
     model: str | None = Field(None, description="Model name (uses provider default if omitted)")
     api_key: str | None = Field(None, description="API key (uses env var if omitted)")
     auto_reindex: bool = Field(True, description="Automatically start re-indexing all memories")
+    force: bool = Field(False, description="Force switch even if dimensions differ (DANGEROUS - may brick account)")
 
 
 class SwitchProviderResponse(BaseModel):
@@ -171,13 +172,20 @@ async def switch_provider(
 ) -> SwitchProviderResponse:
     """Hot-swap the embedding provider/model.
 
+    ⚠️ WARNING: Switching to a model with different dimensions will make
+    existing memories incompatible until reindexing completes. If reindex
+    fails, the account may be unable to store new memories.
+
     When ``auto_reindex`` is true (default), a background job is started
     to re-embed all memories with the new model.  Without re-indexing,
     recall quality will degrade because old vectors are incompatible
     with the new model.
+    
+    Set ``force=true`` to switch even if dimensions differ (dangerous).
     """
     old_provider = embedding_service.provider
     old_model = embedding_service.model
+    old_dims = embedding_service.dimensions
 
     # Verify the new provider is valid
     valid = {"openai", "azure_openai", "ollama", "cohere", "voyage", "jina"}
@@ -186,6 +194,19 @@ async def switch_provider(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unknown provider: {body.provider}. Valid: {', '.join(sorted(valid))}",
         )
+
+    # Check dimensions compatibility before switching
+    new_model_key = f"{body.provider}:{body.model}" if body.model else body.provider
+    new_dims = MODEL_DIMENSIONS.get(body.model) or MODEL_DIMENSIONS.get(new_model_key)
+    
+    if new_dims and old_dims and new_dims != old_dims:
+        if not getattr(body, 'force', False):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Dimension mismatch: current model uses {old_dims}D, new model uses {new_dims}D. "
+                       f"Switching will require reindexing all memories. If reindex fails, your account "
+                       f"will be unable to store new memories until fixed. Add 'force: true' to proceed.",
+            )
 
     # Switch the provider
     embedding_service.switch_provider(
@@ -196,13 +217,24 @@ async def switch_provider(
 
     # Verify the new provider works by doing a test embedding
     try:
-        await embedding_service.embed("test")
+        test_embedding = await embedding_service.embed("test")
+        actual_dims = len(test_embedding)
     except Exception as e:
         # Roll back
         embedding_service.switch_provider(provider=old_provider, model=old_model)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to connect to {body.provider}: {e}",
+        )
+
+    # Double-check actual dimensions match expectations
+    if old_dims and actual_dims != old_dims and not getattr(body, 'force', False):
+        # Roll back - actual dimensions differ
+        embedding_service.switch_provider(provider=old_provider, model=old_model)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Actual embedding dimensions ({actual_dims}D) differ from current ({old_dims}D). "
+                   f"This would break existing memories. Add 'force: true' to proceed anyway.",
         )
 
     reindex_job_id = None
@@ -216,7 +248,19 @@ async def switch_provider(
             )
             reindex_job_id = job.id
         except RuntimeError as e:
-            # Job already running
+            # Job already running - roll back to prevent broken state
+            embedding_service.switch_provider(provider=old_provider, model=old_model)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, 
+                detail=f"Reindex job already running. Rolled back provider switch. {str(e)}",
+            )
+        except Exception as e:
+            # Reindex failed to start - roll back
+            embedding_service.switch_provider(provider=old_provider, model=old_model)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to start reindex job. Rolled back provider switch. {str(e)}",
+            )
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     return SwitchProviderResponse(
