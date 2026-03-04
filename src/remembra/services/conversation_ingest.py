@@ -448,11 +448,11 @@ class ConversationIngestService:
         
         # Step 2: Search for similar existing memories
         similar_memories = await self.qdrant.search(
-            embedding=embedding,
+            query_vector=embedding,
             user_id=user_id,
             project_id=project_id,
             limit=5,
-            threshold=0.5,  # Lower threshold for dedup checking
+            score_threshold=0.5,  # Lower threshold for dedup checking
         )
         
         # Step 3: If no similar memories, just ADD
