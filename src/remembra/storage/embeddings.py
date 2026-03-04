@@ -77,9 +77,15 @@ class BaseEmbedder(ABC):
 class OpenAIEmbedder(BaseEmbedder):
     """OpenAI embedding provider."""
 
-    def __init__(self, api_key: str, model: str = "text-embedding-3-small"):
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "text-embedding-3-small",
+        dimensions: int | None = None,
+    ):
         self.api_key = api_key
         self.model = model
+        self.dimensions = dimensions
         self.base_url = "https://api.openai.com/v1"
 
     async def embed(self, text: str) -> list[float]:
@@ -87,6 +93,14 @@ class OpenAIEmbedder(BaseEmbedder):
         return results[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        payload = {
+            "model": self.model,
+            "input": texts,
+        }
+        # text-embedding-3 models support custom dimensions
+        if self.dimensions and self.model.startswith("text-embedding-3"):
+            payload["dimensions"] = self.dimensions
+
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
                 f"{self.base_url}/embeddings",
@@ -94,10 +108,7 @@ class OpenAIEmbedder(BaseEmbedder):
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "model": self.model,
-                    "input": texts,
-                },
+                json=payload,
             )
             response.raise_for_status()
             data = response.json()
@@ -358,6 +369,7 @@ class EmbeddingService:
             self._embedder = OpenAIEmbedder(
                 api_key=self.settings.openai_api_key,
                 model=model,
+                dimensions=self.settings.embedding_dimensions,
             )
         elif provider == "azure_openai":
             if not self.settings.azure_openai_api_key:
