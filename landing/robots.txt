@@ -1,0 +1,28 @@
+# Remembra - AI Memory for Applications
+# https://remembra.dev
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://remembra.dev/sitemap.xml
+
+# Crawl-delay for polite bots
+Crawl-delay: 1
+
+# Block common bot paths
+Disallow: /api/
+Disallow: /*.json$
+
+# Allow all major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
