@@ -1,11 +1,52 @@
 # Changelog
 
-See [CHANGELOG.md](https://github.com/remembra/remembra/blob/main/CHANGELOG.md) for the full version history.
+See [CHANGELOG.md](https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md) for the full version history.
 
-## Latest: v0.6.3 (March 2026)
+## Latest: v0.7.1 (March 2026)
+
+### Fixed
+- **Security: CORS Configuration** — Removed `allow_origins=["*"]`, now configurable via `REMEMBRA_CORS_ORIGINS`
+- **API: PATCH /memories/{id}** — Full implementation (was returning 501)
+- **API: Batch Operations** — `/store/batch` and `/recall/batch` now functional
+- **Streaming: SSE Endpoint** — `/ingest/stream` for conversation ingestion
+- **Observability: OpenTelemetry** — Tracing module fully implemented
+- **Production: CORS Origins** — Added `app.remembra.dev` and `remembra.dev` to allowed origins
+
+### Changed
+- Stub endpoints now return 503 Service Unavailable with helpful messages (was 501)
+- Improved error messages throughout API
+
+## v0.7.0 (March 2026)
 
 ### Added
-- **Docker Support** (Week 11)
+- **Enterprise Features**
+  - Webhook System with HMAC-SHA256 signing and automatic retry
+  - RBAC (Role-Based Access Control) with 3 roles and 12 permissions
+  - Memory Conflict Detection with configurable resolution strategies
+  - Audit Logging with export to JSON/CSV
+
+- **Import/Export System**
+  - Import from ChatGPT, Claude, plain text, JSON, JSONL, CSV
+  - Export to JSON, JSONL, CSV formats
+  - Bulk import API with progress tracking
+
+- **Cloud & Revenue**
+  - Stripe Billing Integration (subscriptions, metering, portal)
+  - Plan Limits with automatic enforcement
+  - Spaces (Multi-tenancy) for organizations
+
+- **Plugin System**
+  - Extensible plugin architecture
+  - Built-in: `auto_tagger`, `recall_logger`, `slack_notifier`
+
+- **API Expansion**
+  - 52 total API routes across 11 route groups
+  - New endpoints: `/admin/*`, `/webhooks/*`, `/transfer/*`, `/conflicts/*`
+
+## v0.6.3
+
+### Added
+- **Docker Support**
   - Production-ready `Dockerfile` with multi-stage build
   - `docker-compose.yml` for complete stack
   - Static file serving for dashboard UI
@@ -14,7 +55,7 @@ See [CHANGELOG.md](https://github.com/remembra/remembra/blob/main/CHANGELOG.md) 
 ## v0.6.2
 
 ### Added
-- **Entity API Endpoints** (Week 10)
+- **Entity API Endpoints**
   - List entities, get relationships, get entity memories
 - **Dashboard Improvements**
   - Entity graph visualization
@@ -28,59 +69,14 @@ See [CHANGELOG.md](https://github.com/remembra/remembra/blob/main/CHANGELOG.md) 
 - **Decay Module**
   - Ebbinghaus forgetting curve implementation
 - **TTL Module**
-  - Parse TTL strings, presets
 
 ## v0.6.0
 
 ### Added
-- **Temporal Features (Week 8)**
-  - TTL (Time-to-Live) with `memory.store(..., ttl="30d")`
-  - Memory decay algorithm
-  - Historical queries with `as_of`
-- **Changelog Ingestion**
-  - Auto-import project changelogs as memories
-
-### Fixed
-- FK constraint bug in consolidation
-
-## v0.5.0
-
-### Added
-- **API Key Authentication**
-- **Rate Limiting**
-- **Memory Protection Layer** (MINJA defense)
-- **Audit Logging**
-
-## v0.4.0
-
-### Added
-- **Hybrid Search** (semantic + BM25)
-- **CrossEncoder Reranking**
-- **Graph-Aware Retrieval**
-- **Context Window Optimization**
-- **Advanced Relevance Ranking**
-
-## v0.3.0
-
-### Added
-- **Entity Extraction**
-- **Entity Matching/Resolution**
-- **Relationship Storage**
-- **Memory-Entity Links**
-
-## v0.2.0
-
-### Added
-- **LLM-powered fact extraction**
-- **Memory consolidation** (ADD/UPDATE/DELETE/NOOP)
-- **Smart merging**
-
-## v0.1.0
-
-### Added
-- Initial release
-- Python SDK with `Memory` client
-- REST API with FastAPI
-- `store()`, `recall()`, `forget()`
-- Qdrant + SQLite storage
-- OpenAI/Ollama/Cohere embeddings
+- Initial public release
+- Core memory storage and recall
+- Entity extraction and resolution
+- Hybrid search (vector + keyword)
+- Python SDK
+- REST API
+- Dashboard UI

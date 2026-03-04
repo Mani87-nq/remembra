@@ -197,7 +197,7 @@ After setup, verify everything works:
 curl http://localhost:8787/health
 
 # Expected response:
-# {"status":"ok","version":"0.6.0","dependencies":{"qdrant":{"status":"ok",...}}}
+# {"status":"ok","version":"0.7.1","dependencies":{"qdrant":{"status":"ok",...}}}
 ```
 
 ---

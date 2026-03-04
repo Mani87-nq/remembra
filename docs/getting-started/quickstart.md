@@ -60,7 +60,7 @@ Get Remembra running in 5 minutes.
 
 ```bash
 curl http://localhost:8787/health
-# {"status":"healthy","version":"0.6.3"}
+# {"status":"healthy","version":"0.7.1"}
 ```
 
 Or open the dashboard: [http://localhost:8787](http://localhost:8787)
