@@ -20,20 +20,29 @@ interface PlanFeature {
   name: string;
   free: string | boolean;
   pro: string | boolean;
+  team: string | boolean;
   enterprise: string | boolean;
 }
 
-const PLAN_FEATURES: PlanFeature[] = [
-  { name: 'Memories', free: '10,000', pro: '100,000', enterprise: 'Unlimited' },
-  { name: 'API Calls/month', free: '50,000', pro: '500,000', enterprise: '10M+' },
-  { name: 'API Keys', free: '3', pro: '10', enterprise: '100' },
-  { name: 'Projects', free: '3', pro: '20', enterprise: '100' },
-  { name: 'Team Members', free: '1', pro: '5', enterprise: '1,000' },
-  { name: 'Webhooks', free: false, pro: true, enterprise: true },
-  { name: 'Observability', free: false, pro: true, enterprise: true },
-  { name: 'SSO/SAML', free: false, pro: false, enterprise: true },
-  { name: 'Priority Support', free: false, pro: true, enterprise: true },
-  { name: 'SLA', free: false, pro: false, enterprise: true },
+interface PlanFeatureRow {
+  name: string;
+  free: string | boolean;
+  pro: string | boolean;
+  team: string | boolean;
+  enterprise: string | boolean;
+}
+
+const PLAN_FEATURES: PlanFeatureRow[] = [
+  { name: 'Memories', free: '50,000', pro: '500,000', team: '2,000,000', enterprise: 'Unlimited' },
+  { name: 'API Calls/month', free: '100,000', pro: '1,000,000', team: '5,000,000', enterprise: '50M+' },
+  { name: 'API Keys', free: '3', pro: '10', team: '50', enterprise: '100' },
+  { name: 'Projects', free: '1', pro: '5', team: '100', enterprise: '1,000' },
+  { name: 'Team Members', free: '1', pro: '5', team: '25', enterprise: '1,000' },
+  { name: 'Webhooks', free: false, pro: true, team: true, enterprise: true },
+  { name: 'Observability', free: false, pro: true, team: true, enterprise: true },
+  { name: 'SSO/SAML', free: false, pro: false, team: false, enterprise: true },
+  { name: 'Priority Support', free: false, pro: false, team: true, enterprise: true },
+  { name: 'SLA', free: false, pro: false, team: false, enterprise: true },
 ];
 
 function UsageBar({ 
@@ -249,7 +258,9 @@ export function Billing() {
 
   const currentPlan = planInfo?.plan || 'free';
   const isPro = currentPlan === 'pro';
+  const isTeam = currentPlan === 'team';
   const isEnterprise = currentPlan === 'enterprise';
+  const hasPaidPlan = isPro || isTeam || isEnterprise;
 
   return (
     <div className="space-y-8">
@@ -263,13 +274,13 @@ export function Billing() {
       {/* Current Plan Banner */}
       <div className={clsx(
         'p-6 rounded-xl border-2',
-        isPro || isEnterprise
+        hasPaidPlan
           ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20'
           : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {isPro || isEnterprise ? (
+            {hasPaidPlan ? (
               <div className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500">
                 <Crown className="w-6 h-6 text-white" />
               </div>
@@ -285,14 +296,16 @@ export function Billing() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {isPro 
                   ? 'Thank you for being a Pro subscriber!' 
-                  : isEnterprise 
-                    ? 'Enterprise features enabled'
-                    : 'Upgrade to unlock more features'}
+                  : isTeam
+                    ? 'Thank you for being a Team subscriber!'
+                    : isEnterprise 
+                      ? 'Enterprise features enabled'
+                      : 'Upgrade to unlock more features'}
               </p>
             </div>
           </div>
           
-          {(isPro || isEnterprise) && (
+          {hasPaidPlan && (
             <button
               onClick={handleManageSubscription}
               disabled={portalLoading}
@@ -355,19 +368,19 @@ export function Billing() {
       {!isEnterprise && (
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-            {isPro ? 'Your Plan' : 'Choose Your Plan'}
+            {hasPaidPlan ? 'Your Plan' : 'Choose Your Plan'}
           </h3>
           
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <PricingCard
               name="Free"
               price="Free"
-              description="For personal projects and testing"
+              description="For indie devs and testing"
               features={[
-                '10,000 memories',
-                '50,000 API calls/month',
+                '50,000 memories',
+                '100K API calls/month',
                 '3 API keys',
-                '3 projects',
+                '1 project',
                 'Hybrid search',
                 'Entity resolution',
               ]}
@@ -376,20 +389,36 @@ export function Billing() {
             
             <PricingCard
               name="Pro"
-              price="$49"
-              description="For production applications"
+              price="$29"
+              description="For startups & side projects"
               features={[
-                '100,000 memories',
-                '500,000 API calls/month',
+                '500,000 memories',
+                '1M API calls/month',
                 '10 API keys',
-                '20 projects',
+                '5 projects',
                 '5 team members',
                 'Webhooks & observability',
-                'Priority support',
               ]}
               isCurrentPlan={isPro}
               isPopular={true}
               onUpgrade={() => handleUpgrade('pro')}
+              loading={checkoutLoading}
+            />
+            
+            <PricingCard
+              name="Team"
+              price="$99"
+              description="For growing companies"
+              features={[
+                '2,000,000 memories',
+                '5M API calls/month',
+                '50 API keys',
+                '100 projects',
+                '25 team members',
+                'Priority support',
+              ]}
+              isCurrentPlan={isTeam}
+              onUpgrade={() => handleUpgrade('team')}
               loading={checkoutLoading}
             />
             
@@ -399,12 +428,11 @@ export function Billing() {
               description="For large-scale deployments"
               features={[
                 'Unlimited memories',
-                '10M+ API calls/month',
+                '50M+ API calls/month',
                 '100 API keys',
                 'SSO/SAML',
                 '1,000 team members',
-                'Dedicated support',
-                'Custom SLA',
+                'Dedicated SLA',
               ]}
               isCurrentPlan={isEnterprise}
             />
@@ -417,16 +445,19 @@ export function Billing() {
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-4 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
                 Feature
               </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-4 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">
                 Free
               </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-blue-600 dark:text-blue-400">
-                Pro
+              <th className="px-4 py-4 text-center text-sm font-semibold text-blue-600 dark:text-blue-400">
+                Pro $29
               </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">
+              <th className="px-4 py-4 text-center text-sm font-semibold text-purple-600 dark:text-purple-400">
+                Team $99
+              </th>
+              <th className="px-4 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">
                 Enterprise
               </th>
             </tr>
@@ -434,10 +465,10 @@ export function Billing() {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {PLAN_FEATURES.map((feature, i) => (
               <tr key={i} className={i % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800/50'}>
-                <td className="px-6 py-3 text-sm text-gray-700 dark:text-gray-300">
+                <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                   {feature.name}
                 </td>
-                <td className="px-6 py-3 text-center text-sm">
+                <td className="px-4 py-3 text-center text-sm">
                   {typeof feature.free === 'boolean' ? (
                     feature.free ? (
                       <Check className="w-5 h-5 text-green-500 mx-auto" />
@@ -448,7 +479,7 @@ export function Billing() {
                     <span className="text-gray-700 dark:text-gray-300">{feature.free}</span>
                   )}
                 </td>
-                <td className="px-6 py-3 text-center text-sm bg-blue-50/50 dark:bg-blue-900/10">
+                <td className="px-4 py-3 text-center text-sm bg-blue-50/50 dark:bg-blue-900/10">
                   {typeof feature.pro === 'boolean' ? (
                     feature.pro ? (
                       <Check className="w-5 h-5 text-green-500 mx-auto" />
@@ -459,7 +490,18 @@ export function Billing() {
                     <span className="font-medium text-blue-700 dark:text-blue-400">{feature.pro}</span>
                   )}
                 </td>
-                <td className="px-6 py-3 text-center text-sm">
+                <td className="px-4 py-3 text-center text-sm bg-purple-50/50 dark:bg-purple-900/10">
+                  {typeof feature.team === 'boolean' ? (
+                    feature.team ? (
+                      <Check className="w-5 h-5 text-green-500 mx-auto" />
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )
+                  ) : (
+                    <span className="font-medium text-purple-700 dark:text-purple-400">{feature.team}</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-center text-sm">
                   {typeof feature.enterprise === 'boolean' ? (
                     feature.enterprise ? (
                       <Check className="w-5 h-5 text-green-500 mx-auto" />

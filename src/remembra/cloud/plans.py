@@ -2,8 +2,9 @@
 Plan definitions and limit enforcement for Remembra Cloud.
 
 Plans:
-  - free:       Self-hosted, unlimited everything, no cloud features
-  - pro:        $49/mo — 100K memories, 500K recalls/mo, 10 API keys
+  - free:       50K memories, 1 project, community support
+  - pro:        $29/mo — 500K memories, 5 projects, email support
+  - team:       $99/mo — 2M memories, unlimited projects, priority support
   - enterprise: Custom pricing — unlimited everything, SLA, SSO
 """
 
@@ -17,6 +18,7 @@ from typing import Any
 class PlanTier(str, Enum):
     FREE = "free"
     PRO = "pro"
+    TEAM = "team"
     ENTERPRISE = "enterprise"
 
 
@@ -54,54 +56,73 @@ class PlanLimits:
 
 
 # ---------------------------------------------------------------------------
-# Plan definitions
+# Plan definitions (matching PRODUCT-SPEC.md research)
 # ---------------------------------------------------------------------------
 
 PLANS: dict[PlanTier, PlanLimits] = {
+    # Free: Indie devs, students
     PlanTier.FREE: PlanLimits(
-        max_memories=10_000,
+        max_memories=50_000,        # 50K memories (research spec)
         max_storage_mb=500,
-        max_recalls_per_month=50_000,
-        max_stores_per_month=10_000,
+        max_recalls_per_month=100_000,
+        max_stores_per_month=50_000,
         max_api_keys=3,
         max_users=1,
-        max_projects=3,
-        retention_days=None,  # unlimited
+        max_projects=1,             # 1 project (research spec)
+        retention_days=None,        # unlimited
         has_webhooks=False,
         has_sso=False,
         has_observability=False,
         has_priority_support=False,
         stripe_price_id=None,
     ),
+    # Pro $29/mo: Startups, side projects
     PlanTier.PRO: PlanLimits(
-        max_memories=100_000,
+        max_memories=500_000,       # 500K memories (research spec)
         max_storage_mb=5_000,
-        max_recalls_per_month=500_000,
-        max_stores_per_month=100_000,
+        max_recalls_per_month=1_000_000,
+        max_stores_per_month=500_000,
         max_api_keys=10,
         max_users=5,
-        max_projects=20,
+        max_projects=5,             # 5 projects (research spec)
         retention_days=365,
         has_webhooks=True,
         has_sso=False,
         has_observability=True,
-        has_priority_support=True,
-        stripe_price_id="price_1T6ZDAQ3CqXwAZA7jUWCVVF0",  # Remembra Pro $49/mo
+        has_priority_support=False,
+        stripe_price_id="price_1T7CdNQ3CqXwAZA7Ef32k0CZ",  # $29/mo
     ),
+    # Team $99/mo: Growing companies
+    PlanTier.TEAM: PlanLimits(
+        max_memories=2_000_000,     # 2M memories (research spec)
+        max_storage_mb=20_000,
+        max_recalls_per_month=5_000_000,
+        max_stores_per_month=2_000_000,
+        max_api_keys=50,
+        max_users=25,
+        max_projects=100,           # unlimited-ish
+        retention_days=None,        # unlimited
+        has_webhooks=True,
+        has_sso=False,
+        has_observability=True,
+        has_priority_support=True,
+        stripe_price_id="price_1T7CdNQ3CqXwAZA7scUmw5XO",  # $99/mo
+    ),
+    # Enterprise: Large orgs, custom pricing
     PlanTier.ENTERPRISE: PlanLimits(
         max_memories=10_000_000,
         max_storage_mb=100_000,
-        max_recalls_per_month=10_000_000,
-        max_stores_per_month=5_000_000,
+        max_recalls_per_month=50_000_000,
+        max_stores_per_month=10_000_000,
         max_api_keys=100,
         max_users=1000,
-        max_projects=100,
-        retention_days=None,  # unlimited
+        max_projects=1000,
+        retention_days=None,        # unlimited
         has_webhooks=True,
         has_sso=True,
         has_observability=True,
         has_priority_support=True,
-        stripe_price_id="price_enterprise_monthly",
+        stripe_price_id=None,       # Custom pricing, contact sales
     ),
 }
 
@@ -143,7 +164,7 @@ class UsageSnapshot:
                     reason=f"Memory limit reached ({limits.max_memories:,} memories)",
                     limit=limits.max_memories,
                     current=self.memories_stored,
-                    upgrade_hint="Upgrade to Pro for 100K memories" if self.plan == PlanTier.FREE else None,
+                    upgrade_hint="Upgrade to Pro for 500K memories" if self.plan == PlanTier.FREE else None,
                 )
             if self.stores_this_month >= limits.max_stores_per_month:
                 return LimitCheckResult(
