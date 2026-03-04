@@ -88,7 +88,13 @@ async def get_current_user(
         try:
             from remembra.auth.users import UserManager
             db = getattr(request.app.state, "db", None)
-            if db and settings.jwt_secret:
+            if db is None:
+                log.warning("database_not_initialized_for_jwt_auth")
+                # Don't fail - fall through to API key check
+            elif not settings.jwt_secret:
+                log.warning("jwt_secret_not_configured")
+                # Don't fail - fall through to API key check
+            else:
                 user_manager = UserManager(db, settings.jwt_secret)
                 payload = user_manager.verify_jwt_token(token)
                 if payload and payload.get("sub"):
@@ -100,7 +106,7 @@ async def get_current_user(
                         name=payload.get("email"),
                     )
         except Exception as e:
-            log.debug("jwt_verification_failed", error=str(e))
+            log.warning("jwt_verification_failed", error=str(e), error_type=type(e).__name__)
             # Fall through to API key check
     
     # Check API key
@@ -190,7 +196,13 @@ async def get_user_from_jwt_or_api_key(
             # Create UserManager to verify JWT
             from remembra.auth.users import UserManager
             db = getattr(request.app.state, "db", None)
-            if db and settings.jwt_secret:
+            if db is None:
+                log.debug("database_not_initialized_for_jwt_auth_optional")
+                # Don't fail - fall through to API key check
+            elif not settings.jwt_secret:
+                log.debug("jwt_secret_not_configured_optional")
+                # Don't fail - fall through to API key check
+            else:
                 user_manager = UserManager(db, settings.jwt_secret)
                 payload = user_manager.verify_jwt_token(token)
                 if payload:
@@ -201,7 +213,7 @@ async def get_user_from_jwt_or_api_key(
                         name=payload.get("email"),
                     )
         except Exception as e:
-            log.debug("jwt_verification_failed", error=str(e))
+            log.debug("jwt_verification_failed_optional", error=str(e), error_type=type(e).__name__)
     
     # Fall back to API key
     if api_key:

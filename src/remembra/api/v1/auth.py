@@ -140,6 +140,7 @@ async def get_current_user_from_jwt(
     Dependency that validates JWT token and returns user info.
     
     Raises 401 if token is missing or invalid.
+    Raises 500 if server is misconfigured.
     """
     if not credentials:
         raise HTTPException(
@@ -148,10 +149,29 @@ async def get_current_user_from_jwt(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    user_manager = await get_user_manager(request)
+    try:
+        user_manager = await get_user_manager(request)
+    except HTTPException:
+        # Re-raise HTTP exceptions (500 from get_user_manager)
+        raise
+    except Exception as e:
+        log.error("get_user_manager_failed", error=str(e), error_type=type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Authentication service unavailable",
+        )
     
     # Verify JWT token
-    payload = user_manager.verify_jwt_token(credentials.credentials)
+    try:
+        payload = user_manager.verify_jwt_token(credentials.credentials)
+    except Exception as e:
+        log.error("jwt_verification_error", error=str(e), error_type=type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -160,15 +180,29 @@ async def get_current_user_from_jwt(
         )
     
     # Check if token is blacklisted
-    if await user_manager.is_token_blacklisted(credentials.credentials):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has been invalidated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    try:
+        if await user_manager.is_token_blacklisted(credentials.credentials):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been invalidated",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        log.error("token_blacklist_check_failed", error=str(e), user_id=payload.get("sub"))
+        # Continue - don't fail auth if blacklist check fails
     
     # Get user from database
-    user = await user_manager.get_user_by_id(payload["sub"])
+    try:
+        user = await user_manager.get_user_by_id(payload["sub"])
+    except Exception as e:
+        log.error("get_user_by_id_failed", error=str(e), user_id=payload.get("sub"))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user data",
+        )
+    
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
