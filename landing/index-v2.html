@@ -17,49 +17,14 @@
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@remembradev">
-    <meta name="twitter:creator" content="@remembradev">
     <meta name="twitter:title" content="Remembra - Memory Layer for AI">
     <meta name="twitter:description" content="Persistent memory for AI applications. Self-host in 5 minutes. Open source.">
     <meta name="twitter:image" content="https://remembra.dev/social-preview.png">
     
-    <!-- Additional SEO -->
-    <meta name="robots" content="index, follow">
-    <meta name="author" content="DolphyTech">
-    <meta name="keywords" content="AI memory, LLM memory, RAG, vector database, entity resolution, AI chatbot, persistent memory, self-hosted, MCP">
-    <link rel="canonical" href="https://remembra.dev">
-    
-    <!-- Schema.org Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Remembra",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Any",
-        "description": "Universal memory layer for AI applications. Persistent memory with entity resolution, temporal decay, and graph-aware recall.",
-        "url": "https://remembra.dev",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD",
-            "description": "Free tier with 50,000 memories"
-        },
-        "author": {
-            "@type": "Organization",
-            "name": "DolphyTech",
-            "url": "https://dolphytech.com"
-        }
-    }
-    </script>
-    
     <!-- Favicons -->
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="Remembra" />
-    <link rel="manifest" href="/site.webmanifest" />
     
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -137,7 +102,6 @@
             font-size: 18px;
         }
         
-        .logo img { width: 28px; height: 28px; border-radius: 8px; }
         .logo svg { width: 24px; height: 24px; }
         
         .nav { display: flex; align-items: center; gap: 32px; }
@@ -707,14 +671,10 @@
         /* Pricing */
         .pricing-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 24px;
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
-        }
-        
-        @media (max-width: 1100px) {
-            .pricing-grid { grid-template-columns: repeat(2, 1fr); }
         }
         
         .pricing-card {
@@ -983,7 +943,9 @@
     <header class="header" id="header">
         <div class="header-inner">
             <a href="/" class="logo">
-                <img src="/logo.jpg" alt="Remembra">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
                 Remembra
             </a>
             
@@ -993,12 +955,10 @@
                     <li><a href="#pricing">Pricing</a></li>
                     <li><a href="https://docs.remembra.dev">Docs</a></li>
                     <li><a href="#changelog">Changelog</a></li>
+                    <li><a href="https://github.com/remembra-ai/remembra" target="_blank">GitHub</a></li>
                 </ul>
                 <div class="nav-actions">
-                    <a href="https://github.com/remembra-ai/remembra" target="_blank" class="btn btn-outline" style="padding: 8px 14px; gap: 6px;">
-                        <svg style="width: 18px; height: 18px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                        Star
-                    </a>
+                    <a href="https://app.remembra.dev/login" class="btn btn-ghost">Log in</a>
                     <a href="https://app.remembra.dev/signup" class="btn btn-primary">Get Started</a>
                 </div>
             </nav>
@@ -1501,45 +1461,29 @@ memories = client.<span class="fn">recall</span>(
                     <div class="pricing-price">$29<span>/month</span></div>
                     <p class="pricing-desc">For production applications</p>
                     <ul class="pricing-features">
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 500K memories</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 5 projects</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Webhooks</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Email support</li>
-                    </ul>
-                    <a href="https://app.remembra.dev/signup?plan=pro" class="btn btn-primary">Get Started →</a>
-                </div>
-                
-                <div class="pricing-card reveal" style="border-color: rgba(139,92,246,0.3);">
-                    <div class="pricing-name">Team</div>
-                    <div class="pricing-price">$99<span>/month</span></div>
-                    <p class="pricing-desc">For growing companies</p>
-                    <ul class="pricing-features">
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 2M memories</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 100 projects</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Unlimited memories</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 10 projects</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Priority support</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 99.9% SLA</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Unlimited retention</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Advanced analytics</li>
                     </ul>
-                    <a href="https://app.remembra.dev/signup?plan=team" class="btn btn-purple">Get Started →</a>
+                    <a href="https://app.remembra.dev/signup?plan=pro" class="btn btn-primary">Start Free Trial</a>
                 </div>
                 
                 <div class="pricing-card reveal">
                     <div class="pricing-name">Enterprise</div>
                     <div class="pricing-price">Custom</div>
-                    <p class="pricing-desc">For large deployments</p>
+                    <p class="pricing-desc">For teams with custom needs</p>
                     <ul class="pricing-features">
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Unlimited</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Dedicated infra</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> SSO/SAML</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Custom SLA</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Everything in Pro</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Unlimited projects</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Dedicated support</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> SLA guarantee</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> On-premise option</li>
                     </ul>
-                    <a href="/contact.html?type=enterprise" class="btn btn-outline">Contact Sales</a>
+                    <a href="/contact" class="btn btn-outline">Contact Sales</a>
                 </div>
             </div>
-            
-            <!-- Self-hosted note -->
-            <p style="text-align: center; color: var(--gray-400); margin-top: 32px; font-size: 14px;">
-                🔧 Self-hosting? Remembra is <a href="https://github.com/remembra-ai/remembra" style="color: var(--purple-light);">open source (Apache 2.0)</a> — deploy free with unlimited memories.
-            </p>
         </div>
     </section>
 
@@ -1607,21 +1551,12 @@ memories = client.<span class="fn">recall</span>(
         <div class="footer-grid">
             <div class="footer-brand">
                 <a href="/" class="logo">
-                    <img src="/logo.jpg" alt="Remembra">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width: 24px; height: 24px;">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
                     Remembra
                 </a>
                 <p>Memory layer for AI applications.<br>Built by DolphyTech.</p>
-                <div style="display: flex; align-items: center; gap: 16px; margin-top: 16px;">
-                    <a href="https://github.com/remembra-ai/remembra" target="_blank" style="color: var(--gray-500); transition: color 0.2s;">
-                        <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    </a>
-                    <a href="https://twitter.com/remembradev" target="_blank" style="color: var(--gray-500); transition: color 0.2s;">
-                        <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                    </a>
-                    <a href="https://discord.gg/Bzv3JshRa3" target="_blank" style="color: var(--gray-500); transition: color 0.2s;">
-                        <svg style="width: 20px; height: 20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/></svg>
-                    </a>
-                </div>
             </div>
             
             <div class="footer-column">
@@ -1647,11 +1582,10 @@ memories = client.<span class="fn">recall</span>(
             <div class="footer-column">
                 <h4>Company</h4>
                 <ul>
-                    <li><a href="/about.html">About</a></li>
-                    <li><a href="/contact.html">Contact</a></li>
-                    <li><a href="https://twitter.com/remembradev">Twitter</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="https://twitter.com/remembra_dev">Twitter</a></li>
                     <li><a href="https://github.com/remembra-ai">GitHub</a></li>
-                    <li><a href="https://discord.gg/Bzv3JshRa3">Discord</a></li>
                 </ul>
             </div>
             
@@ -1674,54 +1608,6 @@ memories = client.<span class="fn">recall</span>(
         </div>
     </footer>
 
-    <!-- Waitlist Modal -->
-    <div id="waitlistModal" style="position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div style="background: var(--gray-900); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px; max-width: 420px; width: 90%; margin: 20px; position: relative;">
-            <button onclick="closeWaitlistModal()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 4px;">
-                <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-            
-            <div style="text-align: center; margin-bottom: 24px;">
-                <div style="width: 64px; height: 64px; background: rgba(139,92,246,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px;">🚀</div>
-                <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Join the Waitlist</h3>
-                <p style="color: var(--gray-400); font-size: 14px;">Be the first to know when Remembra Pro Cloud launches.</p>
-            </div>
-            
-            <form id="waitlistForm" action="https://formsubmit.co/admin@dolphytech.com" method="POST">
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Email</label>
-                    <input type="email" name="email" required placeholder="you@company.com" 
-                           style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 14px; outline: none;">
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Name (optional)</label>
-                    <input type="text" name="name" placeholder="Your name"
-                           style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 14px; outline: none;">
-                </div>
-                <input type="hidden" name="_subject" value="🚀 New Remembra Waitlist Signup!">
-                <input type="hidden" name="_captcha" value="false">
-                <input type="text" name="_honey" style="display:none">
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">
-                    Join Waitlist →
-                </button>
-            </form>
-            
-            <p style="text-align: center; font-size: 12px; color: var(--gray-500); margin-top: 16px;">We'll never spam you. Unsubscribe anytime.</p>
-        </div>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="successModal" style="position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div style="background: var(--gray-900); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px; max-width: 420px; width: 90%; margin: 20px; text-align: center;">
-            <div style="width: 80px; height: 80px; background: rgba(34,197,94,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 24px;">✓</div>
-            <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">You're on the list!</h3>
-            <p style="color: var(--gray-400); font-size: 14px; margin-bottom: 24px;">We'll notify you when Remembra Pro Cloud is ready. Thanks for your interest!</p>
-            <button onclick="closeSuccessModal()" class="btn btn-primary" style="padding: 14px 32px;">
-                Got it!
-            </button>
-        </div>
-    </div>
-
     <script>
         // Header scroll effect
         const header = document.getElementById('header');
@@ -1741,60 +1627,6 @@ memories = client.<span class="fn">recall</span>(
         };
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
-        
-        // Waitlist Modal
-        function openWaitlistModal() {
-            document.getElementById('waitlistModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeWaitlistModal() {
-            document.getElementById('waitlistModal').style.display = 'none';
-            document.body.style.overflow = '';
-        }
-        
-        function closeSuccessModal() {
-            document.getElementById('successModal').style.display = 'none';
-            document.body.style.overflow = '';
-        }
-        
-        // Close on backdrop click
-        document.getElementById('waitlistModal').addEventListener('click', function(e) {
-            if (e.target === this) closeWaitlistModal();
-        });
-        
-        // Handle form submission
-        document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const data = new FormData(form);
-            
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: data,
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (response.ok) {
-                    closeWaitlistModal();
-                    document.getElementById('successModal').style.display = 'flex';
-                    form.reset();
-                } else {
-                    alert('Something went wrong. Please try again.');
-                }
-            } catch (error) {
-                alert('Something went wrong. Please try again.');
-            }
-        });
-        
-        // Close on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeWaitlistModal();
-                closeSuccessModal();
-            }
-        });
     </script>
 </body>
 </html>
