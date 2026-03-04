@@ -1,4 +1,4 @@
-import { Brain, Moon, Sun, LogOut, User } from 'lucide-react';
+import { Moon, Sun, LogOut, User } from 'lucide-react';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -15,9 +15,11 @@ export function Header({ darkMode, onToggleDarkMode, isAuthenticated, onLogout, 
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8B5CF6] to-[#A78BFA] flex items-center justify-center">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
+            <img 
+              src="/logo-icon.jpg" 
+              alt="Remembra" 
+              className="w-10 h-10 rounded-lg"
+            />
             <div>
               <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">
                 Remembra

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserPlus, Loader2, Eye, EyeOff, Brain, Check, X } from 'lucide-react';
+import { UserPlus, Loader2, Eye, EyeOff, Check, X } from 'lucide-react';
 import { API_V1 } from '../config';
 
 interface SignupProps {
@@ -78,9 +78,11 @@ export function Signup({ onSignup, onSwitchToLogin }: SignupProps) {
     <div className="min-h-screen flex items-center justify-center bg-[hsl(var(--background))] px-4 py-8">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#8B5CF6] to-[#A78BFA] flex items-center justify-center mx-auto mb-4">
-            <Brain className="w-8 h-8 text-white" />
-          </div>
+          <img 
+            src="/logo-icon.jpg" 
+            alt="Remembra" 
+            className="w-16 h-16 rounded-2xl mx-auto mb-4"
+          />
           <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">
             Create your account
           </h1>
