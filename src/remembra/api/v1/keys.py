@@ -275,13 +275,21 @@ async def list_api_keys(
     request: Request,
     key_manager: APIKeyManagerDep,
     role_manager: RoleManagerDep,
-    current_user: CurrentUser,
+    current_user: JWTOrAPIKeyUser,
 ) -> ListKeysResponse:
     """
     List all API keys for the authenticated user.
     
+    Supports both JWT Bearer token and API key authentication.
+    
     Note: The actual key values are never shown (only metadata).
     """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Use JWT token or API key.",
+        )
+    
     keys = await key_manager.list_keys(current_user.user_id)
     
     # Enrich with roles
@@ -321,7 +329,7 @@ async def get_api_key_info(
     key_id: str,
     key_manager: APIKeyManagerDep,
     role_manager: RoleManagerDep,
-    current_user: CurrentUser,
+    current_user: JWTOrAPIKeyUser,
 ) -> KeyInfo:
     """
     Get information about a specific API key.
@@ -329,6 +337,12 @@ async def get_api_key_info(
     Users can only view their own keys.
     The actual key value is never shown.
     """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Use JWT token or API key.",
+        )
+    
     key_info = await get_key_with_role(key_manager, role_manager, key_id)
     
     if not key_info:
@@ -365,7 +379,7 @@ async def update_api_key(
     key_manager: APIKeyManagerDep,
     role_manager: RoleManagerDep,
     audit_logger: AuditLoggerDep,
-    current_user: CurrentUser,
+    current_user: JWTOrAPIKeyUser,
 ) -> UpdateKeyResponse:
     """
     Update an API key's name or role.
@@ -378,6 +392,12 @@ async def update_api_key(
     - `editor` - Read/write memories (default)
     - `viewer` - Read-only access
     """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Use JWT token or API key.",
+        )
+    
     # Get existing key info
     existing_key = await key_manager.get_key_info(key_id)
     
@@ -449,7 +469,7 @@ async def revoke_api_key(
     key_manager: APIKeyManagerDep,
     role_manager: RoleManagerDep,
     audit_logger: AuditLoggerDep,
-    current_user: CurrentUser,
+    current_user: JWTOrAPIKeyUser,
 ) -> RevokeKeyResponse:
     """
     Revoke (deactivate) an API key.
@@ -457,6 +477,12 @@ async def revoke_api_key(
     Users can only revoke their own keys.
     Revoked keys cannot be used for authentication.
     """
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required. Use JWT token or API key.",
+        )
+    
     success = await key_manager.revoke_key(key_id, current_user.user_id)
     
     if not success:
