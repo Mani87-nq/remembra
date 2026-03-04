@@ -182,7 +182,7 @@
             },
             pro: {
                 name: 'Remembra Pro',
-                price: '$29/mo',
+                price: '$49/mo',
                 title: 'Start Your Pro Trial',
                 subtitle: '14-day free trial. Cancel anytime.',
                 buttonText: 'Continue to Payment',
@@ -245,13 +245,12 @@
             document.getElementById('stripeBadge').style.display = 'none';
         }
 
-        // Form submission handler
+        // Form submission handler - redirect to dashboard for proper account creation
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const name = document.getElementById('name').value;
-            const company = document.getElementById('company').value;
             
             const submitBtn = document.getElementById('submitBtn');
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -261,24 +260,15 @@
             loadingOverlay.classList.remove('hidden');
             loadingOverlay.classList.add('flex');
             
-            // Store signup info locally
-            localStorage.setItem('remembra_signup', JSON.stringify({ 
-                email, 
-                name, 
-                company, 
-                plan: planKey,
-                timestamp: Date.now() 
-            }));
+            // Redirect to dashboard signup - this is the proper flow
+            // Dashboard creates account, then user can upgrade from Billing page
+            const params = new URLSearchParams();
+            if (email) params.set('email', email);
+            if (name) params.set('name', name);
+            if (planKey && planKey !== 'free') params.set('plan', planKey);
             
-            if (plan.paymentLink) {
-                // Paid plan - redirect to Stripe
-                const checkoutUrl = `${plan.paymentLink}?prefilled_email=${encodeURIComponent(email)}`;
-                window.location.href = checkoutUrl;
-            } else {
-                // Free plan - redirect to dashboard signup
-                const dashboardSignup = `https://app.remembra.dev?signup=true&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`;
-                window.location.href = dashboardSignup;
-            }
+            const dashboardUrl = `https://app.remembra.dev/signup${params.toString() ? '?' + params.toString() : ''}`;
+            window.location.href = dashboardUrl;
         });
         
         // Check for successful payment return

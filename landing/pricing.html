@@ -300,7 +300,7 @@
             <h2 class="text-3xl font-bold mb-4">Ready to give your AI memory?</h2>
             <p class="text-xl text-gray-400 mb-8">Start building with Remembra today.</p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="/signup.html" class="px-8 py-4 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition">
+                <a href="https://app.remembra.dev/signup" class="px-8 py-4 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition">
                     Start Free Trial →
                 </a>
                 <a href="https://docs.remembra.dev" class="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 font-semibold rounded-xl transition">
@@ -329,38 +329,24 @@
         </div>
     </footer>
 
-    <!-- Stripe Checkout Script -->
+    <!-- Checkout Script -->
     <script>
-        const stripe = Stripe('pk_live_51T6Yu7Q3CqXwAZA7GDSQJUzrds3gemv7zyaYHL8w6l9xifjqcuvkRvW4P4tlcaBYRo3zB9v1TFO5CXfwdhcze5X400Ntw516m3');
-        
+        // Redirect to dashboard signup - the proper flow for account creation + billing
         async function subscribePro() {
             const button = document.getElementById('proButton');
             button.textContent = 'Loading...';
             button.disabled = true;
-            
-            try {
-                window.location.href = '/signup.html?plan=pro';
-            } catch (error) {
-                console.error('Error:', error);
-                button.textContent = 'Subscribe →';
-                button.disabled = false;
-                alert('Something went wrong. Please try again.');
-            }
+            // Redirect to dashboard signup with plan parameter
+            // User creates account, then upgrades from Billing page
+            window.location.href = 'https://app.remembra.dev/signup?plan=pro';
         }
         
         async function subscribeTeam() {
             const button = document.getElementById('teamButton');
             button.textContent = 'Loading...';
             button.disabled = true;
-            
-            try {
-                window.location.href = '/signup.html?plan=team';
-            } catch (error) {
-                console.error('Error:', error);
-                button.textContent = 'Subscribe →';
-                button.disabled = false;
-                alert('Something went wrong. Please try again.');
-            }
+            // Redirect to dashboard signup with plan parameter
+            window.location.href = 'https://app.remembra.dev/signup?plan=team';
         }
         
         // Check for cancelled checkout

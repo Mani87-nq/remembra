@@ -85,10 +85,25 @@ function App() {
     api.setUserId(user.id);
     setCurrentUser(user);
     setIsAuthenticated(true);
+    
+    // Check if user had a plan intent (signed up via pricing page with plan=pro/team)
+    const planIntent = localStorage.getItem('remembra_plan_intent');
+    if (planIntent && (planIntent === 'pro' || planIntent === 'team')) {
+      localStorage.removeItem('remembra_plan_intent');
+      // Redirect to billing tab after login
+      setActiveTab('billing');
+    }
   };
 
   const handleSignup = (user: { id: string; email: string; name?: string }) => {
     // After signup, switch to login
+    // Check if user signed up with a paid plan intent (plan param in URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const planIntent = urlParams.get('plan');
+    if (planIntent && (planIntent === 'pro' || planIntent === 'team')) {
+      // Store plan intent for after login - user will be prompted to upgrade
+      localStorage.setItem('remembra_plan_intent', planIntent);
+    }
     setCurrentUser(user);
     setAuthMode('login');
   };
