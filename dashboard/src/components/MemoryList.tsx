@@ -58,14 +58,14 @@ export function MemoryList({
 
       {loading && (
         <div className="flex justify-center p-6">
-          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+          <Loader2 className="w-6 h-6 text-[#8B5CF6] animate-spin" />
         </div>
       )}
 
       {!loading && hasMore && onLoadMore && (
         <button
           onClick={onLoadMore}
-          className="w-full py-3 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+          className="w-full py-3 text-sm font-medium text-[#8B5CF6] dark:text-[#A78BFA] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
         >
           Load more
         </button>

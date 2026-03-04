@@ -10,19 +10,19 @@ interface HeaderProps {
 
 export function Header({ darkMode, onToggleDarkMode, isAuthenticated, onLogout, userName }: HeaderProps) {
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <header className="bg-[hsl(var(--card))] border-b border-[hsl(var(--border))]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8B5CF6] to-[#A78BFA] flex items-center justify-center">
               <Brain className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">
                 Remembra
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">
                 Memory Dashboard
               </p>
             </div>
@@ -32,9 +32,9 @@ export function Header({ darkMode, onToggleDarkMode, isAuthenticated, onLogout, 
           <div className="flex items-center gap-3">
             {/* User info */}
             {isAuthenticated && userName && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-700">
-                <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm text-gray-700 dark:text-gray-300 max-w-[150px] truncate">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--muted))]">
+                <User className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+                <span className="text-sm text-[hsl(var(--foreground))] max-w-[150px] truncate">
                   {userName}
                 </span>
               </div>
@@ -42,7 +42,7 @@ export function Header({ darkMode, onToggleDarkMode, isAuthenticated, onLogout, 
 
             <button
               onClick={onToggleDarkMode}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted))] transition-colors"
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {darkMode ? (
@@ -55,7 +55,7 @@ export function Header({ darkMode, onToggleDarkMode, isAuthenticated, onLogout, 
             {isAuthenticated && (
               <button
                 onClick={onLogout}
-                className="p-2 rounded-lg text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-2 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-[hsl(var(--muted))] transition-colors"
                 title="Logout"
               >
                 <LogOut className="w-5 h-5" />

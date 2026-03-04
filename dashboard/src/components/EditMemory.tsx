@@ -52,7 +52,7 @@ export function EditMemory({ memory, onSave, onCancel }: EditMemoryProps) {
             'bg-white dark:bg-gray-900',
             'border-gray-300 dark:border-gray-600',
             'text-gray-900 dark:text-white',
-            'focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+            'focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent',
             'resize-none font-mono text-sm'
           )}
           disabled={loading}
@@ -100,7 +100,7 @@ export function EditMemory({ memory, onSave, onCancel }: EditMemoryProps) {
           disabled={loading || !hasChanges}
           className={clsx(
             'px-4 py-2 rounded-lg font-medium',
-            'bg-blue-600 hover:bg-blue-700 text-white',
+            'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white',
             'flex items-center gap-2',
             (loading || !hasChanges) && 'opacity-50 cursor-not-allowed'
           )}

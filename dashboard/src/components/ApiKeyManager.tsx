@@ -24,7 +24,7 @@ type CreateKeyResponse = CreateApiKeyResponse;
 // Permission badge colors
 const PERMISSION_STYLES = {
   admin: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-  editor: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+  editor: 'bg-blue-100 dark:bg-blue-900/30 text-#7C3AED dark:text-[#A78BFA]',
   viewer: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
 };
 
@@ -104,7 +104,7 @@ export function ApiKeyManager() {
           onClick={() => setShowCreateModal(true)}
           className={clsx(
             'px-4 py-2 rounded-lg font-medium',
-            'bg-blue-600 hover:bg-blue-700 text-white',
+            'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white',
             'flex items-center gap-2 transition-colors'
           )}
         >
@@ -123,7 +123,7 @@ export function ApiKeyManager() {
       {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
         </div>
       )}
 
@@ -139,7 +139,7 @@ export function ApiKeyManager() {
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium"
+            className="px-4 py-2 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-medium"
           >
             Create your first key
           </button>
@@ -310,7 +310,7 @@ function CreateKeyModal({ onClose, onCreated }: CreateKeyModalProps) {
                 'border-gray-300 dark:border-gray-600',
                 'text-gray-900 dark:text-white',
                 'placeholder-gray-400 dark:placeholder-gray-500',
-                'focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                'focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent'
               )}
               disabled={loading}
               autoFocus
@@ -333,7 +333,7 @@ function CreateKeyModal({ onClose, onCreated }: CreateKeyModalProps) {
                   className={clsx(
                     'flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
                     permission === perm
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      ? 'border-[#8B5CF6] bg-blue-50 dark:bg-blue-900/20'
                       : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                   )}
                 >
@@ -343,7 +343,7 @@ function CreateKeyModal({ onClose, onCreated }: CreateKeyModalProps) {
                     value={perm}
                     checked={permission === perm}
                     onChange={() => setPermission(perm)}
-                    className="text-blue-600"
+                    className="text-[#8B5CF6]"
                     disabled={loading}
                   />
                   <div>
@@ -390,7 +390,7 @@ function CreateKeyModal({ onClose, onCreated }: CreateKeyModalProps) {
               disabled={loading || !name.trim()}
               className={clsx(
                 'px-4 py-2 rounded-lg font-medium',
-                'bg-blue-600 hover:bg-blue-700 text-white',
+                'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white',
                 'flex items-center gap-2',
                 (loading || !name.trim()) && 'opacity-50 cursor-not-allowed'
               )}
@@ -541,7 +541,7 @@ function NewKeyResultModal({ keyData, onClose }: NewKeyResultModalProps) {
               onClick={onClose}
               className={clsx(
                 'px-4 py-2 rounded-lg font-medium',
-                'bg-blue-600 hover:bg-blue-700 text-white'
+                'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white'
               )}
             >
               Done

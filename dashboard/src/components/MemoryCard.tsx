@@ -25,7 +25,7 @@ export function MemoryCard({ memory, onClick, showRelevance = false }: MemoryCar
 
   const relevanceColor = (score: number) => {
     if (score >= 0.8) return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30';
-    if (score >= 0.6) return 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30';
+    if (score >= 0.6) return 'text-[#8B5CF6] dark:text-[#A78BFA] bg-blue-100 dark:bg-blue-900/30';
     if (score >= 0.4) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30';
     return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800';
   };
@@ -36,7 +36,7 @@ export function MemoryCard({ memory, onClick, showRelevance = false }: MemoryCar
       className={clsx(
         'bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700',
         'p-4 transition-all duration-200',
-        onClick && 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
+        onClick && 'cursor-pointer hover:border-blue-300 dark:hover:border-[#8B5CF6] hover:shadow-md'
       )}
     >
       {/* Header */}

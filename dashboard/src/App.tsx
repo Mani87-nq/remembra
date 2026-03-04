@@ -14,7 +14,8 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     if (saved !== null) return saved === 'true';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Default to dark mode to match Remembra brand
+    return true;
   });
   
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -166,7 +167,7 @@ function App() {
   // Authenticated - show dashboard
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-[hsl(var(--background))]">
         <Header
           darkMode={darkMode}
           onToggleDarkMode={handleToggleDarkMode}

@@ -5,7 +5,7 @@ import { Clock, Eye, Tag, ChevronLeft, ChevronRight, Loader2 } from 'lucide-reac
 import clsx from 'clsx';
 
 const entityColors: Record<string, string> = {
-  person: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+  person: 'bg-blue-100 dark:bg-blue-900/40 text-#7C3AED dark:text-blue-300',
   company: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
   organization: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
   location: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300',
@@ -104,7 +104,7 @@ export function MemoryTimeline() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-[#8B5CF6]" />
         </div>
       ) : (
         <div className="relative">
@@ -115,7 +115,7 @@ export function MemoryTimeline() {
             <div key={dateLabel} className="mb-6">
               {/* Date header */}
               <div className="relative flex items-center mb-3 pl-10">
-                <div className="absolute left-2.5 w-3 h-3 rounded-full bg-blue-500 ring-4 ring-white dark:ring-gray-900" />
+                <div className="absolute left-2.5 w-3 h-3 rounded-full bg-[#8B5CF6] ring-4 ring-white dark:ring-gray-900" />
                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{dateLabel}</span>
               </div>
 
@@ -125,7 +125,7 @@ export function MemoryTimeline() {
                   <div
                     key={mem.id}
                     className="p-3 rounded-lg border border-gray-200 dark:border-gray-700
-                               bg-white dark:bg-gray-800/50 hover:border-blue-300 dark:hover:border-blue-700
+                               bg-white dark:bg-gray-800/50 hover:border-blue-300 dark:hover:border-#7C3AED
                                transition-colors"
                   >
                     <p className="text-sm text-gray-900 dark:text-white line-clamp-2">{mem.content}</p>

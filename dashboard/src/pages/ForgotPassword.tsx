@@ -128,7 +128,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
           </p>
           <button
             onClick={onBackToLogin}
-            className="py-3 px-6 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
+            className="py-3 px-6 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-medium transition-colors"
           >
             Sign in
           </button>
@@ -141,7 +141,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-#8B5CF6 to-[#A78BFA] flex items-center justify-center mx-auto mb-4">
             <Brain className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -169,7 +169,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
                 />
               </div>
 
@@ -182,7 +182,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-#A78BFA text-white font-medium transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -203,7 +203,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
             <div className="space-y-4">
               {message && (
                 <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-600 dark:text-blue-400">{message}</p>
+                  <p className="text-sm text-[#8B5CF6] dark:text-[#A78BFA]">{message}</p>
                 </div>
               )}
 
@@ -217,7 +217,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
                   placeholder="Paste your reset token"
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent font-mono text-sm"
                 />
                 <p className="mt-1 text-xs text-gray-400">
                   Check your email or server logs for the reset token
@@ -236,7 +236,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
                     autoComplete="new-password"
-                    className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                    className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent pr-12"
                   />
                   <button
                     type="button"
@@ -259,7 +259,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   autoComplete="new-password"
-                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
                 />
               </div>
 
@@ -278,7 +278,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
               <button
                 type="submit"
                 disabled={loading || !isPasswordValid}
-                className="w-full py-3 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-#A78BFA disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

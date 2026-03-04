@@ -61,7 +61,7 @@ export function SearchBar({
     <div className="relative">
       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
         {loading ? (
-          <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+          <Loader2 className="w-5 h-5 text-[#8B5CF6] animate-spin" />
         ) : (
           <Search className="w-5 h-5 text-gray-400" />
         )}
@@ -79,7 +79,7 @@ export function SearchBar({
           'bg-white dark:bg-gray-800',
           'border border-gray-200 dark:border-gray-700',
           'text-gray-900 dark:text-gray-100 placeholder-gray-400',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+          'focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent',
           'transition-all duration-200'
         )}
       />

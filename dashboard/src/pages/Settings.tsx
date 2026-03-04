@@ -47,7 +47,7 @@ export function Settings({ onLogout }: SettingsProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
       </div>
     );
   }
@@ -80,7 +80,7 @@ export function Settings({ onLogout }: SettingsProps) {
             className={clsx(
               'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
               activeTab === 'profile'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                ? 'border-[#8B5CF6] text-[#8B5CF6] dark:text-[#A78BFA]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             )}
           >
@@ -92,7 +92,7 @@ export function Settings({ onLogout }: SettingsProps) {
             className={clsx(
               'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
               activeTab === 'password'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                ? 'border-[#8B5CF6] text-[#8B5CF6] dark:text-[#A78BFA]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             )}
           >
@@ -104,7 +104,7 @@ export function Settings({ onLogout }: SettingsProps) {
             className={clsx(
               'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
               activeTab === 'account'
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                ? 'border-[#8B5CF6] text-[#8B5CF6] dark:text-[#A78BFA]'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             )}
           >
@@ -188,7 +188,7 @@ function ProfileSettings({ user, onUpdate }: { user: UserResponse; onUpdate: () 
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
             maxLength={100}
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
           />
         </div>
 
@@ -223,7 +223,7 @@ function ProfileSettings({ user, onUpdate }: { user: UserResponse; onUpdate: () 
             disabled={loading || name === (user.name || '')}
             className={clsx(
               'px-4 py-2 rounded-lg font-medium transition-colors',
-              'bg-blue-600 hover:bg-blue-700 text-white',
+              'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white',
               (loading || name === (user.name || '')) && 'opacity-50 cursor-not-allowed'
             )}
           >
@@ -299,7 +299,7 @@ function PasswordSettings() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="Enter current password"
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
           />
         </div>
 
@@ -314,7 +314,7 @@ function PasswordSettings() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="Enter new password"
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
           />
         </div>
 
@@ -329,7 +329,7 @@ function PasswordSettings() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm new password"
-            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent"
           />
         </div>
 
@@ -372,7 +372,7 @@ function PasswordSettings() {
             disabled={loading || !isValid}
             className={clsx(
               'px-4 py-2 rounded-lg font-medium transition-colors',
-              'bg-blue-600 hover:bg-blue-700 text-white',
+              'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white',
               (loading || !isValid) && 'opacity-50 cursor-not-allowed'
             )}
           >

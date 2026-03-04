@@ -70,7 +70,7 @@ function UsageBar({
         <div 
           className={clsx(
             'h-full rounded-full transition-all duration-300',
-            isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-blue-500'
+            isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-[#8B5CF6]'
           )}
           style={{ width: `${percentage}%` }}
         />
@@ -108,13 +108,13 @@ function PricingCard({
     <div className={clsx(
       'relative p-6 rounded-xl border-2 transition-all',
       isPopular 
-        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/10' 
+        ? 'border-[#8B5CF6] bg-blue-50/50 dark:bg-blue-900/10' 
         : 'border-gray-200 dark:border-gray-700',
       isCurrentPlan && 'ring-2 ring-green-500 ring-offset-2 dark:ring-offset-gray-900'
     )}>
       {isPopular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+          <span className="bg-[#8B5CF6] text-white text-xs font-semibold px-3 py-1 rounded-full">
             Most Popular
           </span>
         </div>
@@ -155,7 +155,7 @@ function PricingCard({
           className={clsx(
             'w-full py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2',
             isPopular
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? 'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white'
               : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white',
             loading && 'opacity-50 cursor-not-allowed'
           )}
@@ -243,7 +243,7 @@ export function Billing() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
       </div>
     );
   }
@@ -267,13 +267,13 @@ export function Billing() {
       <div className={clsx(
         'p-6 rounded-xl border-2',
         hasPaidPlan
-          ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20'
+          ? 'border-[#8B5CF6] bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20'
           : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800'
       )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {hasPaidPlan ? (
-              <div className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500">
+              <div className="p-3 rounded-full bg-gradient-to-r from-#8B5CF6 to-purple-500">
                 <Crown className="w-6 h-6 text-white" />
               </div>
             ) : (
@@ -320,7 +320,7 @@ export function Billing() {
       {planInfo && (
         <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="w-5 h-5 text-blue-500" />
+            <TrendingUp className="w-5 h-5 text-[#8B5CF6]" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Usage This Month</h3>
             {usage?.period && (
               <span className="text-sm text-gray-500 dark:text-gray-400">({usage.period})</span>
@@ -443,7 +443,7 @@ export function Billing() {
               <th className="px-4 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">
                 Free
               </th>
-              <th className="px-4 py-4 text-center text-sm font-semibold text-blue-600 dark:text-blue-400">
+              <th className="px-4 py-4 text-center text-sm font-semibold text-[#8B5CF6] dark:text-[#A78BFA]">
                 Pro $29
               </th>
               <th className="px-4 py-4 text-center text-sm font-semibold text-purple-600 dark:text-purple-400">
@@ -479,7 +479,7 @@ export function Billing() {
                       <span className="text-gray-400">—</span>
                     )
                   ) : (
-                    <span className="font-medium text-blue-700 dark:text-blue-400">{feature.pro}</span>
+                    <span className="font-medium text-#7C3AED dark:text-[#A78BFA]">{feature.pro}</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-center text-sm bg-purple-50/50 dark:bg-purple-900/10">
