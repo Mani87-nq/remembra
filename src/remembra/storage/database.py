@@ -364,7 +364,34 @@ class Database:
         return cursor.rowcount > 0
 
     async def delete_user_memories(self, user_id: str) -> int:
-        """Delete all memories for a user."""
+        """Delete all memories for a user.
+        
+        Properly handles FK constraints by deleting relationships first.
+        """
+        # First, get all memory IDs for this user
+        cursor = await self.conn.execute(
+            "SELECT id FROM memories WHERE user_id = ?", (user_id,)
+        )
+        memory_ids = [row[0] for row in await cursor.fetchall()]
+        
+        if not memory_ids:
+            return 0
+        
+        # Delete relationships that reference these memories as source
+        # (source_memory_id FK doesn't have CASCADE)
+        placeholders = ",".join("?" * len(memory_ids))
+        await self.conn.execute(
+            f"DELETE FROM relationships WHERE source_memory_id IN ({placeholders})",
+            memory_ids,
+        )
+        
+        # Delete memory_entities (has CASCADE but explicit is cleaner)
+        await self.conn.execute(
+            f"DELETE FROM memory_entities WHERE memory_id IN ({placeholders})",
+            memory_ids,
+        )
+        
+        # Now safe to delete the memories
         cursor = await self.conn.execute(
             "DELETE FROM memories WHERE user_id = ?", (user_id,)
         )
