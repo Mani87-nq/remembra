@@ -28,8 +28,28 @@ bearer_scheme = HTTPBearer(auto_error=False)
 class SignupRequest(BaseModel):
     """Request body for user signup."""
     email: EmailStr
-    password: str = Field(min_length=8, description="Password must be at least 8 characters")
+    password: str = Field(min_length=8, description="Password must be at least 8 characters with uppercase, lowercase, number, and special character")
     name: str | None = Field(None, max_length=100, description="User's display name")
+    
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        """Enforce password complexity requirements."""
+        import re
+        errors = []
+        if len(v) < 8:
+            errors.append("at least 8 characters")
+        if not re.search(r'[A-Z]', v):
+            errors.append("one uppercase letter")
+        if not re.search(r'[a-z]', v):
+            errors.append("one lowercase letter")
+        if not re.search(r'\d', v):
+            errors.append("one number")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]', v):
+            errors.append("one special character (!@#$%^&*...)")
+        if errors:
+            raise ValueError(f"Password must contain: {', '.join(errors)}")
+        return v
     
     @field_validator("name")
     @classmethod
@@ -59,13 +79,16 @@ class LoginRequest(BaseModel):
     """Request body for user login."""
     email: EmailStr
     password: str
+    totp_code: str | None = Field(None, min_length=6, max_length=6, description="6-digit TOTP code (required if 2FA enabled)")
 
 
 class LoginResponse(BaseModel):
     """Response for successful login."""
-    access_token: str
+    access_token: str | None = None
     token_type: str = "bearer"
-    user: dict
+    user: dict | None = None
+    requires_2fa: bool = False
+    message: str | None = None
 
 
 class LogoutResponse(BaseModel):
@@ -87,7 +110,27 @@ class ResetPasswordRequest(BaseModel):
     """Request body for password reset."""
     email: EmailStr
     token: str
-    new_password: str = Field(min_length=8, description="New password must be at least 8 characters")
+    new_password: str = Field(min_length=8, description="New password with complexity requirements")
+    
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        """Enforce password complexity requirements."""
+        import re
+        errors = []
+        if len(v) < 8:
+            errors.append("at least 8 characters")
+        if not re.search(r'[A-Z]', v):
+            errors.append("one uppercase letter")
+        if not re.search(r'[a-z]', v):
+            errors.append("one lowercase letter")
+        if not re.search(r'\d', v):
+            errors.append("one number")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]', v):
+            errors.append("one special character (!@#$%^&*...)")
+        if errors:
+            raise ValueError(f"Password must contain: {', '.join(errors)}")
+        return v
 
 
 class ResetPasswordResponse(BaseModel):
@@ -288,8 +331,10 @@ async def login(
     
     - **email**: Registered email address
     - **password**: Account password
+    - **totp_code**: 6-digit TOTP code (required if 2FA is enabled)
     
     Returns a JWT access token valid for 7 days.
+    If 2FA is enabled and no totp_code provided, returns requires_2fa=true.
     """
     user_manager = await get_user_manager(request)
     
@@ -303,6 +348,22 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=error,
         )
+    
+    # Check if 2FA is enabled
+    if await user_manager.is_totp_enabled(user.id):
+        if not body.totp_code:
+            # Password correct but need 2FA code
+            return LoginResponse(
+                requires_2fa=True,
+                message="2FA code required",
+            )
+        
+        # Verify TOTP code
+        if not await user_manager.verify_totp(user.id, body.totp_code):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid 2FA code",
+            )
     
     return LoginResponse(
         access_token=token,
@@ -502,7 +563,27 @@ async def update_profile(
 class ChangePasswordRequest(BaseModel):
     """Request body for changing password."""
     current_password: str = Field(description="Current password for verification")
-    new_password: str = Field(min_length=8, description="New password (at least 8 characters)")
+    new_password: str = Field(min_length=8, description="New password with complexity requirements")
+    
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        """Enforce password complexity requirements."""
+        import re
+        errors = []
+        if len(v) < 8:
+            errors.append("at least 8 characters")
+        if not re.search(r'[A-Z]', v):
+            errors.append("one uppercase letter")
+        if not re.search(r'[a-z]', v):
+            errors.append("one lowercase letter")
+        if not re.search(r'\d', v):
+            errors.append("one number")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]', v):
+            errors.append("one special character (!@#$%^&*...)")
+        if errors:
+            raise ValueError(f"Password must contain: {', '.join(errors)}")
+        return v
 
 
 class ChangePasswordResponse(BaseModel):
@@ -592,3 +673,160 @@ async def delete_account(
     await user_manager.invalidate_token(current_user["id"], current_user["token"])
     
     return DeleteAccountResponse()
+
+
+# ---------------------------------------------------------------------------
+# Two-Factor Authentication (2FA) Endpoints
+# ---------------------------------------------------------------------------
+
+
+class TotpSetupResponse(BaseModel):
+    """Response for TOTP setup initiation."""
+    secret: str
+    provisioning_uri: str
+    message: str = "Scan the QR code with your authenticator app, then verify"
+
+
+class TotpVerifyRequest(BaseModel):
+    """Request body for TOTP verification."""
+    code: str = Field(min_length=6, max_length=6, description="6-digit TOTP code")
+
+
+class TotpVerifyResponse(BaseModel):
+    """Response for TOTP verification/enable."""
+    message: str = "Two-factor authentication enabled successfully"
+
+
+class TotpDisableRequest(BaseModel):
+    """Request body for TOTP disable."""
+    password: str = Field(description="Password for confirmation")
+
+
+class TotpDisableResponse(BaseModel):
+    """Response for TOTP disable."""
+    message: str = "Two-factor authentication disabled"
+
+
+class TotpStatusResponse(BaseModel):
+    """Response for TOTP status check."""
+    enabled: bool
+    message: str
+
+
+@router.post(
+    "/2fa/setup",
+    response_model=TotpSetupResponse,
+    responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}},
+)
+async def setup_totp(
+    request: Request,
+    current_user: CurrentUser,
+) -> TotpSetupResponse:
+    """
+    Initiate 2FA setup.
+    
+    Returns a secret and provisioning URI for QR code generation.
+    User must verify with a code before 2FA is enabled.
+    
+    Requires a valid Bearer token in the Authorization header.
+    """
+    user_manager = await get_user_manager(request)
+    
+    secret, provisioning_uri, error = await user_manager.setup_totp(current_user["id"])
+    
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error,
+        )
+    
+    return TotpSetupResponse(
+        secret=secret,
+        provisioning_uri=provisioning_uri,
+    )
+
+
+@router.post(
+    "/2fa/enable",
+    response_model=TotpVerifyResponse,
+    responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}},
+)
+async def enable_totp(
+    request: Request,
+    body: TotpVerifyRequest,
+    current_user: CurrentUser,
+) -> TotpVerifyResponse:
+    """
+    Enable 2FA by verifying a TOTP code.
+    
+    Must call /2fa/setup first to get the secret.
+    
+    - **code**: 6-digit code from authenticator app
+    
+    Requires a valid Bearer token in the Authorization header.
+    """
+    user_manager = await get_user_manager(request)
+    
+    success, error = await user_manager.enable_totp(current_user["id"], body.code)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error or "Failed to enable 2FA",
+        )
+    
+    return TotpVerifyResponse()
+
+
+@router.post(
+    "/2fa/disable",
+    response_model=TotpDisableResponse,
+    responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}},
+)
+async def disable_totp(
+    request: Request,
+    body: TotpDisableRequest,
+    current_user: CurrentUser,
+) -> TotpDisableResponse:
+    """
+    Disable 2FA for the current user.
+    
+    - **password**: Password for security confirmation
+    
+    Requires a valid Bearer token in the Authorization header.
+    """
+    user_manager = await get_user_manager(request)
+    
+    success, error = await user_manager.disable_totp(current_user["id"], body.password)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error or "Failed to disable 2FA",
+        )
+    
+    return TotpDisableResponse()
+
+
+@router.get(
+    "/2fa/status",
+    response_model=TotpStatusResponse,
+    responses={401: {"model": ErrorResponse}},
+)
+async def get_totp_status(
+    request: Request,
+    current_user: CurrentUser,
+) -> TotpStatusResponse:
+    """
+    Check if 2FA is enabled for the current user.
+    
+    Requires a valid Bearer token in the Authorization header.
+    """
+    user_manager = await get_user_manager(request)
+    
+    enabled = await user_manager.is_totp_enabled(current_user["id"])
+    
+    return TotpStatusResponse(
+        enabled=enabled,
+        message="2FA is enabled" if enabled else "2FA is not enabled",
+    )

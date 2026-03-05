@@ -36,6 +36,10 @@ class Settings(BaseSettings):
         ],
         description="Allowed CORS origins. Set to ['*'] only for development.",
     )
+    cors_filter_localhost_in_production: bool = Field(
+        True,
+        description="Automatically remove localhost origins when debug=False",
+    )
 
     # -----------------------------------------------------------------------
     # Qdrant (vector store)
@@ -367,7 +371,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode='after')
     def check_security_settings(self) -> 'Settings':
-        """Warn about insecure settings in production."""
+        """Warn about insecure settings in production and filter CORS origins."""
         if self.auth_enabled and not self.debug:
             # Check JWT secret
             if self.jwt_secret == "remembra-jwt-secret-change-in-production":
@@ -377,6 +381,16 @@ class Settings(BaseSettings):
                     UserWarning,
                     stacklevel=2,
                 )
+        
+        # Filter out localhost from CORS origins in production mode
+        if not self.debug and self.cors_filter_localhost_in_production:
+            # Use object.__setattr__ since model is frozen after validation
+            filtered = [
+                origin for origin in self.cors_origins 
+                if "localhost" not in origin and "127.0.0.1" not in origin
+            ]
+            object.__setattr__(self, 'cors_origins', filtered)
+        
         return self
 
 

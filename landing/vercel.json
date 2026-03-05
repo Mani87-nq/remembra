@@ -1,5 +1,17 @@
 {
   "buildCommand": null,
   "outputDirectory": ".",
-  "framework": null
+  "framework": null,
+  "redirects": [
+    {
+      "source": "/docs",
+      "destination": "https://docs.remembra.dev",
+      "permanent": true
+    },
+    {
+      "source": "/docs/:path*",
+      "destination": "https://docs.remembra.dev/:path*",
+      "permanent": true
+    }
+  ]
 }

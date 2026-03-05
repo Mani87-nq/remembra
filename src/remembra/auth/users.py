@@ -29,6 +29,7 @@ class User:
     created_at: datetime
     email_verified: bool = False
     is_active: bool = True
+    totp_enabled: bool = False
 
 
 @dataclass
@@ -377,3 +378,119 @@ class UserManager:
         log.info("account_deactivated", user_id=user_id)
         
         return True, None
+    
+    # -----------------------------------------------------------------------
+    # Two-Factor Authentication (2FA) Methods
+    # -----------------------------------------------------------------------
+    
+    async def setup_totp(self, user_id: str) -> tuple[str | None, str | None, str | None]:
+        """
+        Generate a TOTP secret for 2FA setup.
+        
+        Returns (secret, provisioning_uri, None) on success,
+        (None, None, error_message) on failure.
+        """
+        try:
+            import pyotp
+        except ImportError:
+            return None, None, "2FA not available - pyotp not installed"
+        
+        user_data = await self.db.get_user_by_id(user_id)
+        if not user_data:
+            return None, None, "User not found"
+        
+        # Generate new secret
+        secret = pyotp.random_base32()
+        
+        # Generate provisioning URI for QR code
+        totp = pyotp.TOTP(secret)
+        provisioning_uri = totp.provisioning_uri(
+            name=user_data["email"],
+            issuer_name="Remembra"
+        )
+        
+        # Store secret (not yet enabled)
+        await self.db.save_totp_secret(user_id, secret)
+        
+        log.info("totp_setup_initiated", user_id=user_id)
+        
+        return secret, provisioning_uri, None
+    
+    async def enable_totp(self, user_id: str, code: str) -> tuple[bool, str | None]:
+        """
+        Verify TOTP code and enable 2FA for user.
+        
+        Returns (True, None) on success, (False, error_message) on failure.
+        """
+        try:
+            import pyotp
+        except ImportError:
+            return False, "2FA not available - pyotp not installed"
+        
+        user_data = await self.db.get_user_by_id(user_id)
+        if not user_data:
+            return False, "User not found"
+        
+        secret = user_data.get("totp_secret")
+        if not secret:
+            return False, "2FA setup not initiated. Call setup first."
+        
+        # Verify the code
+        totp = pyotp.TOTP(secret)
+        if not totp.verify(code, valid_window=1):
+            return False, "Invalid verification code"
+        
+        # Enable 2FA
+        await self.db.enable_totp(user_id)
+        
+        log.info("totp_enabled", user_id=user_id)
+        
+        return True, None
+    
+    async def disable_totp(self, user_id: str, password: str) -> tuple[bool, str | None]:
+        """
+        Disable 2FA for user (requires password confirmation).
+        
+        Returns (True, None) on success, (False, error_message) on failure.
+        """
+        user_data = await self.db.get_user_by_id(user_id)
+        if not user_data:
+            return False, "User not found"
+        
+        # Verify password
+        if not self.verify_password(password, user_data["password_hash"]):
+            return False, "Password is incorrect"
+        
+        # Disable 2FA
+        await self.db.disable_totp(user_id)
+        
+        log.info("totp_disabled", user_id=user_id)
+        
+        return True, None
+    
+    async def verify_totp(self, user_id: str, code: str) -> bool:
+        """
+        Verify a TOTP code for login.
+        
+        Returns True if code is valid, False otherwise.
+        """
+        try:
+            import pyotp
+        except ImportError:
+            return False
+        
+        user_data = await self.db.get_user_by_id(user_id)
+        if not user_data:
+            return False
+        
+        secret = user_data.get("totp_secret")
+        if not secret:
+            return False
+        
+        totp = pyotp.TOTP(secret)
+        return totp.verify(code, valid_window=1)
+    
+    async def is_totp_enabled(self, user_id: str) -> bool:
+        """Check if 2FA is enabled for user."""
+        user_data = await self.db.get_user_by_id(user_id)
+        return user_data.get("totp_enabled", False) if user_data else False

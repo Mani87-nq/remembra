@@ -78,7 +78,9 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login_at TIMESTAMP,
     email_verified BOOLEAN DEFAULT FALSE,
-    is_active BOOLEAN DEFAULT TRUE
+    is_active BOOLEAN DEFAULT TRUE,
+    totp_secret TEXT,
+    totp_enabled BOOLEAN DEFAULT FALSE
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -208,10 +210,13 @@ class Database:
     async def _run_migrations(self) -> None:
         """Apply migrations for existing databases (adds missing columns)."""
         # Memory provenance columns (Week 7)
+        # TOTP/2FA columns (security hardening)
         migrations = [
             "ALTER TABLE memories ADD COLUMN source TEXT DEFAULT 'user_input'",
             "ALTER TABLE memories ADD COLUMN trust_score REAL DEFAULT 1.0",
             "ALTER TABLE memories ADD COLUMN checksum TEXT",
+            "ALTER TABLE users ADD COLUMN totp_secret TEXT",
+            "ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN DEFAULT FALSE",
         ]
         
         for migration in migrations:
@@ -1223,6 +1228,34 @@ class Database:
         """Delete password reset token for a user."""
         await self.conn.execute(
             "DELETE FROM password_reset_tokens WHERE user_id = ?",
+            (user_id,),
+        )
+        await self.conn.commit()
+
+    # -----------------------------------------------------------------------
+    # Two-Factor Authentication (TOTP) operations
+    # -----------------------------------------------------------------------
+
+    async def save_totp_secret(self, user_id: str, secret: str) -> None:
+        """Save TOTP secret for a user (but don't enable yet)."""
+        await self.conn.execute(
+            "UPDATE users SET totp_secret = ? WHERE id = ?",
+            (secret, user_id),
+        )
+        await self.conn.commit()
+
+    async def enable_totp(self, user_id: str) -> None:
+        """Enable TOTP for a user (after verification)."""
+        await self.conn.execute(
+            "UPDATE users SET totp_enabled = TRUE WHERE id = ?",
+            (user_id,),
+        )
+        await self.conn.commit()
+
+    async def disable_totp(self, user_id: str) -> None:
+        """Disable TOTP and clear secret for a user."""
+        await self.conn.execute(
+            "UPDATE users SET totp_enabled = FALSE, totp_secret = NULL WHERE id = ?",
             (user_id,),
         )
         await self.conn.commit()
