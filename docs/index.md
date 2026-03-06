@@ -3,8 +3,8 @@
 **Persistent memory for AI applications. Self-host in 5 minutes.**
 
 <div class="admonition tip" markdown>
-<p class="admonition-title">🚀 v0.7.1 Released!</p>
-<p>Now with <strong>Conversation Ingestion</strong>, <strong>Sleep-Time Compute</strong>, <strong>PII Detection</strong>, <strong>Anomaly Detection</strong>, and <strong>TypeScript SDK</strong>. <a href="#whats-new-in-v070">See what's new →</a></p>
+<p class="admonition-title">🚀 v0.7.2 Released!</p>
+<p>Now with <strong>EntityGraph Performance Fix</strong>, <strong>Admin rebuild-vectors endpoint</strong>, <strong>Troubleshooting Guide</strong>, and <strong>Setup Checklist</strong>. <a href="#whats-new-in-v072">See what's new →</a></p>
 </div>
 
 ---
@@ -201,7 +201,53 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 [Get Started :material-arrow-right:](getting-started/quickstart.md){ .md-button .md-button--primary }
 [View on GitHub :material-github:](https://github.com/remembra-ai/remembra){ .md-button }
 
-## What's New in v0.7.1
+## What's New in v0.7.2
+
+<div class="grid cards" markdown>
+
+-   :material-lightning-bolt:{ .lg .middle } __EntityGraph Performance__
+
+    ---
+
+    Eliminated N+1 API calls. Single `/debug/entities/graph` endpoint replaces 50+ individual calls for blazing fast graph loading.
+
+-   :material-database-refresh:{ .lg .middle } __Admin: rebuild-vectors__
+
+    ---
+
+    New `POST /admin/rebuild-vectors` endpoint to fix memories missing from Qdrant. Self-heal vector sync issues without data loss.
+
+-   :material-book-open-page-variant:{ .lg .middle } __Troubleshooting Guide__
+
+    ---
+
+    Comprehensive diagnosis and fix guide for common issues. Step-by-step instructions for self-hosters.
+
+    [View Guide →](docs/TROUBLESHOOTING.md)
+
+-   :material-clipboard-check:{ .lg .middle } __Setup Checklist__
+
+    ---
+
+    10-step verification checklist ensures your Remembra instance is production-ready.
+
+    [View Checklist →](docs/SETUP-CHECKLIST.md)
+
+-   :material-bug-check:{ .lg .middle } __Error Display Fix__
+
+    ---
+
+    Dashboard now shows actual error messages instead of `[object Object]`. Pydantic validation errors properly parsed.
+
+-   :material-filter:{ .lg .middle } __Project Filtering Fix__
+
+    ---
+
+    Fixed recall defaulting to wrong project_id. Memories now correctly filtered by project scope.
+
+</div>
+
+### Previous Release (v0.7.1)
 
 <div class="grid cards" markdown>
 
@@ -209,7 +255,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
     ---
 
-    Automatically extract memories from chat conversations. Pipe in your conversation history and get structured memories out.
+    Automatically extract memories from chat conversations.
 
     [Learn more →](guides/conversation-ingestion.md)
 
@@ -217,7 +263,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
     ---
 
-    Background consolidation that runs during idle time. Deduplicates memories, resolves entity aliases, and improves quality automatically.
+    Background consolidation during idle time.
 
     [Learn more →](guides/sleep-time-compute.md)
 
@@ -225,37 +271,15 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
     ---
 
-    OWASP ASI06 compliant. Automatically detect, redact, or block sensitive data (SSN, credit cards, API keys) before storage.
+    OWASP ASI06 compliant sensitive data handling.
 
     [Learn more →](guides/security.md#pii-detection)
-
--   :material-alert-circle:{ .lg .middle } __Anomaly Detection__
-
-    ---
-
-    Monitor for unusual patterns that could indicate memory poisoning attacks, bulk scraping, or system abuse.
-
-    [Learn more →](guides/security.md#anomaly-detection)
 
 -   :material-language-typescript:{ .lg .middle } __TypeScript SDK__
 
     ---
 
-    First-class JavaScript/TypeScript support. `npm install remembra` and you're ready.
-
-    ```typescript
-    import { Remembra } from 'remembra';
-    const memory = new Remembra({ url, userId });
-    await memory.store('...');
-    ```
-
--   :material-chart-bar:{ .lg .middle } __Enterprise Features (Free)__
-
-    ---
-
-    Webhooks, RBAC, Import/Export, Audit Logging — all included in the open source version. No paywall.
-
-    [See all features →](guides/webhooks.md)
+    First-class JavaScript/TypeScript support.
 
 </div>
 
@@ -274,7 +298,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 │  (LLM-based) │ (Resolution) │(Hybrid Search)│  (TTL/Decay)  │
 ├──────────────┼──────────────┼───────────────┼───────────────┤
 │  Ingestion   │  Sleep-Time  │  PII Detect   │   Anomaly     │
-│  (v0.7.1)    │  Compute     │  (OWASP)      │   Detection   │
+│  (v0.7.2)    │  Compute     │  (OWASP)      │   Detection   │
 ├──────────────┴──────────────┴───────────────┴───────────────┤
 │                      Storage Layer                           │
 │         Qdrant (vectors) + SQLite (metadata/graph)          │
