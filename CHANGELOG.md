@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Dashboard: EntityGraph Performance** — Changed from N+1 API calls to single `/debug/entities/graph` endpoint
+- **Dashboard: Error Display** — Fixed `[object Object]` showing instead of actual error messages
+- **Dashboard: TypeScript** — Resolved strict mode compilation errors
+- **API: Project Filtering** — Fixed recall defaulting to wrong project_id
+
+### Added
+- **Admin: rebuild-vectors endpoint** — `POST /admin/rebuild-vectors` to fix memories missing from Qdrant
+- **Docs: Troubleshooting Guide** — Comprehensive diagnosis and fix guide for common issues
+- **Docs: Setup Checklist** — 10-step verification checklist for self-hosters
+
 ## [0.7.1] - 2026-03-03
 
 ### Fixed
