@@ -213,6 +213,10 @@ class Settings(BaseSettings):
         False,
         description="Enable cloud features (billing, usage metering, plan enforcement)",
     )
+    owner_emails: list[str] = Field(
+        default_factory=list,
+        description="Email addresses that get automatic Enterprise access (owner bypass)",
+    )
     stripe_secret_key: str | None = Field(
         None,
         description="Stripe secret key (sk_live_xxx or sk_test_xxx)",

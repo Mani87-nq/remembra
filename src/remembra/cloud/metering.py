@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from remembra.cloud.plans import PlanTier, UsageSnapshot
+from remembra.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +98,29 @@ class UsageMeter:
             return None
         return dict(row)
 
+    async def get_user_email(self, user_id: str) -> str | None:
+        """Get user's email from user_id."""
+        cursor = await self._db.conn.execute(
+            "SELECT email FROM users WHERE id = ?",
+            (user_id,),
+        )
+        row = await cursor.fetchone()
+        return row[0] if row else None
+
     async def get_tenant_plan(self, user_id: str) -> PlanTier:
-        """Get the plan tier for a user. Returns FREE if not registered."""
+        """Get the plan tier for a user. Returns FREE if not registered.
+        
+        Owner emails configured via REMEMBRA_OWNER_EMAILS automatically
+        get Enterprise access without requiring database entries.
+        """
+        # Owner bypass: check if user's email is in owner_emails
+        settings = get_settings()
+        if settings.owner_emails:
+            email = await self.get_user_email(user_id)
+            if email and email.lower() in [e.lower() for e in settings.owner_emails]:
+                logger.info(f"Owner bypass: {email} → Enterprise")
+                return PlanTier.ENTERPRISE
+        
         tenant = await self.get_tenant(user_id)
         if tenant is None:
             return PlanTier.FREE
