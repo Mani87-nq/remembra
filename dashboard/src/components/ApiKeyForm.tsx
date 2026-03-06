@@ -8,8 +8,8 @@ interface ApiKeyFormProps {
 
 export function ApiKeyForm({ onAuthenticated }: ApiKeyFormProps) {
   const [apiKey, setApiKey] = useState('');
-  const [userId, setUserId] = useState(api.getUserId());
-  const [projectId, setProjectId] = useState(api.getProjectId());
+  const [userId, setUserId] = useState(api.getUserId() || '');
+  const [projectId, setProjectId] = useState(api.getProjectId() || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

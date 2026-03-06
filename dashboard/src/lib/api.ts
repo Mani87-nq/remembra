@@ -266,7 +266,7 @@ class ApiClient {
   async storeMemory(content: string, projectId?: string, ttl?: string): Promise<Memory> {
     const body: Record<string, string> = {
       content,
-      project_id: projectId || this.getProjectId(),
+      project_id: projectId || this.getProjectId() || 'default',
       user_id: this.getUserId(),
     };
     if (ttl) {

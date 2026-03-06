@@ -13,13 +13,14 @@ import { MemoryTimeline } from '../components/MemoryTimeline';
 import { ApiKeyManager } from '../components/ApiKeyManager';
 import { Billing } from '../components/Billing';
 import { Settings } from './Settings';
+import { Admin } from './Admin';
 import { StatsOverview } from '../components/StatsOverview';
 import { EmptyState } from '../components/EmptyState';
 import { type Memory } from '../lib/api';
 import { RefreshCw, Plus } from 'lucide-react';
 import clsx from 'clsx';
 
-export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings';
+export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings' | 'admin';
 
 interface DashboardProps {
   activeTab: TabType;
@@ -277,6 +278,9 @@ export function Dashboard({ activeTab, onLogout }: DashboardProps) {
 
       case 'settings':
         return <Settings onLogout={onLogout || (() => {})} />;
+
+      case 'admin':
+        return <Admin />;
 
       default:
         return null;

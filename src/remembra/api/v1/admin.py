@@ -1,7 +1,8 @@
 """Admin endpoints – /api/v1/admin.
 
-Provides audit log export and role management.
+Provides audit log export, role management, and superadmin user management.
 All endpoints require admin role or equivalent permissions.
+Superadmin endpoints require owner_emails access.
 """
 
 from __future__ import annotations
@@ -9,6 +10,8 @@ from __future__ import annotations
 import csv
 import io
 import json
+import secrets
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -18,8 +21,13 @@ from pydantic import BaseModel, Field
 from remembra.auth.middleware import CurrentUser
 from remembra.auth.rbac import Permission, Role, RoleManager
 from remembra.auth.scopes import RequireAdmin, RequireAuditExport
+from remembra.auth.users import UserManager
+from remembra.cloud.metering import UsageMeter
+from remembra.cloud.plans import PlanTier, get_plan
+from remembra.config import get_settings
 from remembra.core.limiter import limiter
 from remembra.security.audit import AuditLogger
+from remembra.storage.database import Database
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -37,8 +45,56 @@ def get_role_manager(request: Request) -> RoleManager | None:
     return getattr(request.app.state, "role_manager", None)
 
 
+def get_database(request: Request) -> Database:
+    return request.app.state.db
+
+
+def get_usage_meter(request: Request) -> UsageMeter | None:
+    return getattr(request.app.state, "usage_meter", None)
+
+
+async def get_user_manager(request: Request) -> UserManager:
+    """Get UserManager instance (creates on demand like auth.py)."""
+    db: Database = request.app.state.db
+    settings = get_settings()
+    return UserManager(db, settings.jwt_secret)
+
+
 AuditLoggerDep = Annotated[AuditLogger, Depends(get_audit_logger)]
 RoleManagerDep = Annotated[RoleManager | None, Depends(get_role_manager)]
+DatabaseDep = Annotated[Database, Depends(get_database)]
+UsageMeterDep = Annotated[UsageMeter | None, Depends(get_usage_meter)]
+UserManagerDep = Annotated[UserManager, Depends(get_user_manager)]
+
+
+async def require_superadmin(
+    request: Request,
+    current_user: CurrentUser,
+) -> None:
+    """Dependency that checks if the current user is a superadmin (in owner_emails)."""
+    settings = get_settings()
+    
+    # Get user's email from the database
+    db: Database = request.app.state.db
+    user_data = await db.get_user_by_id(current_user.user_id)
+    
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User not found",
+        )
+    
+    user_email = user_data.get("email", "").lower()
+    owner_emails = [e.lower() for e in settings.owner_emails] if settings.owner_emails else []
+    
+    if user_email not in owner_emails:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Superadmin access required. Contact support@remembra.dev",
+        )
+
+
+RequireSuperadmin = Annotated[None, Depends(require_superadmin)]
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +123,58 @@ class RoleListResponse(BaseModel):
 class AuditListResponse(BaseModel):
     events: list[dict[str, Any]]
     total: int
+
+
+# ---------------------------------------------------------------------------
+# Superadmin User Management Models
+# ---------------------------------------------------------------------------
+
+
+class UserListItem(BaseModel):
+    """User summary for list view."""
+    id: str
+    email: str
+    name: str | None
+    plan: str
+    memories_count: int
+    api_keys_count: int
+    created_at: str
+    last_login_at: str | None
+    is_active: bool
+
+
+class UserListResponse(BaseModel):
+    """Response for user list endpoint."""
+    users: list[UserListItem]
+    total: int
+
+
+class UserDetailResponse(BaseModel):
+    """Full user details including usage."""
+    id: str
+    email: str
+    name: str | None
+    plan: str
+    stripe_customer_id: str | None
+    stripe_subscription_id: str | None
+    created_at: str
+    last_login_at: str | None
+    is_active: bool
+    email_verified: bool
+    totp_enabled: bool
+    usage: dict[str, Any]
+    limits: dict[str, Any]
+
+
+class UpdateUserTierRequest(BaseModel):
+    """Request to update a user's plan tier."""
+    plan: str = Field(description="Plan tier: free, pro, team, enterprise")
+
+
+class AdminResetPasswordResponse(BaseModel):
+    """Response with temporary password after admin reset."""
+    temporary_password: str
+    message: str
 
 
 # ---------------------------------------------------------------------------
@@ -388,4 +496,464 @@ async def consolidation_status(
         "enabled": True,
         "running": sleep_worker.running,
         "last_run": sleep_worker.last_run.isoformat() if sleep_worker.last_run else None,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Superadmin User Management Endpoints
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/users",
+    response_model=UserListResponse,
+    summary="List all users (superadmin only)",
+)
+@limiter.limit("30/minute")
+async def list_all_users(
+    request: Request,
+    db: DatabaseDep,
+    usage_meter: UsageMeterDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+    search: str | None = Query(None, description="Search by email or name"),
+    plan: str | None = Query(None, description="Filter by plan tier"),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+) -> UserListResponse:
+    """
+    List all registered users with their plan and usage summary.
+    
+    **Superadmin only** - requires owner_emails access.
+    """
+    # Build query
+    query = "SELECT * FROM users WHERE 1=1"
+    params: list[Any] = []
+    
+    if search:
+        query += " AND (email LIKE ? OR name LIKE ?)"
+        params.extend([f"%{search}%", f"%{search}%"])
+    
+    query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+    
+    cursor = await db.conn.execute(query, params)
+    rows = await cursor.fetchall()
+    
+    # Get total count
+    count_query = "SELECT COUNT(*) FROM users WHERE 1=1"
+    count_params: list[Any] = []
+    if search:
+        count_query += " AND (email LIKE ? OR name LIKE ?)"
+        count_params.extend([f"%{search}%", f"%{search}%"])
+    
+    count_cursor = await db.conn.execute(count_query, count_params)
+    total = (await count_cursor.fetchone())[0]
+    
+    users = []
+    for row in rows:
+        user_dict = dict(row)
+        user_id = user_dict["id"]
+        
+        # Get plan from cloud_tenants
+        plan_tier = "free"
+        if usage_meter:
+            plan_tier = (await usage_meter.get_tenant_plan(user_id)).value
+        
+        # Filter by plan if specified
+        if plan and plan_tier != plan.lower():
+            continue
+        
+        # Get memory count
+        mem_cursor = await db.conn.execute(
+            "SELECT COUNT(*) FROM memories WHERE user_id = ?",
+            (user_id,),
+        )
+        memories_count = (await mem_cursor.fetchone())[0]
+        
+        # Get API key count
+        key_cursor = await db.conn.execute(
+            "SELECT COUNT(*) FROM api_keys WHERE user_id = ? AND active = TRUE",
+            (user_id,),
+        )
+        api_keys_count = (await key_cursor.fetchone())[0]
+        
+        users.append(UserListItem(
+            id=user_id,
+            email=user_dict["email"],
+            name=user_dict.get("name"),
+            plan=plan_tier,
+            memories_count=memories_count,
+            api_keys_count=api_keys_count,
+            created_at=user_dict["created_at"],
+            last_login_at=user_dict.get("last_login_at"),
+            is_active=user_dict.get("is_active", True),
+        ))
+    
+    return UserListResponse(users=users, total=total)
+
+
+@router.get(
+    "/users/{user_id}",
+    response_model=UserDetailResponse,
+    summary="Get user details (superadmin only)",
+)
+@limiter.limit("30/minute")
+async def get_user_details(
+    request: Request,
+    user_id: str,
+    db: DatabaseDep,
+    usage_meter: UsageMeterDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+) -> UserDetailResponse:
+    """
+    Get full user details including usage and plan limits.
+    
+    **Superadmin only** - requires owner_emails access.
+    """
+    user_data = await db.get_user_by_id(user_id)
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    
+    # Get tenant info (plan, Stripe IDs)
+    tenant = None
+    plan_tier = PlanTier.FREE
+    if usage_meter:
+        tenant = await usage_meter.get_tenant(user_id)
+        plan_tier = await usage_meter.get_tenant_plan(user_id)
+    
+    # Get usage snapshot
+    usage = {}
+    if usage_meter:
+        snapshot = await usage_meter.get_usage_snapshot(user_id)
+        usage = {
+            "memories_stored": snapshot.memories_stored,
+            "recalls_this_month": snapshot.recalls_this_month,
+            "stores_this_month": snapshot.stores_this_month,
+            "api_keys_active": snapshot.api_keys_active,
+        }
+    
+    # Get plan limits
+    limits_obj = get_plan(plan_tier)
+    limits = {
+        "max_memories": limits_obj.max_memories,
+        "max_recalls_per_month": limits_obj.max_recalls_per_month,
+        "max_stores_per_month": limits_obj.max_stores_per_month,
+        "max_api_keys": limits_obj.max_api_keys,
+        "has_webhooks": limits_obj.has_webhooks,
+        "has_priority_support": limits_obj.has_priority_support,
+    }
+    
+    return UserDetailResponse(
+        id=user_data["id"],
+        email=user_data["email"],
+        name=user_data.get("name"),
+        plan=plan_tier.value,
+        stripe_customer_id=tenant.get("stripe_customer_id") if tenant else None,
+        stripe_subscription_id=tenant.get("stripe_subscription_id") if tenant else None,
+        created_at=user_data["created_at"],
+        last_login_at=user_data.get("last_login_at"),
+        is_active=user_data.get("is_active", True),
+        email_verified=user_data.get("email_verified", False),
+        totp_enabled=user_data.get("totp_enabled", False),
+        usage=usage,
+        limits=limits,
+    )
+
+
+@router.patch(
+    "/users/{user_id}/tier",
+    summary="Update user's plan tier (superadmin only)",
+)
+@limiter.limit("10/minute")
+async def update_user_tier(
+    request: Request,
+    user_id: str,
+    body: UpdateUserTierRequest,
+    db: DatabaseDep,
+    usage_meter: UsageMeterDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+) -> dict[str, Any]:
+    """
+    Update a user's plan tier manually (bypasses Stripe).
+    
+    Use this for:
+    - Upgrading users to Pro/Team/Enterprise manually
+    - Handling enterprise sales
+    - Fixing billing issues
+    
+    **Superadmin only** - requires owner_emails access.
+    """
+    # Validate user exists
+    user_data = await db.get_user_by_id(user_id)
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    
+    # Validate plan tier
+    try:
+        new_plan = PlanTier(body.plan.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid plan: {body.plan}. Valid plans: free, pro, team, enterprise",
+        )
+    
+    if usage_meter is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Cloud features not enabled",
+        )
+    
+    # Register/update tenant with new plan
+    await usage_meter.register_tenant(user_id, plan=new_plan)
+    
+    return {
+        "status": "updated",
+        "user_id": user_id,
+        "email": user_data["email"],
+        "new_plan": new_plan.value,
+        "message": f"User upgraded to {new_plan.value} plan",
+    }
+
+
+@router.delete(
+    "/users/{user_id}",
+    summary="Delete user and all data (superadmin only)",
+)
+@limiter.limit("5/minute")
+async def delete_user(
+    request: Request,
+    user_id: str,
+    db: DatabaseDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+    confirm: bool = Query(False, description="Must be true to confirm deletion"),
+) -> dict[str, Any]:
+    """
+    Permanently delete a user and ALL their data.
+    
+    This is a destructive operation that removes:
+    - User account
+    - All memories
+    - All API keys
+    - All entities and relationships
+    - All usage records
+    
+    **Superadmin only** - requires owner_emails access.
+    **Requires confirm=true** to execute.
+    """
+    if not confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Add ?confirm=true to confirm permanent deletion",
+        )
+    
+    user_data = await db.get_user_by_id(user_id)
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    
+    email = user_data["email"]
+    
+    # Delete in order to handle foreign keys
+    # 1. Delete memories and related data
+    await db.conn.execute("DELETE FROM memory_entities WHERE memory_id IN (SELECT id FROM memories WHERE user_id = ?)", (user_id,))
+    await db.conn.execute("DELETE FROM memories_fts WHERE user_id = ?", (user_id,))
+    await db.conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
+    
+    # 2. Delete entities and relationships
+    await db.conn.execute("DELETE FROM relationships WHERE from_entity_id IN (SELECT id FROM entities WHERE user_id = ?)", (user_id,))
+    await db.conn.execute("DELETE FROM relationships WHERE to_entity_id IN (SELECT id FROM entities WHERE user_id = ?)", (user_id,))
+    await db.conn.execute("DELETE FROM entities WHERE user_id = ?", (user_id,))
+    
+    # 3. Delete API keys
+    await db.conn.execute("DELETE FROM api_keys WHERE user_id = ?", (user_id,))
+    
+    # 4. Delete audit logs for user
+    await db.conn.execute("DELETE FROM audit_log WHERE user_id = ?", (user_id,))
+    
+    # 5. Delete cloud tenant record
+    await db.conn.execute("DELETE FROM cloud_tenants WHERE user_id = ?", (user_id,))
+    await db.conn.execute("DELETE FROM cloud_usage_daily WHERE user_id = ?", (user_id,))
+    
+    # 6. Delete password reset tokens
+    await db.conn.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
+    
+    # 7. Delete token blacklist entries
+    await db.conn.execute("DELETE FROM token_blacklist WHERE user_id = ?", (user_id,))
+    
+    # 8. Finally delete user
+    await db.conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    
+    await db.conn.commit()
+    
+    return {
+        "status": "deleted",
+        "user_id": user_id,
+        "email": email,
+        "message": "User and all associated data permanently deleted",
+    }
+
+
+@router.post(
+    "/users/{user_id}/reset-password",
+    response_model=AdminResetPasswordResponse,
+    summary="Admin reset user password (superadmin only)",
+)
+@limiter.limit("10/minute")
+async def admin_reset_password(
+    request: Request,
+    user_id: str,
+    db: DatabaseDep,
+    user_manager: UserManagerDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+) -> AdminResetPasswordResponse:
+    """
+    Reset a user's password to a temporary random password.
+    
+    The temporary password is returned in the response and should
+    be communicated to the user securely. They should change it
+    immediately upon login.
+    
+    **Superadmin only** - requires owner_emails access.
+    """
+    user_data = await db.get_user_by_id(user_id)
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    
+    # Generate a random temporary password
+    temp_password = secrets.token_urlsafe(12)
+    
+    # Hash and update
+    password_hash = user_manager.hash_password(temp_password)
+    await db.update_user_password(user_id, password_hash)
+    
+    return AdminResetPasswordResponse(
+        temporary_password=temp_password,
+        message=f"Password reset for {user_data['email']}. User must change password on next login.",
+    )
+
+
+@router.post(
+    "/users/{user_id}/activate",
+    summary="Activate/deactivate user account (superadmin only)",
+)
+@limiter.limit("10/minute")
+async def toggle_user_active(
+    request: Request,
+    user_id: str,
+    db: DatabaseDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+    active: bool = Query(..., description="Set account active status"),
+) -> dict[str, Any]:
+    """
+    Activate or deactivate a user account.
+    
+    Deactivated users cannot log in but their data is preserved.
+    
+    **Superadmin only** - requires owner_emails access.
+    """
+    user_data = await db.get_user_by_id(user_id)
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    
+    await db.conn.execute(
+        "UPDATE users SET is_active = ?, updated_at = ? WHERE id = ?",
+        (active, datetime.now(UTC).isoformat(), user_id),
+    )
+    await db.conn.commit()
+    
+    status_str = "activated" if active else "deactivated"
+    return {
+        "status": status_str,
+        "user_id": user_id,
+        "email": user_data["email"],
+        "is_active": active,
+    }
+
+
+@router.get(
+    "/stats",
+    summary="Get platform statistics (superadmin only)",
+)
+@limiter.limit("30/minute")
+async def get_platform_stats(
+    request: Request,
+    db: DatabaseDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+) -> dict[str, Any]:
+    """
+    Get overall platform statistics.
+    
+    **Superadmin only** - requires owner_emails access.
+    """
+    # User stats
+    user_cursor = await db.conn.execute("SELECT COUNT(*) FROM users")
+    total_users = (await user_cursor.fetchone())[0]
+    
+    active_cursor = await db.conn.execute("SELECT COUNT(*) FROM users WHERE is_active = TRUE")
+    active_users = (await active_cursor.fetchone())[0]
+    
+    # Memory stats
+    mem_cursor = await db.conn.execute("SELECT COUNT(*) FROM memories")
+    total_memories = (await mem_cursor.fetchone())[0]
+    
+    # API key stats
+    key_cursor = await db.conn.execute("SELECT COUNT(*) FROM api_keys WHERE active = TRUE")
+    active_keys = (await key_cursor.fetchone())[0]
+    
+    # Plan distribution
+    plan_cursor = await db.conn.execute("""
+        SELECT plan, COUNT(*) as count 
+        FROM cloud_tenants 
+        GROUP BY plan
+    """)
+    plan_rows = await plan_cursor.fetchall()
+    plan_distribution = {row["plan"]: row["count"] for row in plan_rows}
+    
+    # Add users without tenant record as free
+    tenants_count = sum(plan_distribution.values())
+    if tenants_count < total_users:
+        plan_distribution["free"] = plan_distribution.get("free", 0) + (total_users - tenants_count)
+    
+    # Recent signups (last 7 days)
+    week_ago = (datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)).isoformat()
+    recent_cursor = await db.conn.execute(
+        "SELECT COUNT(*) FROM users WHERE created_at >= ?",
+        (week_ago,),
+    )
+    recent_signups = (await recent_cursor.fetchone())[0]
+    
+    return {
+        "users": {
+            "total": total_users,
+            "active": active_users,
+            "recent_signups_7d": recent_signups,
+        },
+        "memories": {
+            "total": total_memories,
+        },
+        "api_keys": {
+            "active": active_keys,
+        },
+        "plans": plan_distribution,
     }

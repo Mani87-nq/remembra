@@ -13,11 +13,12 @@ import {
   ChevronRight,
   Brain,
   Search,
-  Plus
+  Plus,
+  Shield
 } from 'lucide-react';
 import clsx from 'clsx';
 
-export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings';
+export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings' | 'admin';
 
 interface NavItem {
   id: TabType;
@@ -40,6 +41,8 @@ const navItems: NavItem[] = [
   { id: 'keys', label: 'API Keys', icon: Key, section: 'account' },
   { id: 'billing', label: 'Billing', icon: CreditCard, section: 'account' },
   { id: 'settings', label: 'Settings', icon: Settings, section: 'account' },
+  // Admin (superadmin only)
+  { id: 'admin', label: 'Admin', icon: Shield, section: 'admin' },
 ];
 
 interface SidebarProps {
@@ -165,6 +168,7 @@ export function Sidebar({
         {renderNavSection('core', 'Core')}
         {renderNavSection('insights', 'Insights')}
         {renderNavSection('account', 'Account')}
+        {renderNavSection('admin', 'Admin')}
       </div>
 
       {/* Collapse Toggle */}
