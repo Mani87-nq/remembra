@@ -75,7 +75,7 @@ async def list_entities(
     request: Request,
     db: DatabaseDep,
     current_user: CurrentUser,
-    project_id: str = Query(default="default"),
+    project_id: str | None = Query(default=None, description="Filter by project (omit to see all projects)"),
     entity_type: str | None = Query(default=None, description="Filter by type (person, company, location, concept)"),
     limit: int = Query(default=100, ge=1, le=500),
 ) -> EntitiesListResponse:

@@ -138,10 +138,9 @@ class ApiClient {
     localStorage.setItem('remembra_project_id', projectId);
   }
 
-  getProjectId(): string {
+  getProjectId(): string | null {
     if (!this.projectId) {
-      // Default to 'clawdbot' for General/Clawdbot data, can be overridden via localStorage
-      this.projectId = localStorage.getItem('remembra_project_id') || 'clawdbot';
+      this.projectId = localStorage.getItem('remembra_project_id') || null;
     }
     return this.projectId;
   }

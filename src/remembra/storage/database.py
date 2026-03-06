@@ -755,18 +755,33 @@ class Database:
         )
 
     async def get_user_entities(
-        self, user_id: str, project_id: str = "default"
+        self, user_id: str, project_id: str | None = None
     ) -> list[Entity]:
-        """Get all entities for a user with full details including aliases."""
-        cursor = await self.conn.execute(
-            """
-            SELECT id, canonical_name, type, aliases, attributes, confidence 
-            FROM entities 
-            WHERE user_id = ? AND project_id = ?
-            ORDER BY updated_at DESC
-            """,
-            (user_id, project_id),
-        )
+        """Get all entities for a user with full details including aliases.
+        
+        If project_id is None, returns entities from ALL projects.
+        """
+        if project_id:
+            cursor = await self.conn.execute(
+                """
+                SELECT id, canonical_name, type, aliases, attributes, confidence 
+                FROM entities 
+                WHERE user_id = ? AND project_id = ?
+                ORDER BY updated_at DESC
+                """,
+                (user_id, project_id),
+            )
+        else:
+            # No project filter - get ALL entities for user
+            cursor = await self.conn.execute(
+                """
+                SELECT id, canonical_name, type, aliases, attributes, confidence 
+                FROM entities 
+                WHERE user_id = ?
+                ORDER BY updated_at DESC
+                """,
+                (user_id,),
+            )
         rows = await cursor.fetchall()
 
         return [
@@ -809,17 +824,29 @@ class Database:
     async def get_entities_by_type(
         self, 
         user_id: str, 
-        project_id: str, 
+        project_id: str | None, 
         entity_type: str
     ) -> list[Entity]:
-        """Get all entities of a specific type for a user/project."""
-        cursor = await self.conn.execute(
-            """
-            SELECT * FROM entities 
-            WHERE user_id = ? AND project_id = ? AND LOWER(type) = LOWER(?)
-            """,
-            (user_id, project_id, entity_type),
-        )
+        """Get all entities of a specific type for a user/project.
+        
+        If project_id is None, returns entities from ALL projects.
+        """
+        if project_id:
+            cursor = await self.conn.execute(
+                """
+                SELECT * FROM entities 
+                WHERE user_id = ? AND project_id = ? AND LOWER(type) = LOWER(?)
+                """,
+                (user_id, project_id, entity_type),
+            )
+        else:
+            cursor = await self.conn.execute(
+                """
+                SELECT * FROM entities 
+                WHERE user_id = ? AND LOWER(type) = LOWER(?)
+                """,
+                (user_id, entity_type),
+            )
         rows = await cursor.fetchall()
         return [
             Entity(
