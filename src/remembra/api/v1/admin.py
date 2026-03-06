@@ -957,3 +957,114 @@ async def get_platform_stats(
         },
         "plans": plan_distribution,
     }
+
+
+@router.post(
+    "/rebuild-vectors",
+    summary="Rebuild missing vector embeddings for memories (superadmin only)",
+)
+@limiter.limit("1/minute")
+async def rebuild_vectors(
+    request: Request,
+    db: DatabaseDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+    user_id: str | None = Query(default=None, description="Scope to specific user"),
+    dry_run: bool = Query(default=True, description="Preview without making changes"),
+) -> dict[str, Any]:
+    """
+    Find memories in SQLite that are missing from Qdrant and re-embed them.
+    
+    This fixes memories that were stored but not properly vectorized.
+    
+    **Superadmin only** - requires owner_emails access.
+    
+    Args:
+        user_id: Optional - scope to a specific user's memories
+        dry_run: If True, only report what would be done without making changes
+    """
+    from remembra.services.memory import MemoryService
+    
+    # Get services from app state
+    memory_service: MemoryService = request.app.state.memory_service
+    qdrant = memory_service.qdrant
+    embeddings = memory_service.embeddings
+    
+    # Build query
+    if user_id:
+        cursor = await db.conn.execute(
+            "SELECT id, user_id, project_id, content FROM memories WHERE user_id = ?",
+            (user_id,),
+        )
+    else:
+        cursor = await db.conn.execute(
+            "SELECT id, user_id, project_id, content FROM memories"
+        )
+    
+    rows = await cursor.fetchall()
+    
+    missing = []
+    rebuilt = []
+    errors = []
+    
+    for row in rows:
+        mem_id, mem_user_id, mem_project_id, content = row["id"], row["user_id"], row["project_id"], row["content"]
+        
+        # Check if exists in Qdrant (use get_by_id)
+        try:
+            existing = await qdrant.get_by_id(mem_id)
+            exists = existing is not None
+        except Exception:
+            exists = False
+        
+        if not exists:
+            missing.append({
+                "id": mem_id,
+                "user_id": mem_user_id,
+                "content_preview": content[:100] if content else "",
+            })
+            
+            if not dry_run:
+                try:
+                    from remembra.core.models import Memory
+                    
+                    # Get full memory data from SQLite
+                    full_cursor = await db.conn.execute(
+                        """SELECT id, user_id, project_id, content, metadata, 
+                                  created_at, expires_at, extracted_facts
+                           FROM memories WHERE id = ?""",
+                        (mem_id,),
+                    )
+                    mem_row = await full_cursor.fetchone()
+                    
+                    if mem_row:
+                        # Generate embedding
+                        embedding = await embeddings.embed(content)
+                        
+                        # Create Memory object and upsert to Qdrant
+                        memory = Memory(
+                            id=mem_row["id"],
+                            user_id=mem_row["user_id"],
+                            project_id=mem_row["project_id"],
+                            content=mem_row["content"],
+                            extracted_facts=json.loads(mem_row["extracted_facts"] or "[]"),
+                            entities=[],
+                            embedding=embedding,
+                            metadata=json.loads(mem_row["metadata"] or "{}"),
+                            created_at=datetime.fromisoformat(mem_row["created_at"]),
+                            expires_at=datetime.fromisoformat(mem_row["expires_at"]) if mem_row["expires_at"] else None,
+                        )
+                        await qdrant.upsert(memory)
+                        rebuilt.append(mem_id)
+                except Exception as e:
+                    errors.append({"id": mem_id, "error": str(e)})
+    
+    return {
+        "dry_run": dry_run,
+        "total_memories_checked": len(rows),
+        "missing_from_qdrant": len(missing),
+        "rebuilt": len(rebuilt) if not dry_run else 0,
+        "errors": len(errors) if not dry_run else 0,
+        "missing_memories": missing[:50],  # Limit preview
+        "error_details": errors[:10] if errors else [],
+    }

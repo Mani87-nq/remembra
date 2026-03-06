@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../lib/api';
-import type { RelationshipResponse } from '../lib/api';
 import { RefreshCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
 interface EntityGraphProps {
@@ -50,26 +49,8 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
     setLoading(true);
     setError(null);
     try {
-      // Get all entities
-      const entitiesResponse = await api.listEntities(projectId, undefined, 200);
-      
-      // Get relationships for each entity (batch)
-      const allRelationships: RelationshipResponse[] = [];
-      const seenRelIds = new Set<string>();
-      
-      for (const entity of entitiesResponse.entities.slice(0, 50)) { // Limit for performance
-        try {
-          const relResponse = await api.getEntityRelationships(entity.id);
-          for (const rel of relResponse.relationships) {
-            if (!seenRelIds.has(rel.id)) {
-              seenRelIds.add(rel.id);
-              allRelationships.push(rel);
-            }
-          }
-        } catch {
-          // Skip entities with no relationships
-        }
-      }
+      // Use the efficient graph endpoint instead of N+1 queries
+      const graphData = await api.getEntityGraph(projectId || 'default');
       
       // Create nodes with random initial positions
       const canvas = canvasRef.current;
@@ -78,25 +59,25 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       const centerX = width / 2;
       const centerY = height / 2;
       
-      const newNodes: Node[] = entitiesResponse.entities.map((e) => ({
-        id: e.id,
-        name: e.canonical_name,
-        type: e.type.toLowerCase(),
+      const newNodes: Node[] = graphData.nodes.map((n) => ({
+        id: n.id,
+        name: n.label,
+        type: n.type.toLowerCase(),
         x: centerX + (Math.random() - 0.5) * 300,
         y: centerY + (Math.random() - 0.5) * 300,
         vx: 0,
         vy: 0,
-        memoryCount: e.memory_count,
+        memoryCount: n.memory_count || 0,
       }));
       
-      // Create edges
+      // Create edges from graph data
       const nodeIds = new Set(newNodes.map(n => n.id));
-      const newEdges: Edge[] = allRelationships
-        .filter(r => nodeIds.has(r.from_entity_id) && nodeIds.has(r.to_entity_id))
-        .map(r => ({
-          source: r.from_entity_id,
-          target: r.to_entity_id,
-          type: r.type,
+      const newEdges: Edge[] = graphData.edges
+        .filter(e => nodeIds.has(e.source) && nodeIds.has(e.target))
+        .map(e => ({
+          source: e.source,
+          target: e.target,
+          type: e.type,
         }));
       
       setNodes(newNodes);
