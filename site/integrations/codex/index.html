@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://docs.remembra.dev/reference/changelog/">
+        <link rel="canonical" href="https://docs.remembra.dev/integrations/codex/">
       
       
-        <link rel="prev" href="../api/">
+        <link rel="prev" href="../zed/">
       
       
-        <link rel="next" href="../../TROUBLESHOOTING/">
+        <link rel="next" href="../vscode/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Changelog - Remembra</title>
+        <title>OpenAI Codex - Remembra</title>
       
     
     
@@ -88,7 +88,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#changelog" class="md-skip">
+        <a href="#openai-codex" class="md-skip">
           Skip to content
         </a>
       
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Changelog
+              OpenAI Codex
             
           </span>
         </div>
@@ -295,11 +295,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../integrations/mcp-server/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../mcp-server/" class="md-tabs__link">
           
   
   
@@ -375,13 +377,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../configuration/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../reference/configuration/" class="md-tabs__link">
           
   
   
@@ -778,28 +778,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -817,7 +820,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -835,7 +838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/mcp-server/" class="md-nav__link">
+      <a href="../mcp-server/" class="md-nav__link">
         
   
   
@@ -863,7 +866,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/claude-code/" class="md-nav__link">
+      <a href="../claude-code/" class="md-nav__link">
         
   
   
@@ -891,7 +894,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/claude-desktop/" class="md-nav__link">
+      <a href="../claude-desktop/" class="md-nav__link">
         
   
   
@@ -919,7 +922,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/cursor/" class="md-nav__link">
+      <a href="../cursor/" class="md-nav__link">
         
   
   
@@ -947,7 +950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/windsurf/" class="md-nav__link">
+      <a href="../windsurf/" class="md-nav__link">
         
   
   
@@ -975,7 +978,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/zed/" class="md-nav__link">
+      <a href="../zed/" class="md-nav__link">
         
   
   
@@ -1000,10 +1003,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../integrations/codex/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI Codex
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1019,6 +1049,198 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup (CLI)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup (CLI)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup-config-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup (Config File)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup (Config File)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-authentication_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-tuning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Tuning
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verify
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-scoped-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project-Scoped Config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#remembra-mcp-command-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "remembra-mcp: command not found"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connection-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Connection refused"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-not-connecting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server not connecting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1031,7 +1253,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/vscode/" class="md-nav__link">
+      <a href="../vscode/" class="md-nav__link">
         
   
   
@@ -1059,7 +1281,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/jetbrains/" class="md-nav__link">
+      <a href="../jetbrains/" class="md-nav__link">
         
   
   
@@ -1087,7 +1309,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../integrations/any-mcp-client/" class="md-nav__link">
+      <a href="../any-mcp-client/" class="md-nav__link">
         
   
   
@@ -1722,31 +1944,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
             
   
   
@@ -1764,7 +1983,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1782,7 +2001,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../reference/configuration/" class="md-nav__link">
         
   
   
@@ -1810,7 +2029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -1835,37 +2054,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Changelog
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../reference/changelog/" class="md-nav__link">
         
   
   
@@ -1881,322 +2073,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#latest-v081-march-2026" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Latest: v0.8.1 (March 2026)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Latest: v0.8.1 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Changed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v080-march-2026" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.8.0 (March 2026)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.8.0 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Changed
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v072-march-2026" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.7.2 (March 2026)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.7.2 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fixed_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Changed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v071-march-2026" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.7.1 (March 2026)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.7.1 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fixed_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v070-march-2026" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.7.0 (March 2026)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.7.0 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v063" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.3
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.3">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v062" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.2
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.2">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v061" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.1
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.1">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v060" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.0
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.0">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2353,33 +2229,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#latest-v081-march-2026" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Latest: v0.8.1 (March 2026)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Latest: v0.8.1 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
+        Prerequisites
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#setup-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changed
+        Setup (CLI)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup (CLI)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With Authentication
       
     </span>
   </a>
@@ -2392,22 +2268,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v080-march-2026" class="md-nav__link">
+  <a href="#setup-config-file" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.8.0 (March 2026)
+        Setup (Config File)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="v0.8.0 (March 2026)">
+    <nav class="md-nav" aria-label="Setup (Config File)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#added_1" class="md-nav__link">
+  <a href="#with-authentication_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Added
+        With Authentication
       
     </span>
   </a>
@@ -2415,21 +2291,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#optional-tuning" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changed
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed
+        Optional Tuning
       
     </span>
   </a>
@@ -2442,22 +2307,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v072-march-2026" class="md-nav__link">
+  <a href="#verify" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.7.2 (March 2026)
+        Verify
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="v0.7.2 (March 2026)">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try It
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-scoped-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Project-Scoped Config
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#fixed_1" class="md-nav__link">
+  <a href="#remembra-mcp-command-not-found" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fixed
+        "remembra-mcp: command not found"
       
     </span>
   </a>
@@ -2465,10 +2363,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#connection-refused" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changed
+        "Connection refused"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#server-not-connecting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Server not connecting
       
     </span>
   </a>
@@ -2481,170 +2390,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#v071-march-2026" class="md-nav__link">
+  <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v0.7.1 (March 2026)
+        Next Steps
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="v0.7.1 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fixed_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Fixed
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v070-march-2026" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.7.0 (March 2026)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.7.0 (March 2026)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v063" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.3
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.3">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v062" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.2
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.2">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v061" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.1
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.1">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#v060" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.6.0
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="v0.6.0">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#added_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Added
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -2668,134 +2420,131 @@
   
 
 
-<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
-<p>See <a href="https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md">CHANGELOG.md</a> for the full version history.</p>
-<h2 id="latest-v081-march-2026">Latest: v0.8.1 (March 2026)<a class="headerlink" href="#latest-v081-march-2026" title="Permanent link">&para;</a></h2>
-<h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
+<h1 id="openai-codex">OpenAI Codex<a class="headerlink" href="#openai-codex" title="Permanent link">&para;</a></h1>
+<p>Add persistent memory to OpenAI Codex in 2 minutes.</p>
+<p>Codex is OpenAI's coding agent (CLI and IDE extension). With Remembra, Codex remembers your project context, architecture decisions, and preferences across sessions.</p>
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Remembra server running</strong> — <a href="../../getting-started/quickstart/">Quick start</a> or <code>docker compose up -d</code></li>
+<li><strong>MCP package installed:</strong>
+   <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>remembra<span class="o">[</span>mcp<span class="o">]</span>
+</span></code></pre></div></li>
+</ol>
+<h2 id="setup-cli">Setup (CLI)<a class="headerlink" href="#setup-cli" title="Permanent link">&para;</a></h2>
+<p>The fastest way — one command:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>codex<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>remembra<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--env<span class="w"> </span><span class="nv">REMEMBRA_URL</span><span class="o">=</span>http://localhost:8787<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--<span class="w"> </span>remembra-mcp
+</span></code></pre></div>
+<h3 id="with-authentication">With Authentication<a class="headerlink" href="#with-authentication" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>codex<span class="w"> </span>mcp<span class="w"> </span>add<span class="w"> </span>remembra<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>--env<span class="w"> </span><span class="nv">REMEMBRA_URL</span><span class="o">=</span>http://localhost:8787<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>--env<span class="w"> </span><span class="nv">REMEMBRA_API_KEY</span><span class="o">=</span>your_key_here<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--env<span class="w"> </span><span class="nv">REMEMBRA_USER_ID</span><span class="o">=</span>your_user_id<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>--<span class="w"> </span>remembra-mcp
+</span></code></pre></div>
+<h2 id="setup-config-file">Setup (Config File)<a class="headerlink" href="#setup-config-file" title="Permanent link">&para;</a></h2>
+<p>Alternatively, edit your config directly.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Global (~/.codex/config.toml)</label><label for="__tabbed_1_2">Project (.codex/config.toml)</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;remembra-mcp&quot;</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">[mcp_servers.remembra.env]</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">REMEMBRA_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;http://localhost:8787&quot;</span>
+</span></code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;remembra-mcp&quot;</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">[mcp_servers.remembra.env]</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">REMEMBRA_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;http://localhost:8787&quot;</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">REMEMBRA_PROJECT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span>
+</span></code></pre></div>
+</div>
+</div>
+</div>
+<h3 id="with-authentication_1">With Authentication<a class="headerlink" href="#with-authentication_1" title="Permanent link">&para;</a></h3>
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;remembra-mcp&quot;</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">[mcp_servers.remembra.env]</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">REMEMBRA_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;http://localhost:8787&quot;</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">REMEMBRA_API_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;your_key_here&quot;</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">REMEMBRA_USER_ID</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;your_user_id&quot;</span>
+</span></code></pre></div>
+<h3 id="optional-tuning">Optional Tuning<a class="headerlink" href="#optional-tuning" title="Permanent link">&para;</a></h3>
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;remembra-mcp&quot;</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">startup_timeout_sec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">15</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">tool_timeout_sec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span>
+</span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">TOML, not JSON</p>
+<p>Codex uses TOML configuration, unlike Claude Desktop and Cursor which use JSON. Make sure you're editing a <code>.toml</code> file.</p>
+</div>
+<h2 id="verify">Verify<a class="headerlink" href="#verify" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>codex<span class="w"> </span>mcp<span class="w"> </span>list
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># remembra — ✓ Connected</span>
+</span></code></pre></div>
+<h2 id="try-it">Try It<a class="headerlink" href="#try-it" title="Permanent link">&para;</a></h2>
+<p>Start a Codex session and test:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>You: Remember that this project uses FastAPI, SQLAlchemy,
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>     and deploys to AWS Lambda via SAM.
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>Codex: I&#39;ll save that to memory.
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>       [Tool: store_memory] ✓ Stored — 3 facts extracted
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>You: Help me add a new endpoint for user profiles.
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>Codex: Let me check the project context...
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>       [Tool: recall_memories]
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>       [recalls: FastAPI, SQLAlchemy, AWS Lambda, SAM]
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>       Here&#39;s the FastAPI endpoint with SQLAlchemy model...
+</span></code></pre></div>
+<h2 id="project-scoped-config">Project-Scoped Config<a class="headerlink" href="#project-scoped-config" title="Permanent link">&para;</a></h2>
+<p>Add <code>.codex/config.toml</code> to your project root to share Remembra config with your team:</p>
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;remembra-mcp&quot;</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="k">[mcp_servers.remembra.env]</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">REMEMBRA_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;http://localhost:8787&quot;</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">REMEMBRA_PROJECT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span>
+</span></code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Project-scoped configs only work in trusted projects. Codex will prompt you to trust the project on first use.</p>
+</div>
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="remembra-mcp-command-not-found">"remembra-mcp: command not found"<a class="headerlink" href="#remembra-mcp-command-not-found" title="Permanent link">&para;</a></h3>
+<p>Make sure the MCP package is installed and on your PATH:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>pip<span class="w"> </span>install<span class="w"> </span>remembra<span class="o">[</span>mcp<span class="o">]</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>which<span class="w"> </span>remembra-mcp
+</span></code></pre></div>
+<p>If it's installed but not found, use the full path:</p>
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/Users/you/.local/bin/remembra-mcp&quot;</span>
+</span></code></pre></div>
+<h3 id="connection-refused">"Connection refused"<a class="headerlink" href="#connection-refused" title="Permanent link">&para;</a></h3>
+<p>The Remembra server isn't running:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>curl<span class="w"> </span>http://localhost:8787/health
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># If this fails:</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</span></code></pre></div>
+<h3 id="server-not-connecting">Server not connecting<a class="headerlink" href="#server-not-connecting" title="Permanent link">&para;</a></h3>
+<p>Check startup timeout — if your server takes a while to boot:</p>
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;remembra-mcp&quot;</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">startup_timeout_sec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span>
+</span></code></pre></div>
+<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Encryption at Rest (AES-256-GCM)</strong> — Field-level encryption for memory content and metadata with PBKDF2 key derivation (480K iterations). Set <code>REMEMBRA_ENCRYPTION_KEY</code> to enable. Backwards-compatible with unencrypted data.</li>
-<li><strong>SECURITY.md</strong> — Comprehensive security policy with architecture overview, compliance roadmap (SOC 2, HIPAA), and self-hosted hardening checklist</li>
-</ul>
-<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>cryptography</code> added as optional dependency (<code>pip install "remembra[encryption]"</code>)</li>
-<li>Qdrant store now transparently encrypts/decrypts content payloads</li>
-</ul>
-<hr />
-<h2 id="v080-march-2026">v0.8.0 (March 2026)<a class="headerlink" href="#v080-march-2026" title="Permanent link">&para;</a></h2>
-<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>One-Command Quick Start</strong> — <code>curl -sSL https://raw.githubusercontent.com/remembra-ai/remembra/main/quickstart.sh | bash</code> zero-config setup with Ollama embeddings</li>
-<li><strong>Multi-Provider Entity Extraction</strong> — OpenAI, Anthropic Claude, and Ollama support for entity extraction</li>
-<li><strong>Usage Warning Banners</strong> — API responses include usage thresholds at 60/80/95% to drive Pro upgrades</li>
-<li><strong>Docker Compose Quickstart</strong> — Zero-config compose with Qdrant + Ollama + Remembra in one file</li>
-<li><strong>125 New Tests</strong> — Comprehensive test coverage for embeddings, entities, conflicts, spaces, and plugins</li>
-</ul>
-<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>httpx Connection Reuse</strong> — Persistent connections across all 6 embedding providers for reduced latency</li>
-<li><strong>App Lifespan Cleanup</strong> — Proper resource management during application startup and shutdown</li>
-</ul>
-<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Connection Churn</strong> — Fixed 13 locations creating per-request httpx clients, now using shared persistent connections</li>
-</ul>
-<h2 id="v072-march-2026">v0.7.2 (March 2026)<a class="headerlink" href="#v072-march-2026" title="Permanent link">&para;</a></h2>
-<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Security: CORS Configuration</strong> — Removed <code>allow_origins=["*"]</code>, now configurable via <code>REMEMBRA_CORS_ORIGINS</code></li>
-<li><strong>API: PATCH /memories/{id}</strong> — Full implementation (was returning 501)</li>
-<li><strong>API: Batch Operations</strong> — <code>/store/batch</code> and <code>/recall/batch</code> now functional</li>
-<li><strong>Streaming: SSE Endpoint</strong> — <code>/ingest/stream</code> for conversation ingestion</li>
-<li><strong>Observability: OpenTelemetry</strong> — Tracing module fully implemented</li>
-<li><strong>Production: CORS Origins</strong> — Added <code>app.remembra.dev</code> and <code>remembra.dev</code> to allowed origins</li>
-</ul>
-<h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Stub endpoints now return 503 Service Unavailable with helpful messages (was 501)</li>
-<li>Improved error messages throughout API</li>
-</ul>
-<h2 id="v071-march-2026">v0.7.1 (March 2026)<a class="headerlink" href="#v071-march-2026" title="Permanent link">&para;</a></h2>
-<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Minor bug fixes and stability improvements</li>
-</ul>
-<h2 id="v070-march-2026">v0.7.0 (March 2026)<a class="headerlink" href="#v070-march-2026" title="Permanent link">&para;</a></h2>
-<h3 id="added_2">Added<a class="headerlink" href="#added_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Enterprise Features</strong></li>
-<li>Webhook System with HMAC-SHA256 signing and automatic retry</li>
-<li>RBAC (Role-Based Access Control) with 3 roles and 12 permissions</li>
-<li>Memory Conflict Detection with configurable resolution strategies</li>
-<li>
-<p>Audit Logging with export to JSON/CSV</p>
-</li>
-<li>
-<p><strong>Import/Export System</strong></p>
-</li>
-<li>Import from ChatGPT, Claude, plain text, JSON, JSONL, CSV</li>
-<li>Export to JSON, JSONL, CSV formats</li>
-<li>
-<p>Bulk import API with progress tracking</p>
-</li>
-<li>
-<p><strong>Cloud &amp; Revenue</strong></p>
-</li>
-<li>Stripe Billing Integration (subscriptions, metering, portal)</li>
-<li>Plan Limits with automatic enforcement</li>
-<li>
-<p>Spaces (Multi-tenancy) for organizations</p>
-</li>
-<li>
-<p><strong>Plugin System</strong></p>
-</li>
-<li>Extensible plugin architecture</li>
-<li>
-<p>Built-in: <code>auto_tagger</code>, <code>recall_logger</code>, <code>slack_notifier</code></p>
-</li>
-<li>
-<p><strong>API Expansion</strong></p>
-</li>
-<li>52 total API routes across 11 route groups</li>
-<li>New endpoints: <code>/admin/*</code>, <code>/webhooks/*</code>, <code>/transfer/*</code>, <code>/conflicts/*</code></li>
-</ul>
-<h2 id="v063">v0.6.3<a class="headerlink" href="#v063" title="Permanent link">&para;</a></h2>
-<h3 id="added_3">Added<a class="headerlink" href="#added_3" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Docker Support</strong></li>
-<li>Production-ready <code>Dockerfile</code> with multi-stage build</li>
-<li><code>docker-compose.yml</code> for complete stack</li>
-<li>Static file serving for dashboard UI</li>
-<li>Health checks for container orchestration</li>
-</ul>
-<h2 id="v062">v0.6.2<a class="headerlink" href="#v062" title="Permanent link">&para;</a></h2>
-<h3 id="added_4">Added<a class="headerlink" href="#added_4" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Entity API Endpoints</strong></li>
-<li>List entities, get relationships, get entity memories</li>
-<li><strong>Dashboard Improvements</strong></li>
-<li>Entity graph visualization</li>
-<li>Memory editing support</li>
-</ul>
-<h2 id="v061">v0.6.1<a class="headerlink" href="#v061" title="Permanent link">&para;</a></h2>
-<h3 id="added_5">Added<a class="headerlink" href="#added_5" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Temporal API Endpoints</strong></li>
-<li>Decay reports, cleanup jobs, single memory decay info</li>
-<li><strong>Decay Module</strong></li>
-<li>Ebbinghaus forgetting curve implementation</li>
-<li><strong>TTL Module</strong></li>
-</ul>
-<h2 id="v060">v0.6.0<a class="headerlink" href="#v060" title="Permanent link">&para;</a></h2>
-<h3 id="added_6">Added<a class="headerlink" href="#added_6" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Initial public release</li>
-<li>Core memory storage and recall</li>
-<li>Entity extraction and resolution</li>
-<li>Hybrid search (vector + keyword)</li>
-<li>Python SDK</li>
-<li>REST API</li>
-<li>Dashboard UI</li>
+<li><a href="../mcp-server/">MCP Tool Reference</a> — Full documentation of all 5 tools and 2 resources</li>
+<li><a href="../../guides/python-sdk/">Python SDK</a> — Programmatic access from Python</li>
+<li><a href="../../guides/rest-api/">REST API</a> — Direct HTTP access</li>
 </ul>
 
 
