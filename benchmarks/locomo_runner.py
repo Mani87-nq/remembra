@@ -123,6 +123,8 @@ class BenchmarkResult:
 
 def _normalize_answer(text: str) -> str:
     """Normalize answer text following LOCOMO's methodology."""
+    # Ensure text is a string (ground truth can be int for years/numbers)
+    text = str(text)
     # Remove commas
     text = text.replace(",", "")
     # Lowercase
@@ -174,6 +176,10 @@ def _f1_score(prediction: str, ground_truth: str) -> float:
 
 def eval_question(prediction: str, ground_truth: str, category: int) -> float:
     """Evaluate a single QA pair using category-specific logic."""
+    # Ensure inputs are strings (ground truth can be int for years/numbers)
+    prediction = str(prediction) if prediction is not None else ""
+    ground_truth = str(ground_truth) if ground_truth is not None else ""
+    
     if category == 5:
         # Adversarial: binary check for refusal phrases
         pred_lower = prediction.lower()
@@ -308,6 +314,8 @@ class RemembraClient:
         if session_id:
             payload["session_id"] = session_id
         r = self._client.post(f"{self.base_url}/api/v1/ingest/conversation", json=payload)
+        if r.status_code >= 400:
+            print(f"  DEBUG: ingest error {r.status_code}: {r.text[:500]}")
         r.raise_for_status()
         return r.json()
 
@@ -406,6 +414,7 @@ def ingest_conversation(
     }
 
     for session_key, session_dt, turns in sessions:
+        print(f"  Processing {session_key}...", flush=True)
         # Build messages array for this session
         messages = []
         for turn in turns:
@@ -422,9 +431,8 @@ def ingest_conversation(
                 "content": text,
                 "name": speaker,
             }
-            if session_dt:
-                msg["timestamp"] = session_dt
-
+            # Skip timestamp - LOCOMO uses human format "1:56 pm on 8 May, 2023"
+            # which doesn't match API's expected ISO format
             messages.append(msg)
 
         if not messages:
@@ -440,8 +448,7 @@ def ingest_conversation(
                         "session": session_key,
                         "speaker": msg.get("name", "unknown"),
                     }
-                    if session_dt:
-                        metadata["timestamp"] = session_dt
+                    # Skip timestamp - human format doesn't match API
                     client.store(content, metadata=metadata)
                     stats["turns_ingested"] += 1
                 except Exception as e:
@@ -865,7 +872,7 @@ Examples:
             conv_id = conv.get("sample_id", f"conv-{i}")
             sessions = extract_sessions(conv)
             total_turns = sum(len(turns) for _, _, turns in sessions)
-            print(f"\n[{i+1}/{len(conversations)}] {conv_id} — {len(sessions)} sessions, ~{total_turns} turns")
+            print(f"\n[{i+1}/{len(conversations)}] {conv_id} — {len(sessions)} sessions, ~{total_turns} turns", flush=True)
 
             stats = ingest_conversation(
                 client,

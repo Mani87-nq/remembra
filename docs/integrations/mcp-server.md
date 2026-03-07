@@ -1,11 +1,24 @@
-# MCP Server
+# MCP Server — Tool Reference
+
+Complete reference for Remembra's MCP tools, resources, and configuration.
 
 Use Remembra as persistent memory for AI assistants via the [Model Context Protocol](https://modelcontextprotocol.io).
 
-Works with **Claude Code**, **Claude Desktop**, **Cursor**, and any MCP-compatible client.
+## Setup Guides
 
-!!! tip "v0.8.2 Features"
-    New in v0.8.2: AES-256-GCM encryption at rest, MCP Registry published (`io.github.remembra-ai/remembra`), PII detection & redaction, one-command quick start, multi-provider entity extraction (OpenAI + Anthropic + Ollama), and persistent HTTP connections for faster performance.
+Step-by-step setup instructions for each AI tool:
+
+| Tool | Guide |
+|------|-------|
+| **Claude Code** | [Setup guide](claude-code.md) — `claude mcp add remembra ...` |
+| **Claude Desktop** | [Setup guide](claude-desktop.md) — JSON config |
+| **Cursor** | [Setup guide](cursor.md) — `.cursor/mcp.json` |
+| **Windsurf** | [Setup guide](windsurf.md) — `mcp_config.json` |
+| **Zed** | [Setup guide](zed.md) — `context_servers` in settings |
+| **OpenAI Codex** | [Setup guide](codex.md) — `codex mcp add remembra ...` |
+| **VS Code + Copilot** | [Setup guide](vscode.md) — `.vscode/mcp.json` |
+| **JetBrains IDEs** | [Setup guide](jetbrains.md) — Settings → AI Assistant → MCP |
+| **Any MCP client** | [Generic guide](any-mcp-client.md) — stdio, SSE, HTTP |
 
 ## Installation
 
@@ -14,80 +27,6 @@ pip install remembra[mcp]
 ```
 
 This installs both the Remembra SDK and the MCP server binary (`remembra-mcp`).
-
-## Quick Setup
-
-=== "Claude Code"
-
-    ```bash
-    claude mcp add remembra \
-      -e REMEMBRA_URL=http://localhost:8787 \
-      -e REMEMBRA_API_KEY=your_key \
-      -- remembra-mcp
-    ```
-
-    Verify it's connected:
-
-    ```bash
-    claude mcp list
-    # remembra: remembra-mcp - ✓ Connected
-    ```
-
-=== "Claude Desktop"
-
-    Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-    ```json
-    {
-      "mcpServers": {
-        "remembra": {
-          "command": "remembra-mcp",
-          "env": {
-            "REMEMBRA_URL": "http://localhost:8787",
-            "REMEMBRA_API_KEY": "your_key"
-          }
-        }
-      }
-    }
-    ```
-
-=== "Cursor"
-
-    Add to `.cursor/mcp.json` in your project:
-
-    ```json
-    {
-      "mcpServers": {
-        "remembra": {
-          "command": "remembra-mcp",
-          "env": {
-            "REMEMBRA_URL": "http://localhost:8787",
-            "REMEMBRA_API_KEY": "your_key"
-          }
-        }
-      }
-    }
-    ```
-
-=== "Project Config (.mcp.json)"
-
-    Add `.mcp.json` to your project root (share via git):
-
-    ```json
-    {
-      "mcpServers": {
-        "remembra": {
-          "command": "remembra-mcp",
-          "env": {
-            "REMEMBRA_URL": "${REMEMBRA_URL:-http://localhost:8787}",
-            "REMEMBRA_API_KEY": "${REMEMBRA_API_KEY}",
-            "REMEMBRA_USER_ID": "${REMEMBRA_USER_ID:-default}",
-            "REMEMBRA_PROJECT": "${REMEMBRA_PROJECT:-default}"
-          }
-        }
-      }
-    }
-    ```
 
 ---
 

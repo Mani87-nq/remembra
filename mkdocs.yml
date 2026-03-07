@@ -88,6 +88,15 @@ nav:
     - REST API: guides/rest-api.md
   - Integrations:
     - MCP Server: integrations/mcp-server.md
+    - Claude Code: integrations/claude-code.md
+    - Claude Desktop: integrations/claude-desktop.md
+    - Cursor: integrations/cursor.md
+    - Windsurf: integrations/windsurf.md
+    - Zed: integrations/zed.md
+    - OpenAI Codex: integrations/codex.md
+    - VS Code + Copilot: integrations/vscode.md
+    - JetBrains IDEs: integrations/jetbrains.md
+    - Any MCP Client: integrations/any-mcp-client.md
   - Guides:
     - Conversation Ingestion: guides/conversation-ingestion.md
     - Sleep-Time Compute: guides/sleep-time-compute.md
