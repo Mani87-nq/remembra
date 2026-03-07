@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - Remembra | AI Memory Insights</title>
+    <meta name="description" content="Learn about AI memory, MCP servers, persistent context, and how to give your AI assistants perfect recall. Tutorials, guides, and insights.">
+    <meta name="keywords" content="AI memory, MCP server, Claude memory, AI context, persistent memory, chatbot memory, AI agent memory">
+    
+    <meta property="og:title" content="Remembra Blog - AI Memory Insights">
+    <meta property="og:description" content="Learn how to give your AI perfect memory. Tutorials, comparisons, and best practices.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://remembra.dev/blog">
+    
+    <link rel="canonical" href="https://remembra.dev/blog">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#8B5CF6', 'primary-dark': '#7C3AED', dark: '#0F0F0F', 'dark-card': '#1F1F1F' } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text { background: linear-gradient(135deg, #8B5CF6, #A78BFA, #C4B5FD); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="bg-dark text-white">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-dark/80 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3">
+                <img src="/logo.jpg" alt="Remembra" class="h-8 w-8 rounded-lg">
+                <span class="text-xl font-bold">Remembra</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="https://docs.remembra.dev" class="text-gray-300 hover:text-white">Docs</a>
+                <a href="/changelog.html" class="text-gray-300 hover:text-white">Changelog</a>
+                <a href="/signup.html" class="px-5 py-2.5 bg-primary hover:bg-primary-dark rounded-lg font-medium">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-32 pb-24 px-6">
+        <div class="max-w-4xl mx-auto">
+            <header class="mb-16 text-center">
+                <h1 class="text-5xl md:text-6xl font-bold mb-6"><span class="gradient-text">Blog</span></h1>
+                <p class="text-xl text-gray-400">Insights on AI memory, MCP servers, and building smarter AI applications.</p>
+            </header>
+
+            <div class="space-y-8">
+                <!-- Featured Post -->
+                <article class="bg-dark-card border border-white/10 rounded-2xl p-8 hover:border-primary/50 transition">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">Featured</span>
+                        <time class="text-gray-500 text-sm">March 7, 2026</time>
+                    </div>
+                    <a href="/blog/why-your-ai-forgets-everything">
+                        <h2 class="text-2xl md:text-3xl font-bold mb-3 hover:text-primary transition">Why Your AI Forgets Everything (And How to Fix It)</h2>
+                    </a>
+                    <p class="text-gray-400 mb-4">Every AI conversation starts from scratch. Your assistant doesn't remember that you prefer TypeScript, hate semicolons, or already explained your project architecture three times. Here's why—and how persistent memory changes everything.</p>
+                    <a href="/blog/why-your-ai-forgets-everything" class="text-primary hover:underline font-medium">Read more →</a>
+                </article>
+
+                <!-- Post 2 -->
+                <article class="bg-dark-card border border-white/10 rounded-2xl p-8 hover:border-white/20 transition">
+                    <time class="text-gray-500 text-sm">March 5, 2026</time>
+                    <a href="/blog/getting-started-mcp-memory">
+                        <h2 class="text-xl font-bold mt-2 mb-3 hover:text-primary transition">Getting Started with MCP Memory Servers</h2>
+                    </a>
+                    <p class="text-gray-400 mb-4">A complete guide to adding persistent memory to Claude Code, Cursor, and other MCP-compatible AI tools.</p>
+                    <a href="/blog/getting-started-mcp-memory" class="text-primary hover:underline text-sm font-medium">Read more →</a>
+                </article>
+
+                <!-- Post 3 -->
+                <article class="bg-dark-card border border-white/10 rounded-2xl p-8 hover:border-white/20 transition">
+                    <time class="text-gray-500 text-sm">March 3, 2026</time>
+                    <a href="/blog/remembra-vs-mem0-vs-zep">
+                        <h2 class="text-xl font-bold mt-2 mb-3 hover:text-primary transition">Remembra vs Mem0 vs Zep: AI Memory Comparison</h2>
+                    </a>
+                    <p class="text-gray-400 mb-4">An honest comparison of the top AI memory solutions. Features, pricing, and which one is right for your use case.</p>
+                    <a href="/blog/remembra-vs-mem0-vs-zep" class="text-primary hover:underline text-sm font-medium">Read more →</a>
+                </article>
+
+                <!-- Post 4 -->
+                <article class="bg-dark-card border border-white/10 rounded-2xl p-8 hover:border-white/20 transition">
+                    <time class="text-gray-500 text-sm">March 1, 2026</time>
+                    <a href="/blog/self-hosting-ai-memory">
+                        <h2 class="text-xl font-bold mt-2 mb-3 hover:text-primary transition">Self-Hosting AI Memory: A Complete Guide</h2>
+                    </a>
+                    <p class="text-gray-400 mb-4">Deploy Remembra on your own infrastructure in 5 minutes. Full data ownership, no API costs, enterprise-ready.</p>
+                    <a href="/blog/self-hosting-ai-memory" class="text-primary hover:underline text-sm font-medium">Read more →</a>
+                </article>
+            </div>
+
+            <!-- Newsletter CTA -->
+            <div class="mt-16 bg-gradient-to-r from-primary/20 to-purple-500/20 border border-primary/30 rounded-2xl p-8 text-center">
+                <h3 class="text-2xl font-bold mb-3">Stay Updated</h3>
+                <p class="text-gray-400 mb-6">Get notified about new features, tutorials, and AI memory insights.</p>
+                <a href="https://twitter.com/remembradev" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-dark rounded-lg font-medium">
+                    Follow @remembradev →
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="border-t border-white/10 py-8 text-center text-gray-500 text-sm">
+        <p>© 2026 DolphyTech. <a href="/" class="hover:text-white">remembra.dev</a></p>
+    </footer>
+</body>
+</html>
