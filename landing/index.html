@@ -607,6 +607,47 @@
             flex-shrink: 0;
         }
         
+        .integrations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .integration-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 24px 16px;
+            background: var(--gray-800);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--gray-300);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .integration-card:hover {
+            border-color: var(--purple);
+            background: rgba(139, 92, 246, 0.08);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        .integration-card .int-icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .integration-card .int-name {
+            text-align: center;
+            line-height: 1.3;
+        }
+
         .mcp-demo {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.1);
@@ -1352,9 +1393,9 @@
         <div class="container">
             <div class="mcp-grid">
                 <div class="mcp-content reveal">
-                    <span class="hero-badge" style="margin-bottom: 16px;">Claude Code • Cursor • Claude Desktop</span>
+                    <span class="hero-badge" style="margin-bottom: 16px;">Works with 9 AI tools</span>
                     <h2>MCP-Native Memory</h2>
-                    <p>One command to give Claude or Cursor persistent memory across all your sessions.</p>
+                    <p>One command to give any AI coding tool persistent memory across all your sessions.</p>
                     
                     <div class="mcp-command">
                         <span style="color: var(--gray-500)"># Add to Claude Code</span><br>
@@ -1364,7 +1405,7 @@
                     <ul class="mcp-list">
                         <li>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Works with Claude Code, Cursor, Claude Desktop
+                            Claude Code, Cursor, VS Code, Windsurf, Zed, Codex, JetBrains &amp; more
                         </li>
                         <li>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -1404,6 +1445,56 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integrations Grid -->
+    <section>
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-badge">Integrations</span>
+                <h2 class="section-title">Works With Your Favorite Tools</h2>
+                <p class="section-subtitle">Copy-paste setup guides for every major AI coding tool</p>
+            </div>
+
+            <div class="integrations-grid reveal">
+                <a href="https://docs.remembra.dev/integrations/claude-code/" class="integration-card">
+                    <span class="int-icon">&#x1F4BB;</span>
+                    <span class="int-name">Claude Code</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/claude-desktop/" class="integration-card">
+                    <span class="int-icon">&#x1F5A5;</span>
+                    <span class="int-name">Claude Desktop</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/cursor/" class="integration-card">
+                    <span class="int-icon">&#x1F4DD;</span>
+                    <span class="int-name">Cursor</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/vscode/" class="integration-card">
+                    <span class="int-icon">&#x1F4D0;</span>
+                    <span class="int-name">VS Code + Copilot</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/windsurf/" class="integration-card">
+                    <span class="int-icon">&#x1F30A;</span>
+                    <span class="int-name">Windsurf</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/jetbrains/" class="integration-card">
+                    <span class="int-icon">&#x1F9E0;</span>
+                    <span class="int-name">JetBrains IDEs</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/zed/" class="integration-card">
+                    <span class="int-icon">&#x26A1;</span>
+                    <span class="int-name">Zed</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/codex/" class="integration-card">
+                    <span class="int-icon">&#x1F916;</span>
+                    <span class="int-name">OpenAI Codex</span>
+                </a>
+                <a href="https://docs.remembra.dev/integrations/any-mcp-client/" class="integration-card">
+                    <span class="int-icon">&#x1F50C;</span>
+                    <span class="int-name">Any MCP Client</span>
+                </a>
             </div>
         </div>
     </section>
