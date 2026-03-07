@@ -3786,6 +3786,7 @@ all = [
     { name = "anthropic" },
     { name = "bcrypt" },
     { name = "crewai" },
+    { name = "cryptography" },
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "langchain-core" },
@@ -3825,6 +3826,9 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
     { name = "twine" },
+]
+encryption = [
+    { name = "cryptography" },
 ]
 langchain = [
     { name = "langchain-core" },
@@ -3875,6 +3879,7 @@ requires-dist = [
     { name = "bcrypt", marker = "extra == 'server'", specifier = ">=4.0.0" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "crewai", marker = "extra == 'crewai'", specifier = ">=0.80.0" },
+    { name = "cryptography", marker = "extra == 'encryption'", specifier = ">=42.0.0" },
     { name = "email-validator", marker = "extra == 'server'", specifier = ">=2.0.0" },
     { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.115.0" },
     { name = "httpx", specifier = ">=0.27.0" },
@@ -3897,7 +3902,7 @@ requires-dist = [
     { name = "python-ulid", marker = "extra == 'server'", specifier = ">=3.0.0" },
     { name = "qdrant-client", marker = "extra == 'server'", specifier = ">=1.12.0,<2.0.0" },
     { name = "qrcode", extras = ["pil"], marker = "extra == 'server'", specifier = ">=7.4.0" },
-    { name = "remembra", extras = ["server", "rerank", "mcp", "langchain", "crewai", "cloud", "anthropic"], marker = "extra == 'all'" },
+    { name = "remembra", extras = ["server", "rerank", "mcp", "langchain", "crewai", "cloud", "anthropic", "encryption"], marker = "extra == 'all'" },
     { name = "resend", marker = "extra == 'cloud'", specifier = ">=0.7.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
     { name = "sentence-transformers", marker = "extra == 'rerank'", specifier = ">=2.5.0" },
@@ -3909,7 +3914,7 @@ requires-dist = [
     { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.32.0" },
 ]
-provides-extras = ["server", "mcp", "langchain", "crewai", "anthropic", "cloud", "rerank", "tracing", "dev", "all"]
+provides-extras = ["server", "mcp", "langchain", "crewai", "anthropic", "encryption", "cloud", "rerank", "tracing", "dev", "all"]
 
 [package.metadata.requires-dev]
 dev = [

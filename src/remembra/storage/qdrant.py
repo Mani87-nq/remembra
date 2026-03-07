@@ -9,6 +9,7 @@ from qdrant_client.http.exceptions import UnexpectedResponse
 
 from remembra.config import Settings
 from remembra.models.memory import Memory
+from remembra.security.encryption import FieldEncryptor
 
 log = structlog.get_logger(__name__)
 
@@ -24,17 +25,19 @@ FIELD_METADATA = "metadata"
 class QdrantStore:
     """
     Async Qdrant client wrapper for memory vector storage.
-    
+
     Handles:
     - Collection initialization with proper schema
     - Upsert/delete operations
     - Semantic search with filtering
+    - Transparent AES-256-GCM encryption of content fields
     """
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, encryptor: FieldEncryptor | None = None):
         self.settings = settings
         self.collection_name = settings.qdrant_collection
         self._client: AsyncQdrantClient | None = None
+        self._encryptor = encryptor or FieldEncryptor(settings.encryption_key)
 
     async def _get_client(self) -> AsyncQdrantClient:
         if self._client is None:
@@ -109,9 +112,9 @@ class QdrantStore:
         payload: dict[str, Any] = {
             FIELD_USER_ID: memory.user_id,
             FIELD_PROJECT_ID: memory.project_id,
-            FIELD_CONTENT: memory.content,
+            FIELD_CONTENT: self._encryptor.encrypt(memory.content),
             FIELD_CREATED_AT: memory.created_at.isoformat(),
-            FIELD_METADATA: memory.metadata,
+            FIELD_METADATA: self._encryptor.encrypt_dict(memory.metadata),
         }
 
         if memory.expires_at:
@@ -195,7 +198,10 @@ class QdrantStore:
             score_threshold=score_threshold,
         )
 
-        return [(r.id, r.score, r.payload or {}) for r in results.points]
+        return [
+            (r.id, r.score, self._decrypt_payload(r.payload or {}))
+            for r in results.points
+        ]
 
     async def delete(self, memory_id: str) -> bool:
         """Delete a single memory by ID."""
@@ -259,7 +265,18 @@ class QdrantStore:
             return None
 
         point = results[0]
-        return {"id": point.id, **point.payload} if point.payload else {"id": point.id}
+        if point.payload:
+            return {"id": point.id, **self._decrypt_payload(point.payload)}
+        return {"id": point.id}
+
+    def _decrypt_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Decrypt content and metadata fields in a Qdrant payload."""
+        result = dict(payload)
+        if FIELD_CONTENT in result and isinstance(result[FIELD_CONTENT], str):
+            result[FIELD_CONTENT] = self._encryptor.decrypt(result[FIELD_CONTENT])
+        if FIELD_METADATA in result and isinstance(result[FIELD_METADATA], dict):
+            result[FIELD_METADATA] = self._encryptor.decrypt_dict(result[FIELD_METADATA])
+        return result
 
     async def health_check(self) -> bool:
         """Check if Qdrant is reachable."""

@@ -91,6 +91,11 @@ anthropic = [
     "anthropic>=0.39.0",
 ]
 
+# Encryption at rest (AES-256-GCM)
+encryption = [
+    "cryptography>=42.0.0",
+]
+
 # Cloud / SaaS dependencies (billing, metering)
 cloud = [
     "stripe>=8.0.0",
@@ -123,7 +128,7 @@ dev = [
 
 # All dependencies (SDK + Server + Rerank + MCP + Integrations + Cloud)
 all = [
-    "remembra[server,rerank,mcp,langchain,crewai,cloud,anthropic]",
+    "remembra[server,rerank,mcp,langchain,crewai,cloud,anthropic,encryption]",
 ]
 
 [project.urls]

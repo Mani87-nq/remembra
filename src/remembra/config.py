@@ -310,6 +310,13 @@ class Settings(BaseSettings):
         description="Maximum content length per memory (50KB default)",
     )
     
+    # Encryption at Rest (AES-256-GCM)
+    encryption_key: str | None = Field(
+        None,
+        description="AES-256-GCM encryption key for memory content at rest. "
+        "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"",
+    )
+
     # PII Detection (OWASP ASI06)
     pii_detection_enabled: bool = Field(
         True,
