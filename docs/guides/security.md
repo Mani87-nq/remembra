@@ -302,6 +302,53 @@ Remembra addresses the following OWASP AI Security Initiative guidelines:
 
 ---
 
+## Encryption at Rest
+
+**NEW in v0.8.1** — AES-256-GCM field-level encryption for memory content.
+
+All memory content and metadata can be encrypted before storage using AES-256-GCM authenticated encryption.
+
+### Enable Encryption
+
+```bash
+# Generate a secure key
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# Set in environment
+REMEMBRA_ENCRYPTION_KEY=your-generated-key-here
+```
+
+### How It Works
+
+- **Algorithm:** AES-256-GCM (authenticated encryption)
+- **Key derivation:** PBKDF2-HMAC-SHA256 with 480,000 iterations
+- **Nonce:** 96-bit random nonce per operation (never reused)
+- **Scope:** Memory `content` and `metadata` fields
+- **Embeddings:** Not encrypted (vectors are not reversible to source content)
+
+### Migration
+
+Encryption is backwards-compatible. When enabled:
+
+- New memories are encrypted before storage
+- Existing unencrypted memories are read normally (auto-detected)
+- No migration step required — mixed-mode reads work transparently
+
+### Install
+
+Encryption requires the `cryptography` package:
+
+```bash
+pip install "remembra[encryption]"
+# or
+pip install cryptography
+```
+
+!!! warning "Production"
+    Always set `REMEMBRA_ENCRYPTION_KEY` in production. Without it, memory content is stored in plaintext.
+
+---
+
 ## Authentication
 
 Remembra uses API keys for authentication.

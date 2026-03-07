@@ -2,7 +2,19 @@
 
 See [CHANGELOG.md](https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md) for the full version history.
 
-## Latest: v0.8.0 (March 2026)
+## Latest: v0.8.1 (March 2026)
+
+### Added
+- **Encryption at Rest (AES-256-GCM)** — Field-level encryption for memory content and metadata with PBKDF2 key derivation (480K iterations). Set `REMEMBRA_ENCRYPTION_KEY` to enable. Backwards-compatible with unencrypted data.
+- **SECURITY.md** — Comprehensive security policy with architecture overview, compliance roadmap (SOC 2, HIPAA), and self-hosted hardening checklist
+
+### Changed
+- `cryptography` added as optional dependency (`pip install "remembra[encryption]"`)
+- Qdrant store now transparently encrypts/decrypts content payloads
+
+---
+
+## v0.8.0 (March 2026)
 
 ### Added
 - **One-Command Quick Start** — `curl -sSL https://raw.githubusercontent.com/remembra-ai/remembra/main/quickstart.sh | bash` zero-config setup with Ollama embeddings
