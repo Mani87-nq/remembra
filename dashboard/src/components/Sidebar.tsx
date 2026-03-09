@@ -15,11 +15,12 @@ import {
   Brain,
   Search,
   Plus,
-  Shield
+  Shield,
+  FolderOpen
 } from 'lucide-react';
 import clsx from 'clsx';
 
-export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings' | 'teams' | 'admin';
+export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'projects' | 'keys' | 'billing' | 'settings' | 'teams' | 'admin';
 
 interface NavItem {
   id: TabType;
@@ -31,6 +32,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   // Core
   { id: 'memories', label: 'Memories', icon: Database, section: 'core' },
+  { id: 'projects', label: 'Projects', icon: FolderOpen, section: 'core' },
   { id: 'entities', label: 'Entities', icon: Users, section: 'core' },
   { id: 'graph', label: 'Graph', icon: Share2, section: 'core' },
   { id: 'timeline', label: 'Timeline', icon: History, section: 'core' },
