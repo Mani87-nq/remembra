@@ -492,9 +492,20 @@ async def create_checkout(
     if tenant and tenant.get("stripe_customer_id"):
         customer_id = tenant["stripe_customer_id"]
     else:
+        # Get user's actual email from database
+        user_email = await meter.get_user_email(current_user.user_id)
+        if not user_email:
+            # Fallback: check tenant record
+            user_email = tenant.get("email") if tenant else None
+        if not user_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No email found for user. Please update your profile.",
+            )
+        
         customer_id = await billing.create_customer(
             user_id=current_user.user_id,
-            email=f"{current_user.user_id}@remembra.dev",  # Placeholder
+            email=user_email,
             name=current_user.name,
         )
         await meter.register_tenant(
