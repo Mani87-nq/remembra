@@ -131,7 +131,7 @@ CREATE INDEX IF NOT EXISTS idx_entities_user ON entities(user_id);
 CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(canonical_name);
 CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(type);
 
--- Relationships between entities
+-- Relationships between entities (with temporal validity for point-in-time queries)
 CREATE TABLE IF NOT EXISTS relationships (
     id TEXT PRIMARY KEY,
     from_entity_id TEXT NOT NULL,
@@ -141,14 +141,22 @@ CREATE TABLE IF NOT EXISTS relationships (
     confidence REAL DEFAULT 1.0,
     source_memory_id TEXT,
     created_at TEXT NOT NULL,
+    -- Temporal validity (bi-temporal model)
+    valid_from TEXT NOT NULL DEFAULT (datetime('now')),  -- When relationship became true
+    valid_to TEXT,  -- When relationship stopped being true (NULL = still valid)
+    superseded_by TEXT,  -- ID of relationship that supersedes this one
     FOREIGN KEY (from_entity_id) REFERENCES entities(id),
     FOREIGN KEY (to_entity_id) REFERENCES entities(id),
-    FOREIGN KEY (source_memory_id) REFERENCES memories(id)
+    FOREIGN KEY (source_memory_id) REFERENCES memories(id),
+    FOREIGN KEY (superseded_by) REFERENCES relationships(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_rel_from ON relationships(from_entity_id);
 CREATE INDEX IF NOT EXISTS idx_rel_to ON relationships(to_entity_id);
 CREATE INDEX IF NOT EXISTS idx_rel_type ON relationships(type);
+CREATE INDEX IF NOT EXISTS idx_rel_valid_from ON relationships(valid_from);
+CREATE INDEX IF NOT EXISTS idx_rel_valid_to ON relationships(valid_to);
+CREATE INDEX IF NOT EXISTS idx_rel_current ON relationships(valid_to) WHERE valid_to IS NULL;
 
 -- Memory-Entity associations
 CREATE TABLE IF NOT EXISTS memory_entities (
@@ -217,6 +225,10 @@ class Database:
             "ALTER TABLE memories ADD COLUMN checksum TEXT",
             "ALTER TABLE users ADD COLUMN totp_secret TEXT",
             "ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN DEFAULT FALSE",
+            # Temporal edges for relationships (v0.8.4)
+            "ALTER TABLE relationships ADD COLUMN valid_from TEXT DEFAULT (datetime('now'))",
+            "ALTER TABLE relationships ADD COLUMN valid_to TEXT",
+            "ALTER TABLE relationships ADD COLUMN superseded_by TEXT",
         ]
         
         for migration in migrations:

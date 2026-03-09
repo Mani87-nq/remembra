@@ -26,6 +26,12 @@ class EntityRef(BaseModel):
 
 
 class Relationship(BaseModel):
+    """
+    Relationship between two entities with temporal validity.
+    
+    Temporal edges enable point-in-time queries like "What was Alice's role in January?"
+    and automatic contradiction detection (newer relationships supersede older ones).
+    """
     id: str = Field(default_factory=_new_id)
     from_entity_id: str
     to_entity_id: str
@@ -33,6 +39,37 @@ class Relationship(BaseModel):
     properties: dict[str, Any] = Field(default_factory=dict)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     source_memory_id: str | None = None
+    
+    # Temporal validity (bi-temporal model like Zep/Graphiti)
+    valid_from: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="When this relationship became true in the real world"
+    )
+    valid_to: datetime | None = Field(
+        default=None,
+        description="When this relationship stopped being true (None = still valid)"
+    )
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        description="When we learned about this relationship"
+    )
+    superseded_by: str | None = Field(
+        default=None,
+        description="ID of the relationship that supersedes this one (for contradiction detection)"
+    )
+    
+    @property
+    def is_current(self) -> bool:
+        """Check if this relationship is currently valid."""
+        return self.valid_to is None
+    
+    def is_valid_at(self, point_in_time: datetime) -> bool:
+        """Check if this relationship was valid at a specific point in time."""
+        if point_in_time < self.valid_from:
+            return False
+        if self.valid_to is not None and point_in_time >= self.valid_to:
+            return False
+        return True
 
 
 class Entity(BaseModel):

@@ -8,6 +8,7 @@ This module enables finding memories by traversing the entity graph:
 """
 
 from dataclasses import dataclass, field
+from datetime import datetime
 
 import structlog
 
@@ -99,14 +100,19 @@ class GraphRetriever:
         entity_id: str,
         depth: int = 1,
         visited: set[str] | None = None,
+        as_of: datetime | None = None,
     ) -> list[tuple[Entity, Relationship]]:
         """
         Get entities related to the given entity up to specified depth.
+        
+        Supports temporal queries - filter relationships valid at a specific point in time.
         
         Args:
             entity_id: Starting entity ID
             depth: Current traversal depth
             visited: Set of already-visited entity IDs
+            as_of: Optional point-in-time filter. Only relationships valid at this time
+                   are included. If None, only current (non-superseded) relationships.
             
         Returns:
             List of (Entity, Relationship) tuples
@@ -125,6 +131,16 @@ class GraphRetriever:
         related: list[tuple[Entity, Relationship]] = []
         
         for rel in relationships:
+            # Temporal filtering - check if relationship is valid
+            if as_of is not None:
+                # Point-in-time query
+                if not rel.is_valid_at(as_of):
+                    continue
+            else:
+                # Current relationships only (not superseded)
+                if not rel.is_current:
+                    continue
+            
             # Determine the "other" entity in the relationship
             other_id = rel.to_entity_id if rel.from_entity_id == entity_id else rel.from_entity_id
             
@@ -137,7 +153,7 @@ class GraphRetriever:
                 
                 # Recursive traversal for deeper relationships
                 if depth < self.max_depth:
-                    deeper = await self.get_related_entities(other_id, depth + 1, visited)
+                    deeper = await self.get_related_entities(other_id, depth + 1, visited, as_of)
                     related.extend(deeper)
         
         return related

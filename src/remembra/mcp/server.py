@@ -506,6 +506,114 @@ def list_memories(
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@mcp.tool()
+def share_memory(
+    memory_id: str,
+    space_id: str,
+) -> str:
+    """Share a memory to a collaborative space.
+
+    Enables cross-agent memory sharing. Add a memory to a shared space
+    where other agents/users can access it. Requires Spaces to be enabled.
+
+    Args:
+        memory_id: ID of the memory to share.
+        space_id: ID of the target space.
+
+    Returns:
+        JSON string with share status.
+    """
+    try:
+        client = _get_client()
+        
+        # Call the spaces API to add memory
+        result = client._request(
+            "POST",
+            f"/api/v1/spaces/{space_id}/memories",
+            json={"memory_id": memory_id},
+        )
+        
+        return json.dumps(
+            {
+                "status": "shared",
+                "memory_id": memory_id,
+                "space_id": space_id,
+                "message": f"Memory shared to space successfully",
+            },
+            indent=2,
+        )
+    except MemoryError as e:
+        return json.dumps({"status": "error", "error": str(e), "code": e.status_code})
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
+@mcp.tool()
+def timeline(
+    entity_name: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    limit: int = 20,
+) -> str:
+    """Browse memories on a timeline.
+
+    Temporal browsing of memories, optionally filtered by entity.
+    Enables queries like "What happened with Alice in January?"
+
+    Args:
+        entity_name: Optional filter by entity (person, org, etc).
+        start_date: Start of time range (ISO format, e.g., "2024-01-01").
+        end_date: End of time range (ISO format, e.g., "2024-02-01").
+        limit: Maximum memories to return (default: 20).
+
+    Returns:
+        JSON string with chronological list of memories.
+    """
+    try:
+        client = _get_client()
+        
+        # Build query based on entity and date range
+        query_parts = []
+        if entity_name:
+            query_parts.append(entity_name)
+        if start_date:
+            query_parts.append(f"after {start_date}")
+        if end_date:
+            query_parts.append(f"before {end_date}")
+        
+        query = " ".join(query_parts) if query_parts else "timeline recent"
+        
+        result = client.recall(query=query, limit=limit, threshold=0.0)
+        
+        # Sort by created_at for chronological order
+        memories = sorted(result.memories, key=lambda m: m.created_at)
+        
+        return json.dumps(
+            {
+                "status": "ok",
+                "count": len(memories),
+                "entity_filter": entity_name,
+                "date_range": {
+                    "start": start_date,
+                    "end": end_date,
+                },
+                "memories": [
+                    {
+                        "id": m.id,
+                        "content": m.content,
+                        "created_at": m.created_at.isoformat(),
+                    }
+                    for m in memories
+                ],
+            },
+            indent=2,
+        )
+    except MemoryError as e:
+        return json.dumps({"status": "error", "error": str(e), "code": e.status_code})
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
 # ---------------------------------------------------------------------------
 # Resources
 # ---------------------------------------------------------------------------
