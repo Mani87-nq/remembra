@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from remembra import __version__
 from remembra.api.router import api_router
@@ -306,6 +307,9 @@ def create_app() -> FastAPI:
     
     # Add rate limit exception handler
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    
+    # Add SlowAPI middleware for rate limiting
+    app.add_middleware(SlowAPIMiddleware)
 
     app.add_middleware(
         CORSMiddleware,

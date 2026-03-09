@@ -1,5 +1,6 @@
 """User model and password hashing for authentication."""
 
+import hashlib
 import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -69,6 +70,14 @@ class UserManager:
     def generate_reset_token() -> str:
         """Generate a password reset token."""
         return secrets.token_urlsafe(32)
+    
+    @staticmethod
+    def hash_token_deterministic(token: str) -> str:
+        """
+        Create a deterministic hash for token blacklisting.
+        Uses SHA-256 instead of bcrypt since we need consistent hashes.
+        """
+        return hashlib.sha256(token.encode()).hexdigest()
     
     def create_jwt_token(self, user_id: str, email: str) -> str:
         """Create a JWT access token."""
@@ -279,9 +288,9 @@ class UserManager:
         if not payload:
             return False
         
-        # Add to blacklist
+        # Add to blacklist using deterministic hash (not bcrypt!)
         await self.db.add_token_to_blacklist(
-            token_hash=self.hash_password(token),
+            token_hash=self.hash_token_deterministic(token),
             user_id=user_id,
             expires_at=datetime.fromtimestamp(payload["exp"], tz=UTC),
         )
@@ -291,7 +300,7 @@ class UserManager:
     
     async def is_token_blacklisted(self, token: str) -> bool:
         """Check if a token is blacklisted."""
-        token_hash = self.hash_password(token)
+        token_hash = self.hash_token_deterministic(token)
         return await self.db.is_token_blacklisted(token_hash)
     
     async def update_profile(
