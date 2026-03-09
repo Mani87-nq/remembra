@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS memories (
 CREATE INDEX IF NOT EXISTS idx_memories_user ON memories(user_id);
 CREATE INDEX IF NOT EXISTS idx_memories_project ON memories(user_id, project_id);
 CREATE INDEX IF NOT EXISTS idx_memories_created ON memories(created_at);
-CREATE INDEX IF NOT EXISTS idx_memories_visibility ON memories(visibility);
-CREATE INDEX IF NOT EXISTS idx_memories_team ON memories(team_id);
+-- NOTE: visibility and team_id indexes are created in migrations after columns are added
 
 -- API Keys table (Week 7 - Authentication)
 CREATE TABLE IF NOT EXISTS api_keys (
@@ -312,6 +311,18 @@ class Database:
                 await self._connection.execute(migration)
             except Exception:
                 # Column likely already exists, ignore
+                pass
+        
+        # Create indexes on newly added columns (safe to run even if they exist)
+        indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_memories_visibility ON memories(visibility)",
+            "CREATE INDEX IF NOT EXISTS idx_memories_team ON memories(team_id)",
+        ]
+        for index_sql in indexes:
+            try:
+                await self._connection.execute(index_sql)
+            except Exception:
+                # Index or column might not exist in some edge cases
                 pass
         
         await self._connection.commit()
