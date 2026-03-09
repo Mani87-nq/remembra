@@ -233,7 +233,7 @@ Expected healthy response:
 ```json
 {
   "status": "ok",
-  "version": "0.8.2",
+  "version": "0.9.9",
   "dependencies": {
     "qdrant": {
       "status": "ok"
@@ -471,4 +471,4 @@ When reporting issues, include:
 
 ---
 
-*Last updated: March 6, 2026 | Remembra v0.8.2*
+*Last updated: March 9, 2026 | Remembra v0.9.9*

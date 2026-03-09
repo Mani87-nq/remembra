@@ -3,8 +3,8 @@
 **Persistent memory for AI applications. Self-host in minutes.**
 
 <div class="admonition tip" markdown>
-<p class="admonition-title">🚀 v0.8.2 Released!</p>
-<p>Now with <strong>One-Command Quick Start</strong>, <strong>Multi-Provider Entity Extraction</strong>, <strong>Performance Boost (httpx connection reuse)</strong>, and <strong>Usage Warnings</strong>. <a href="#whats-new-in-v080">See what's new →</a></p>
+<p class="admonition-title">🚀 v0.9.9 Released!</p>
+<p>Now with <strong>Temporal Knowledge Graph</strong>, <strong>6 New MCP Tools</strong>, <strong>Point-in-Time Queries</strong>, and <strong>Entity Graph Visualization</strong>. <a href="#whats-new-in-v099">See what's new →</a></p>
 </div>
 
 ---
@@ -207,45 +207,45 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 [Get Started :material-arrow-right:](getting-started/quickstart.md){ .md-button .md-button--primary }
 [View on GitHub :material-github:](https://github.com/remembra-ai/remembra){ .md-button }
 
-## What's New in v0.8.2
+## What's New in v0.9.9
 
 <div class="grid cards" markdown>
 
--   :material-shield-lock:{ .lg .middle } __AES-256-GCM Encryption__
+-   :material-clock-time-four:{ .lg .middle } __Temporal Knowledge Graph__
 
     ---
 
-    Encrypt memory content at rest with OWASP 2023-compliant key derivation. Set `REMEMBRA_ENCRYPTION_KEY` to enable.
+    Bi-temporal relationship model with `valid_from`, `valid_to`, and `superseded_by`. Ask "Where did Alice work in January 2022?" and get accurate historical answers.
 
--   :material-eye-off:{ .lg .middle } __PII Detection & Redaction__
-
-    ---
-
-    Automatically detect and redact SSNs, credit cards, API keys, and more. Configure detect/redact/block modes.
-
--   :material-cube-outline:{ .lg .middle } __MCP Registry Published__
+-   :material-tools:{ .lg .middle } __6 New MCP Tools__
 
     ---
 
-    Discoverable as `io.github.remembra-ai/remembra` in Claude Desktop, Cursor, and other MCP-compatible clients.
+    MCP server expanded from 5 → 11 tools: `update_memory`, `search_entities`, `list_memories`, `share_memory`, `timeline`, and `relationships_at`.
 
--   :material-lightning-bolt:{ .lg .middle } __Performance + Security__
-
-    ---
-
-    Persistent HTTP connections, rate limiting, API key auth, full audit logging, and anomaly detection built-in.
-
--   :material-docker:{ .lg .middle } __Docker Compose Quickstart__
+-   :material-graph:{ .lg .middle } __Entity Graph Visualization__
 
     ---
 
-    New zero-config compose with Qdrant + Ollama + Remembra. One file, all services, ready to go.
+    Interactive force-directed graph with flowing particle effects on relationship edges. Click-to-explore entity neighborhoods.
 
--   :material-test-tube:{ .lg .middle } __125 New Tests__
+-   :material-calendar-search:{ .lg .middle } __Point-in-Time Queries__
 
     ---
 
-    Comprehensive test coverage for embeddings, entities, conflicts, spaces, and plugins.
+    Query entity relationships at any historical date. Perfect for tracking job changes, relationship history, and temporal facts.
+
+-   :material-swap-horizontal:{ .lg .middle } __Contradiction Detection__
+
+    ---
+
+    New relationships automatically supersede old ones. "Alice works at Meta" correctly supersedes "Alice works at Google" with full history preserved.
+
+-   :material-share-variant:{ .lg .middle } __Cross-Agent Memory Sharing__
+
+    ---
+
+    Share memories between agents via Spaces. New `share_memory` MCP tool enables collaborative agent workflows.
 
 </div>
 

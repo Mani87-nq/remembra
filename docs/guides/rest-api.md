@@ -29,7 +29,7 @@ GET /health
 ```json
 {
   "status": "healthy",
-  "version": "0.8.0",
+  "version": "0.9.9",
   "qdrant": "connected",
   "database": "connected"
 }

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://docs.remembra.dev/sdks/javascript-sdk/">
+        <link rel="canonical" href="https://docs.remembra.dev/guides/field-notes/">
       
       
       
@@ -23,7 +23,7 @@
     
     
       
-        <title>JavaScript SDK - Remembra</title>
+        <title>Field Notes — Real-World Fixes & Tips - Remembra</title>
       
     
     
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#javascript-sdk" class="md-skip">
+        <a href="#field-notes-real-world-fixes-tips" class="md-skip">
           Skip to content
         </a>
       
@@ -121,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              JavaScript SDK
+              Field Notes — Real-World Fixes &amp; Tips
             
           </span>
         </div>
@@ -275,7 +275,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../guides/python-sdk/" class="md-tabs__link">
+        <a href="../python-sdk/" class="md-tabs__link">
           
   
   
@@ -315,7 +315,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../guides/conversation-ingestion/" class="md-tabs__link">
+        <a href="../conversation-ingestion/" class="md-tabs__link">
           
   
   
@@ -684,7 +684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/python-sdk/" class="md-nav__link">
+      <a href="../python-sdk/" class="md-nav__link">
         
   
   
@@ -712,7 +712,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/javascript-sdk/" class="md-nav__link">
+      <a href="../javascript-sdk/" class="md-nav__link">
         
   
   
@@ -740,7 +740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/rest-api/" class="md-nav__link">
+      <a href="../rest-api/" class="md-nav__link">
         
   
   
@@ -1170,7 +1170,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/conversation-ingestion/" class="md-nav__link">
+      <a href="../conversation-ingestion/" class="md-nav__link">
         
   
   
@@ -1198,7 +1198,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/sleep-time-compute/" class="md-nav__link">
+      <a href="../sleep-time-compute/" class="md-nav__link">
         
   
   
@@ -1226,7 +1226,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/entity-resolution/" class="md-nav__link">
+      <a href="../entity-resolution/" class="md-nav__link">
         
   
   
@@ -1254,7 +1254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/temporal/" class="md-nav__link">
+      <a href="../temporal/" class="md-nav__link">
         
   
   
@@ -1282,7 +1282,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/webhooks/" class="md-nav__link">
+      <a href="../webhooks/" class="md-nav__link">
         
   
   
@@ -1310,7 +1310,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/rbac/" class="md-nav__link">
+      <a href="../rbac/" class="md-nav__link">
         
   
   
@@ -1338,7 +1338,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/import-export/" class="md-nav__link">
+      <a href="../import-export/" class="md-nav__link">
         
   
   
@@ -1366,7 +1366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/plugins/" class="md-nav__link">
+      <a href="../plugins/" class="md-nav__link">
         
   
   
@@ -1394,7 +1394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/security/" class="md-nav__link">
+      <a href="../security/" class="md-nav__link">
         
   
   
@@ -2022,6 +2022,102 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-mcp-connection-refused-localhost-vs-cloud" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. MCP Connection Refused (localhost vs Cloud)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-context-lost-between-sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Context Lost Between Sessions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-agent-framework-trim-crash" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Agent Framework trim() Crash
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-remembra-works-in-agent-framework-but-not-in-claude-code-or-vice-versa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Remembra Works in Agent Framework but Not in Claude Code (or Vice Versa)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-session-recall-hook-fires-but-agent-crashes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Session Recall Hook Fires but Agent Crashes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-config-change-triggers-gateway-restart-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Config Change Triggers Gateway Restart Loop
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-brave-search-api-rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Brave Search API Rate Limiting
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-verifying-remembra-cloud-api-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Verifying Remembra Cloud API Health
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -2040,9 +2136,140 @@
   
 
 
-<h1 id="javascript-sdk">JavaScript SDK<a class="headerlink" href="#javascript-sdk" title="Permanent link">&para;</a></h1>
-<p>This page has moved to <a href="../../guides/javascript-sdk/">JavaScript SDK Guide</a>.</p>
-<script>window.location.href = '../guides/javascript-sdk/';</script>
+<h1 id="field-notes-real-world-fixes-tips">Field Notes — Real-World Fixes &amp; Tips<a class="headerlink" href="#field-notes-real-world-fixes-tips" title="Permanent link">&para;</a></h1>
+<p>Lessons learned from deploying Remembra in production with AI coding tools and agent frameworks. These are battle-tested solutions to problems we've hit ourselves.</p>
+<hr />
+<h2 id="1-mcp-connection-refused-localhost-vs-cloud">1. MCP Connection Refused (localhost vs Cloud)<a class="headerlink" href="#1-mcp-connection-refused-localhost-vs-cloud" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom</strong>: <code>mcp__remembra__recall_memories</code> returns <code>Connection refused</code>. Remembra tools appear in your AI tool but every call fails.</p>
+<p><strong>Root Cause</strong>: The MCP server is configured to connect to <code>http://localhost:8787</code> but Remembra isn't running locally. Common when switching from local dev to the cloud API, or after a machine restart.</p>
+<p><strong>Fix</strong>: Update your MCP config to point to the cloud API.</p>
+<p><strong>Claude Code</strong> (<code>~/.claude.json</code>):
+<div class="language-json highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">&quot;remembra&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;remembra-mcp&quot;</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="nt">&quot;REMEMBRA_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.remembra.dev&quot;</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="nt">&quot;REMEMBRA_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-api-key&quot;</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="nt">&quot;REMEMBRA_USER_ID&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-user-id&quot;</span><span class="p">,</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="nt">&quot;REMEMBRA_PROJECT&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;your-project&quot;</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="p">}</span>
+</span></code></pre></div></p>
+<p><strong>Important</strong>: MCP connections are established at startup. After editing the config, you must restart Claude Code (or your AI tool) for changes to take effect. The current session will keep using the old connection.</p>
+<hr />
+<h2 id="2-context-lost-between-sessions">2. Context Lost Between Sessions<a class="headerlink" href="#2-context-lost-between-sessions" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom</strong>: Every new Claude Code session starts from scratch — the AI has no memory of previous work, your preferences, or project context.</p>
+<p><strong>Root Cause</strong>: Two things need to work together for persistent context:</p>
+<ol>
+<li><strong>Claude Code auto memory</strong> — The directory at <code>~/.claude/projects/&lt;project-hash&gt;/memory/</code> must contain a <code>MEMORY.md</code> file. Claude Code loads this automatically at session start.</li>
+<li><strong>Remembra MCP</strong> — Must be configured and reachable so <code>recall_memories</code> / <code>store_memory</code> tools function.</li>
+</ol>
+<p>If the memory directory is empty AND Remembra isn't connected, you get total amnesia.</p>
+<p><strong>Fix</strong>:
+1. Create a <code>MEMORY.md</code> in your project's memory directory with essential context (project overview, tech stack, key files, preferences).
+2. Ensure Remembra MCP is configured and reachable (see fix #1 above).</p>
+<p><strong>Finding your memory directory</strong>:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># The path is derived from your project&#39;s absolute path</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># Example: /Users/you/myproject → ~/.claude/projects/-Users-you-myproject/memory/</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ls<span class="w"> </span>~/.claude/projects/*/memory/
+</span></code></pre></div></p>
+<hr />
+<h2 id="3-agent-framework-trim-crash">3. Agent Framework trim() Crash<a class="headerlink" href="#3-agent-framework-trim-crash" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom</strong>: Agent fails with <code>TypeError: Cannot read properties of undefined (reading 'trim')</code>. Messages aren't processed. Error appears in gateway logs as "Embedded agent failed before reply."</p>
+<p><strong>Root Cause</strong>: Some agent frameworks call <code>.trim()</code> on values that can be <code>undefined</code> during message streaming. This happens when:
+- The API returns an unexpected response format
+- The agent state isn't fully initialized after a config-triggered restart
+- <code>stripBlockTags()</code> returns <code>undefined</code> for empty/null input</p>
+<p><strong>Affected code pattern</strong>:
+<div class="language-javascript highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// UNSAFE — crashes if stripBlockTags returns undefined</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">next</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ctx</span><span class="p">.</span><span class="nx">stripBlockTags</span><span class="p">(</span><span class="nx">buffer</span><span class="p">,</span><span class="w"> </span><span class="nx">opts</span><span class="p">).</span><span class="nx">trim</span><span class="p">();</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">// SAFE — null-coalescing before trim</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="kd">const</span><span class="w"> </span><span class="nx">next</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">ctx</span><span class="p">.</span><span class="nx">stripBlockTags</span><span class="p">(</span><span class="nx">buffer</span><span class="p">,</span><span class="w"> </span><span class="nx">opts</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">).</span><span class="nx">trim</span><span class="p">();</span>
+</span></code></pre></div></p>
+<p><strong>Fix</strong>: Add null-coalescing (<code>?? ""</code>) before every <code>.trim()</code> call on potentially undefined values. Common locations in agent frameworks:
+- Message streaming handlers (text delta processing)
+- Lane/session resolution (<code>key.trim()</code>)
+- System prompt generation (tool names, workspace notes, owner numbers)
+- Identity resolution (ack reactions)</p>
+<p><strong>Tip</strong>: Search for <code>.trim()</code> in your agent's dist files and check if each call site handles <code>undefined</code> input:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>grep<span class="w"> </span>-rn<span class="w"> </span><span class="s1">&#39;\.trim()&#39;</span><span class="w"> </span>/path/to/agent/dist/agents/<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;?\.&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;??&#39;</span>
+</span></code></pre></div>
+This finds <code>.trim()</code> calls that DON'T use optional chaining (<code>?.</code>) or null-coalescing (<code>??</code>).</p>
+<hr />
+<h2 id="4-remembra-works-in-agent-framework-but-not-in-claude-code-or-vice-versa">4. Remembra Works in Agent Framework but Not in Claude Code (or Vice Versa)<a class="headerlink" href="#4-remembra-works-in-agent-framework-but-not-in-claude-code-or-vice-versa" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom</strong>: Remembra recall/store works when talking to your agent bot (e.g., via Telegram) but not in Claude Code, or the other way around.</p>
+<p><strong>Root Cause</strong>: These are separate integrations with separate configs:</p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Config Location</th>
+<th>How It Connects</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Code</td>
+<td><code>~/.claude.json</code> → <code>mcpServers.remembra</code></td>
+<td>stdio MCP via <code>remembra-mcp</code> binary</td>
+</tr>
+<tr>
+<td>Clawdbot</td>
+<td><code>~/.clawdbot/clawdbot.json</code> → <code>plugins.entries.remembra</code></td>
+<td>Direct API via plugin</td>
+</tr>
+<tr>
+<td>Cursor</td>
+<td><code>.cursor/mcp.json</code></td>
+<td>stdio MCP via <code>remembra-mcp</code> binary</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Fix</strong>: Check the config for the specific tool that's failing. They can point to different URLs, use different API keys, or have different project IDs. Make sure both are pointing to the same Remembra instance.</p>
+<hr />
+<h2 id="5-session-recall-hook-fires-but-agent-crashes">5. Session Recall Hook Fires but Agent Crashes<a class="headerlink" href="#5-session-recall-hook-fires-but-agent-crashes" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom</strong>: Gateway log shows <code>[session-recall] Injected recall instruction into bootstrap</code> but immediately followed by an error.</p>
+<p><strong>Root Cause</strong>: The hook successfully injects the recall instruction, but the agent crashes while processing the response. This is usually the trim() bug (#3 above), not a problem with the hook or Remembra itself.</p>
+<p><strong>How to verify</strong>: Check the error log timestamp — if the hook injection and the crash are within 1-2 seconds, the crash is in message processing, not in recall.</p>
+<hr />
+<h2 id="6-config-change-triggers-gateway-restart-loop">6. Config Change Triggers Gateway Restart Loop<a class="headerlink" href="#6-config-change-triggers-gateway-restart-loop" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom</strong>: Gateway keeps restarting. Log shows repeated <code>[reload] config change requires gateway restart</code>.</p>
+<p><strong>Root Cause</strong>: Writing to the config file (even just updating <code>meta.lastTouchedAt</code>) triggers a restart. If the restart itself writes to the config, you get a loop.</p>
+<p><strong>Fix</strong>:
+- Use <code>clawdbot gateway restart</code> for a clean LaunchAgent restart
+- Avoid programmatic writes to the config file during active sessions</p>
+<hr />
+<h2 id="7-brave-search-api-rate-limiting">7. Brave Search API Rate Limiting<a class="headerlink" href="#7-brave-search-api-rate-limiting" title="Permanent link">&para;</a></h2>
+<p><strong>Symptom</strong>: <code>web_search failed: Brave Search API error (429)</code> — floods the error log with rate limit errors.</p>
+<p><strong>Root Cause</strong>: Brave Search free plan has a 1 request/second rate limit. Agent frameworks that fire multiple parallel searches will hit this immediately.</p>
+<p><strong>Fix</strong>:
+- Upgrade to a paid Brave Search plan
+- Or configure your agent to use sequential (not parallel) web searches
+- Or switch to a different search provider without per-second rate limits</p>
+<hr />
+<h2 id="8-verifying-remembra-cloud-api-health">8. Verifying Remembra Cloud API Health<a class="headerlink" href="#8-verifying-remembra-cloud-api-health" title="Permanent link">&para;</a></h2>
+<p>Quick check that the API is reachable:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://api.remembra.dev/health<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>json.tool
+</span></code></pre></div></p>
+<p>Store a test memory:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://api.remembra.dev/api/v1/memories<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: YOUR_API_KEY&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;content&quot;: &quot;Test memory&quot;, &quot;user_id&quot;: &quot;test&quot;, &quot;project_id&quot;: &quot;test&quot;}&#39;</span>
+</span></code></pre></div></p>
+<p>Recall it:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://api.remembra.dev/api/v1/memories/recall<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-API-Key: YOUR_API_KEY&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;query&quot;: &quot;test&quot;, &quot;user_id&quot;: &quot;test&quot;, &quot;project_id&quot;: &quot;test&quot;}&#39;</span>
+</span></code></pre></div></p>
+<hr />
+<p><em>Last updated: March 8, 2026</em>
+<em>Based on production deployment with AI agent frameworks + Claude Code</em></p>
 
 
 

@@ -2,7 +2,22 @@
 
 See [CHANGELOG.md](https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md) for the full version history.
 
-## Latest: v0.8.4 (March 2026)
+## Latest: v0.9.9 (March 2026)
+
+### Added
+- **Temporal Knowledge Graph** — Bi-temporal relationship model with `valid_from`, `valid_to`, and `superseded_by`. Enables point-in-time queries like "Where did Alice work in January 2022?"
+- **6 New MCP Tools** — `update_memory`, `search_entities`, `list_memories`, `share_memory`, `timeline`, `relationships_at` (5 → 11 tools total)
+- **Entity Graph Visualization** — Interactive force-directed graph with flowing particle effects on relationship edges
+- **Contradiction Detection** — New relationships automatically supersede old ones with full history preserved
+- **SDK Client Methods** — `memory.update()` and `memory.list_entities()` in Python SDK
+
+### Changed
+- MCP server instructions updated to reflect 11 available tools
+- Entity graph retrieval now supports temporal filtering
+
+---
+
+## v0.8.4 (March 2026)
 
 ### Fixed
 - **Maintainer Name** — Corrected maintainer name to "Damany Dolphy" in all metadata
