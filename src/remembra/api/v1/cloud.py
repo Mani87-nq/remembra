@@ -487,13 +487,28 @@ async def create_checkout(
         cancel_url=settings.stripe_cancel_url,
     )
 
+    # Get user's actual email from database
+    user_email = await meter.get_user_email(current_user.user_id)
+    
     # Ensure customer exists
     tenant = await meter.get_tenant(current_user.user_id)
     if tenant and tenant.get("stripe_customer_id"):
         customer_id = tenant["stripe_customer_id"]
+        
+        # Fix existing customers that have placeholder emails
+        # This handles customers created before the email fix was deployed
+        if user_email:
+            try:
+                existing = await billing.get_customer(customer_id)
+                if existing.get("email") != user_email:
+                    await billing.update_customer_email(
+                        customer_id,
+                        email=user_email,
+                        name=current_user.name,
+                    )
+            except Exception:
+                pass  # Don't fail checkout if update fails
     else:
-        # Get user's actual email from database
-        user_email = await meter.get_user_email(current_user.user_id)
         if not user_email:
             # Fallback: check tenant record
             user_email = tenant.get("email") if tenant else None

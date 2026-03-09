@@ -78,6 +78,26 @@ class BillingManager:
             "metadata": dict(customer.metadata),
         }
 
+    async def update_customer_email(
+        self,
+        stripe_customer_id: str,
+        email: str,
+        name: str | None = None,
+    ) -> None:
+        """Update Stripe customer email (and optionally name).
+        
+        Used to fix customers created with placeholder emails.
+        """
+        update_data: dict[str, Any] = {"email": email}
+        if name:
+            update_data["name"] = name
+        stripe.Customer.modify(stripe_customer_id, **update_data)
+        logger.info(
+            "Updated Stripe customer email: customer=%s email=%s",
+            stripe_customer_id,
+            email,
+        )
+
     # -----------------------------------------------------------------------
     # Checkout
     # -----------------------------------------------------------------------
