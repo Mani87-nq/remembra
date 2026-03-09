@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://remembra.dev/logo.svg" alt="Remembra Logo" width="120">
+  <img src="assets/logo.png" alt="Remembra Logo" width="140">
 </p>
 
 <h1 align="center">Remembra</h1>
