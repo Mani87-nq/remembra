@@ -16,18 +16,13 @@
       "permanent": true
     },
     {
-      "source": "/changelog/:slug",
-      "destination": "/changelog",
-      "permanent": false
-    },
-    {
       "source": "/blog",
       "destination": "/changelog",
       "permanent": false
     },
     {
       "source": "/blog/:slug",
-      "destination": "/changelog",
+      "destination": "/changelog/:slug",
       "permanent": false
     }
   ]
