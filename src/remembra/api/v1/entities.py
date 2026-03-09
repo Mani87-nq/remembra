@@ -37,7 +37,7 @@ class EntityResponse(BaseModel):
 
 
 class RelationshipResponse(BaseModel):
-    """Relationship between entities."""
+    """Relationship between entities with temporal validity."""
     id: str
     from_entity_id: str
     from_entity_name: str
@@ -45,6 +45,11 @@ class RelationshipResponse(BaseModel):
     to_entity_name: str
     type: str
     confidence: float = 1.0
+    # Temporal validity (bi-temporal edges)
+    valid_from: str | None = None  # When relationship became true
+    valid_to: str | None = None    # When relationship ended (None = still valid)
+    is_current: bool = True        # Whether relationship is currently valid
+    superseded_by: str | None = None  # ID of relationship that supersedes this
 
 
 class EntitiesListResponse(BaseModel):
@@ -179,8 +184,25 @@ async def get_entity_relationships(
     entity_id: str,
     db: DatabaseDep,
     current_user: CurrentUser,
+    as_of: str | None = Query(
+        default=None,
+        description="Point-in-time query (ISO format, e.g., '2022-01-15'). Returns relationships valid at this time.",
+    ),
+    include_history: bool = Query(
+        default=False,
+        description="Include superseded/historical relationships",
+    ),
 ) -> RelationshipsListResponse:
-    """Get all relationships involving a specific entity."""
+    """
+    Get relationships involving a specific entity with temporal filtering.
+    
+    Supports point-in-time queries like "Where did Alice work in January 2022?"
+    
+    - **as_of**: Query relationships as they were at a specific date
+    - **include_history**: Include relationships that have been superseded
+    """
+    from datetime import datetime
+    
     # Verify entity exists
     entity = await db.get_entity(entity_id)
     if not entity:
@@ -189,8 +211,23 @@ async def get_entity_relationships(
             detail=f"Entity {entity_id} not found",
         )
     
-    # Get relationships
-    relationships = await db.get_entity_relationships(entity_id)
+    # Parse as_of date if provided
+    as_of_dt = None
+    if as_of:
+        try:
+            as_of_dt = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date format for as_of: {as_of}. Use ISO format (e.g., 2022-01-15)",
+            )
+    
+    # Get relationships with temporal filtering
+    relationships = await db.get_entity_relationships(
+        entity_id,
+        as_of=as_of_dt,
+        include_superseded=include_history,
+    )
     
     # Enrich with entity names
     relationship_responses = []
@@ -206,6 +243,97 @@ async def get_entity_relationships(
             to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
             type=rel.type,
             confidence=rel.confidence,
+            valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
+            valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
+            is_current=rel.is_current,
+            superseded_by=rel.superseded_by,
+        ))
+    
+    return RelationshipsListResponse(
+        relationships=relationship_responses,
+        total=len(relationship_responses),
+    )
+
+
+@router.get(
+    "/relationships",
+    response_model=RelationshipsListResponse,
+    summary="Search relationships by entity name",
+)
+@limiter.limit("60/minute")
+async def search_relationships_by_name(
+    request: Request,
+    db: DatabaseDep,
+    current_user: CurrentUser,
+    entity_name: str = Query(..., description="Entity name to search for"),
+    relationship_type: str | None = Query(default=None, description="Filter by type (WORKS_AT, SPOUSE_OF, etc)"),
+    as_of: str | None = Query(default=None, description="Point-in-time query (ISO format)"),
+    include_history: bool = Query(default=False, description="Include superseded relationships"),
+    project_id: str = Query(default="default"),
+) -> RelationshipsListResponse:
+    """
+    Search relationships by entity name with temporal filtering.
+    
+    This is the main endpoint for temporal relationship queries like:
+    - "Where did Alice work in January 2022?"
+    - "Who was Bob married to in 2019?"
+    
+    The bi-temporal model tracks both when we learned about a relationship
+    (created_at) and when it was actually true (valid_from/valid_to).
+    """
+    from datetime import datetime
+    
+    # Parse as_of date if provided
+    as_of_dt = None
+    if as_of:
+        try:
+            as_of_dt = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date format for as_of: {as_of}. Use ISO format (e.g., 2022-01-15)",
+            )
+    
+    # Find entity by name
+    entity = await db.find_entity_by_name(
+        name=entity_name,
+        user_id=current_user.user_id,
+        project_id=project_id,
+    )
+    
+    if not entity:
+        # Return empty list if entity not found (don't error)
+        return RelationshipsListResponse(relationships=[], total=0)
+    
+    # Get relationships with temporal filtering
+    relationships = await db.get_entity_relationships(
+        entity.id,
+        as_of=as_of_dt,
+        include_superseded=include_history,
+    )
+    
+    # Filter by relationship type if specified
+    if relationship_type:
+        relationships = [r for r in relationships if r.type.upper() == relationship_type.upper()]
+    
+    # Enrich with entity names
+    relationship_responses = []
+    for rel in relationships:
+        from_entity = await db.get_entity(rel.from_entity_id)
+        to_entity = await db.get_entity(rel.to_entity_id)
+        
+        relationship_responses.append(RelationshipResponse(
+            id=rel.id,
+            from_entity_id=rel.from_entity_id,
+            from_entity_name=from_entity.canonical_name if from_entity else "Unknown",
+            to_entity_id=rel.to_entity_id,
+            to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
+            type=rel.type,
+            confidence=rel.confidence,
+            valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
+            valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
+            is_current=rel.is_current,
+            superseded_by=rel.superseded_by,
         ))
     
     return RelationshipsListResponse(

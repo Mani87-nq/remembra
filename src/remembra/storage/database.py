@@ -905,15 +905,19 @@ class Database:
     # -----------------------------------------------------------------------
 
     async def save_relationship(self, rel: Relationship) -> None:
-        """Save a relationship between entities."""
+        """Save a relationship between entities with temporal validity."""
         await self.conn.execute(
             """
             INSERT INTO relationships (id, from_entity_id, to_entity_id, type, 
-                                        properties, confidence, source_memory_id, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                        properties, confidence, source_memory_id, created_at,
+                                        valid_from, valid_to, superseded_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 properties = excluded.properties,
-                confidence = excluded.confidence
+                confidence = excluded.confidence,
+                valid_from = excluded.valid_from,
+                valid_to = excluded.valid_to,
+                superseded_by = excluded.superseded_by
             """,
             (
                 rel.id,
@@ -923,13 +927,27 @@ class Database:
                 json.dumps(rel.properties),
                 rel.confidence,
                 rel.source_memory_id,
-                datetime.utcnow().isoformat(),
+                rel.created_at.isoformat(),
+                rel.valid_from.isoformat(),
+                rel.valid_to.isoformat() if rel.valid_to else None,
+                rel.superseded_by,
             ),
         )
         await self.conn.commit()
 
-    async def get_entity_relationships(self, entity_id: str) -> list[Relationship]:
-        """Get all relationships for an entity."""
+    async def get_entity_relationships(
+        self,
+        entity_id: str,
+        as_of: datetime | None = None,
+        include_superseded: bool = False,
+    ) -> list[Relationship]:
+        """Get relationships for an entity with temporal filtering.
+        
+        Args:
+            entity_id: Entity to get relationships for
+            as_of: Optional point-in-time filter. Returns relationships valid at this time.
+            include_superseded: If True, include superseded relationships (default: False)
+        """
         cursor = await self.conn.execute(
             """
             SELECT * FROM relationships 
@@ -939,8 +957,14 @@ class Database:
         )
         rows = await cursor.fetchall()
 
-        return [
-            Relationship(
+        relationships = []
+        for row in rows:
+            # Parse temporal fields
+            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
+            valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
+            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
+            
+            rel = Relationship(
                 id=row["id"],
                 from_entity_id=row["from_entity_id"],
                 to_entity_id=row["to_entity_id"],
@@ -948,9 +972,24 @@ class Database:
                 properties=json.loads(row["properties"]) if row["properties"] else {},
                 confidence=row["confidence"],
                 source_memory_id=row["source_memory_id"],
+                valid_from=valid_from,
+                valid_to=valid_to,
+                created_at=created_at,
+                superseded_by=row["superseded_by"],
             )
-            for row in rows
-        ]
+            
+            # Apply temporal filtering
+            if as_of is not None:
+                if not rel.is_valid_at(as_of):
+                    continue
+            elif not include_superseded:
+                # For current queries, exclude superseded relationships
+                if not rel.is_current:
+                    continue
+            
+            relationships.append(rel)
+        
+        return relationships
 
     async def delete_user_relationships(self, user_id: str) -> int:
         """Delete all relationships for a user's entities."""
@@ -964,6 +1003,152 @@ class Database:
         )
         await self.conn.commit()
         return cursor.rowcount
+
+    async def supersede_relationship(
+        self,
+        old_rel_id: str,
+        new_rel_id: str,
+        end_time: datetime | None = None,
+    ) -> None:
+        """Mark a relationship as superseded by a newer one.
+        
+        This is used for contradiction detection - when we learn that
+        "Alice works at Google" but she used to work at Meta, we supersede
+        the Meta relationship.
+        
+        Args:
+            old_rel_id: ID of the relationship being superseded
+            new_rel_id: ID of the new relationship that supersedes it
+            end_time: When the old relationship ended (default: now)
+        """
+        end = end_time or datetime.utcnow()
+        await self.conn.execute(
+            """
+            UPDATE relationships 
+            SET valid_to = ?, superseded_by = ?
+            WHERE id = ?
+            """,
+            (end.isoformat(), new_rel_id, old_rel_id),
+        )
+        await self.conn.commit()
+
+    async def find_contradicting_relationships(
+        self,
+        from_entity_id: str,
+        to_entity_id: str,
+        rel_type: str,
+    ) -> list[Relationship]:
+        """Find existing current relationships that might be contradicted.
+        
+        Used to detect when a new relationship contradicts an existing one.
+        For exclusive relationship types (WORKS_AT, SPOUSE_OF), finding an
+        existing relationship to a DIFFERENT entity suggests the old one
+        should be superseded.
+        
+        Args:
+            from_entity_id: Subject entity
+            to_entity_id: Object entity (the one we're adding)
+            rel_type: Relationship type
+            
+        Returns:
+            List of current relationships of the same type from the same
+            subject but to DIFFERENT objects.
+        """
+        # Exclusive relationship types - only one can be current at a time
+        exclusive_types = {"WORKS_AT", "SPOUSE_OF", "MARRIED_TO", "LIVES_IN", "ROLE"}
+        
+        if rel_type.upper() not in exclusive_types:
+            return []
+        
+        cursor = await self.conn.execute(
+            """
+            SELECT * FROM relationships 
+            WHERE from_entity_id = ? 
+              AND type = ?
+              AND to_entity_id != ?
+              AND valid_to IS NULL
+            """,
+            (from_entity_id, rel_type, to_entity_id),
+        )
+        rows = await cursor.fetchall()
+        
+        relationships = []
+        for row in rows:
+            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
+            valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
+            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
+            
+            relationships.append(Relationship(
+                id=row["id"],
+                from_entity_id=row["from_entity_id"],
+                to_entity_id=row["to_entity_id"],
+                type=row["type"],
+                properties=json.loads(row["properties"]) if row["properties"] else {},
+                confidence=row["confidence"],
+                source_memory_id=row["source_memory_id"],
+                valid_from=valid_from,
+                valid_to=valid_to,
+                created_at=created_at,
+                superseded_by=row["superseded_by"],
+            ))
+        
+        return relationships
+
+    async def get_relationship_history(
+        self,
+        from_entity_id: str,
+        to_entity_id: str | None = None,
+        rel_type: str | None = None,
+    ) -> list[Relationship]:
+        """Get full relationship history including superseded relationships.
+        
+        Useful for timeline queries like "Where has Alice worked?"
+        
+        Args:
+            from_entity_id: Subject entity
+            to_entity_id: Optional filter by object entity
+            rel_type: Optional filter by relationship type
+            
+        Returns:
+            List of all relationships (current and superseded), ordered by valid_from.
+        """
+        query = "SELECT * FROM relationships WHERE from_entity_id = ?"
+        params: list[Any] = [from_entity_id]
+        
+        if to_entity_id:
+            query += " AND to_entity_id = ?"
+            params.append(to_entity_id)
+        
+        if rel_type:
+            query += " AND type = ?"
+            params.append(rel_type)
+        
+        query += " ORDER BY valid_from DESC"
+        
+        cursor = await self.conn.execute(query, params)
+        rows = await cursor.fetchall()
+        
+        relationships = []
+        for row in rows:
+            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
+            valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
+            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
+            
+            relationships.append(Relationship(
+                id=row["id"],
+                from_entity_id=row["from_entity_id"],
+                to_entity_id=row["to_entity_id"],
+                type=row["type"],
+                properties=json.loads(row["properties"]) if row["properties"] else {},
+                confidence=row["confidence"],
+                source_memory_id=row["source_memory_id"],
+                valid_from=valid_from,
+                valid_to=valid_to,
+                created_at=created_at,
+                superseded_by=row["superseded_by"],
+            ))
+        
+        return relationships
 
     # -----------------------------------------------------------------------
     # Memory-Entity associations

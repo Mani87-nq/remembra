@@ -51,6 +51,10 @@ RULES:
 3. Include role/title as part of person description
 4. Resolve pronouns when clear (e.g., "He is the CEO" after mentioning John)
 5. Return empty arrays if no entities found
+6. TEMPORAL: Extract WHEN relationships started/ended if mentioned
+   - "worked at" (past) vs "works at" (present)
+   - "since 2020", "from 2018 to 2022", "until last year"
+   - If no temporal info, omit valid_from/valid_to (defaults to present)
 
 OUTPUT FORMAT (strict JSON):
 {
@@ -72,7 +76,9 @@ OUTPUT FORMAT (strict JSON):
     {
       "subject": "John Smith",
       "predicate": "WORKS_AT",
-      "object": "Acme Corp"
+      "object": "Acme Corp",
+      "valid_from": "2020-01-01",
+      "valid_to": null
     },
     {
       "subject": "John Smith",
@@ -82,7 +88,31 @@ OUTPUT FORMAT (strict JSON):
   ]
 }
 
-EXAMPLES:
+TEMPORAL EXAMPLES:
+
+Input: "Alice used to work at Meta from 2019 to 2022. She now works at Google."
+Output: {
+  "entities": [
+    {"name": "Alice", "type": "PERSON", "description": "Former Meta employee, now at Google", "aliases": []},
+    {"name": "Meta", "type": "ORG", "description": "Tech company (former employer)", "aliases": ["Facebook"]},
+    {"name": "Google", "type": "ORG", "description": "Tech company (current employer)", "aliases": []}
+  ],
+  "relationships": [
+    {"subject": "Alice", "predicate": "WORKS_AT", "object": "Meta", "valid_from": "2019-01-01", "valid_to": "2022-12-31"},
+    {"subject": "Alice", "predicate": "WORKS_AT", "object": "Google", "valid_from": "2022-01-01", "valid_to": null}
+  ]
+}
+
+Input: "Bob has been married to Carol since 2015."
+Output: {
+  "entities": [
+    {"name": "Bob", "type": "PERSON", "description": "Married to Carol", "aliases": []},
+    {"name": "Carol", "type": "PERSON", "description": "Bob's spouse", "aliases": []}
+  ],
+  "relationships": [
+    {"subject": "Bob", "predicate": "SPOUSE_OF", "object": "Carol", "valid_from": "2015-01-01", "valid_to": null}
+  ]
+}
 
 Input: "Sarah mentioned that her husband Mike works at Google as a Senior Engineer."
 Output: {
@@ -124,10 +154,12 @@ class ExtractedEntity:
 
 @dataclass
 class ExtractedRelationship:
-    """A relationship extracted from text."""
+    """A relationship extracted from text with optional temporal bounds."""
     subject: str
     predicate: str
     object: str
+    valid_from: str | None = None  # ISO date string, e.g., "2020-01-01"
+    valid_to: str | None = None    # ISO date string, or None for ongoing
 
 
 @dataclass
@@ -222,6 +254,8 @@ class EntityExtractor:
                         subject=r.get("subject", ""),
                         predicate=r.get("predicate", "RELATED_TO"),
                         object=r.get("object", ""),
+                        valid_from=r.get("valid_from"),
+                        valid_to=r.get("valid_to"),
                     ))
             
             log.info(
@@ -278,6 +312,8 @@ def _parse_extraction_json(raw_text: str) -> ExtractionResult:
                 subject=r.get("subject", ""),
                 predicate=r.get("predicate", "RELATED_TO"),
                 object=r.get("object", ""),
+                valid_from=r.get("valid_from"),
+                valid_to=r.get("valid_to"),
             ))
 
     return ExtractionResult(entities=entities, relationships=relationships)

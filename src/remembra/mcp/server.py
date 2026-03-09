@@ -614,6 +614,79 @@ def timeline(
         return json.dumps({"status": "error", "error": str(e)})
 
 
+@mcp.tool()
+def relationships_at(
+    entity_name: str,
+    as_of: str | None = None,
+    relationship_type: str | None = None,
+    include_history: bool = False,
+) -> str:
+    """Query relationships at a specific point in time.
+
+    Enables temporal queries like "Where did Alice work in January 2022?"
+    or "Who was Bob married to in 2019?" This is Remembra's unique feature
+    for bi-temporal relationship tracking.
+
+    Args:
+        entity_name: Name of the entity to query relationships for.
+        as_of: Point in time (ISO format, e.g., "2022-01-15"). 
+               If omitted, returns current relationships.
+        relationship_type: Filter by type (WORKS_AT, SPOUSE_OF, ROLE, etc).
+        include_history: If true, includes superseded relationships.
+
+    Returns:
+        JSON with relationships valid at the specified time.
+    """
+    try:
+        client = _get_client()
+        
+        # Build the API request for temporal relationship query
+        params = {
+            "entity_name": entity_name,
+            "include_history": include_history,
+        }
+        if as_of:
+            params["as_of"] = as_of
+        if relationship_type:
+            params["relationship_type"] = relationship_type
+        
+        # Call the relationships endpoint
+        result = client._request(
+            "GET",
+            "/api/v1/entities/relationships",
+            params=params,
+        )
+        
+        relationships = result.get("relationships", [])
+        
+        return json.dumps(
+            {
+                "status": "ok",
+                "entity": entity_name,
+                "as_of": as_of or "current",
+                "count": len(relationships),
+                "relationships": [
+                    {
+                        "id": r.get("id"),
+                        "type": r.get("type"),
+                        "from": r.get("from_entity_name"),
+                        "to": r.get("to_entity_name"),
+                        "valid_from": r.get("valid_from"),
+                        "valid_to": r.get("valid_to"),
+                        "is_current": r.get("valid_to") is None,
+                        "superseded_by": r.get("superseded_by"),
+                    }
+                    for r in relationships
+                ],
+            },
+            indent=2,
+        )
+    except MemoryError as e:
+        return json.dumps({"status": "error", "error": str(e), "code": e.status_code})
+    except Exception as e:
+        return json.dumps({"status": "error", "error": str(e)})
+
+
 # ---------------------------------------------------------------------------
 # Resources
 # ---------------------------------------------------------------------------
