@@ -8,31 +8,7 @@
 /* Dark BG: #0F0F0F, Cards: #1F1F1F */
 
 :root {
-  /* Default to dark theme to match landing */
-  --background: 0 0% 6%;
-  --foreground: 0 0% 98%;
-  --card: 0 0% 12%;
-  --card-foreground: 0 0% 98%;
-  --popover: 0 0% 10%;
-  --popover-foreground: 0 0% 98%;
-  --primary: 258 90% 66%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 258 90% 76%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 15%;
-  --muted-foreground: 0 0% 65%;
-  --accent: 258 40% 20%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 20%;
-  --input: 0 0% 15%;
-  --ring: 258 90% 66%;
-  --radius: 0.5rem;
-}
-
-/* Light mode override (if needed later) */
-.light {
+  /* Default to light theme - dark mode overrides below */
   --background: 0 0% 100%;
   --foreground: 0 0% 6%;
   --card: 0 0% 98%;
@@ -52,6 +28,7 @@
   --border: 0 0% 90%;
   --input: 0 0% 90%;
   --ring: 258 85% 58%;
+  --radius: 0.5rem;
 }
 
 .dark {

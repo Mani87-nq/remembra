@@ -230,11 +230,10 @@ class ApiClient {
     const result = await this.fetchApi<{ memories: Memory[]; context: string }>('/memories/recall', {
       method: 'POST',
       body: JSON.stringify({
-        query: '*',  // Broad query to get all memories
+        query: 'all memories',  // Broad semantic query
         limit: params.limit || 20,
         threshold: 0.0,  // Low threshold to include all
-        project_id: params.project_id || this.getProjectId(),
-        user_id: this.getUserId(),
+        project_id: params.project_id || this.getProjectId() || 'default',
       }),
     });
     return result.memories || [];
@@ -247,8 +246,7 @@ class ApiClient {
         query: params.query,
         limit: params.limit || 10,
         threshold: params.threshold || 0.4,
-        project_id: params.project_id || this.getProjectId(),
-        user_id: this.getUserId(),
+        project_id: params.project_id || this.getProjectId() || 'default',
       }),
     });
     return {
@@ -349,8 +347,7 @@ class ApiClient {
         query,
         limit,
         threshold,
-        user_id: this.getUserId(),
-        project_id: this.getProjectId(),
+        project_id: this.getProjectId() || 'default',
       }),
     });
   }
