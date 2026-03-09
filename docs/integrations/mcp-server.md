@@ -147,7 +147,7 @@ Result:
   "server": "http://localhost:8787",
   "health": {
     "status": "healthy",
-    "version": "0.9.9",
+    "version": "0.9.0",
     "qdrant": "connected",
     "database": "connected"
   }
@@ -200,7 +200,7 @@ Result:
 
 ---
 
-### update_memory <span class="md-tag">v0.9.9</span>
+### update_memory <span class="md-tag">v0.9.0</span>
 
 Update an existing memory's content. Re-extracts facts and entities from the new content.
 
@@ -232,7 +232,7 @@ Result:
 
 ---
 
-### search_entities <span class="md-tag">v0.9.9</span>
+### search_entities <span class="md-tag">v0.9.0</span>
 
 Search the entity graph. Find people, companies, locations, and concepts that Remembra knows about.
 
@@ -273,7 +273,7 @@ Result:
 
 ---
 
-### list_memories <span class="md-tag">v0.9.9</span>
+### list_memories <span class="md-tag">v0.9.0</span>
 
 Browse stored memories without a search query. Returns recent memories.
 
@@ -308,7 +308,7 @@ Result:
 
 ---
 
-### share_memory <span class="md-tag">v0.9.9</span>
+### share_memory <span class="md-tag">v0.9.0</span>
 
 Share a memory to a collaborative space for cross-agent sharing.
 
@@ -334,7 +334,7 @@ Result:
 
 ---
 
-### timeline <span class="md-tag">v0.9.9</span>
+### timeline <span class="md-tag">v0.9.0</span>
 
 Browse memories chronologically, optionally filtered by entity and date range.
 
@@ -375,7 +375,7 @@ Result:
 
 ---
 
-### relationships_at <span class="md-tag">v0.9.9</span>
+### relationships_at <span class="md-tag">v0.9.0</span>
 
 Query entity relationships at a specific point in time. Enables temporal queries like "Where did Alice work in January?"
 
@@ -454,7 +454,7 @@ Returns server status and configuration.
   "server": "http://localhost:8787",
   "user_id": "user_123",
   "project": "default",
-  "health": {"status": "healthy", "version": "0.9.9"}
+  "health": {"status": "healthy", "version": "0.9.0"}
 }
 ```
 

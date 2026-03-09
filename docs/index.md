@@ -3,7 +3,7 @@
 **Persistent memory for AI applications. Self-host in minutes.**
 
 <div class="admonition tip" markdown>
-<p class="admonition-title">🚀 v0.9.9 Released!</p>
+<p class="admonition-title">🚀 v0.9.0 Released!</p>
 <p>Now with <strong>Temporal Knowledge Graph</strong>, <strong>6 New MCP Tools</strong>, <strong>Point-in-Time Queries</strong>, and <strong>Entity Graph Visualization</strong>. <a href="#whats-new-in-v099">See what's new →</a></p>
 </div>
 
@@ -207,7 +207,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 [Get Started :material-arrow-right:](getting-started/quickstart.md){ .md-button .md-button--primary }
 [View on GitHub :material-github:](https://github.com/remembra-ai/remembra){ .md-button }
 
-## What's New in v0.9.9
+## What's New in v0.9.0
 
 <div class="grid cards" markdown>
 

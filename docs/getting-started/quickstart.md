@@ -83,7 +83,7 @@ If you prefer to configure things yourself, choose one of the options below.
 
 ```bash
 curl http://localhost:8787/health
-# {"status":"healthy","version":"0.9.9"}
+# {"status":"healthy","version":"0.9.0"}
 ```
 
 Or open the dashboard: [http://localhost:8787](http://localhost:8787)

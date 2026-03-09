@@ -2,7 +2,7 @@
 
 See [CHANGELOG.md](https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md) for the full version history.
 
-## Latest: v0.9.9 (March 2026)
+## Latest: v0.9.0 (March 2026)
 
 ### Added
 - **Temporal Knowledge Graph** — Bi-temporal relationship model with `valid_from`, `valid_to`, and `superseded_by`. Enables point-in-time queries like "Where did Alice work in January 2022?"

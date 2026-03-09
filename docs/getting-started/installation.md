@@ -198,7 +198,7 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "version": "0.9.9",
+  "version": "0.9.0",
   "qdrant": "connected",
   "database": "connected"
 }

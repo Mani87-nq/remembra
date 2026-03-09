@@ -31,7 +31,7 @@
 
 ---
 
-## 🚀 What's New in v0.9.9
+## 🚀 What's New in v0.9.0
 
 - **⏳ Temporal Knowledge Graph** — Bi-temporal relationships with `valid_from`, `valid_to`, and point-in-time queries. Ask "Where did Alice work in January 2022?"
 - **🛠️ 11 MCP Tools** — 6 new tools: `update_memory`, `search_entities`, `list_memories`, `share_memory`, `timeline`, `relationships_at`
