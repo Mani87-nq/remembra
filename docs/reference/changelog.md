@@ -2,7 +2,38 @@
 
 See [CHANGELOG.md](https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md) for the full version history.
 
-## Latest: v0.8.1 (March 2026)
+## Latest: v0.8.4 (March 2026)
+
+### Fixed
+- **Maintainer Name** — Corrected maintainer name to "Damany Dolphy" in all metadata
+- **README Cleanup** — Removed unprofessional language from documentation
+
+### Added
+- **Pre-commit Hook** — Automated check to block unprofessional content before commits
+
+---
+
+## v0.8.3 (March 2026)
+
+### Changed
+- **Accurate Messaging** — Updated all marketing copy to be accurate and not overpromise
+- **NPM SDK Sync** — TypeScript SDK synced to v0.8.3
+- **Documentation** — Replaced "5 minutes" claims with accurate "minutes" throughout
+
+---
+
+## v0.8.2 (March 2026)
+
+### Added
+- **Security Features Release** — Production hardening with AES-256-GCM encryption
+- **16 New Encryption Tests** — 272 total tests now passing
+
+### Changed
+- **Documentation** — Updated all version references to v0.8.2
+
+---
+
+## v0.8.1 (March 2026)
 
 ### Added
 - **Encryption at Rest (AES-256-GCM)** — Field-level encryption for memory content and metadata with PBKDF2 key derivation (480K iterations). Set `REMEMBRA_ENCRYPTION_KEY` to enable. Backwards-compatible with unencrypted data.

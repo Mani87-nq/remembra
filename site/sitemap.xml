@@ -153,6 +153,10 @@
          <lastmod>2026-03-09</lastmod>
     </url>
     <url>
+         <loc>https://docs.remembra.dev/reference/api-reference/</loc>
+         <lastmod>2026-03-09</lastmod>
+    </url>
+    <url>
          <loc>https://docs.remembra.dev/reference/api/</loc>
          <lastmod>2026-03-09</lastmod>
     </url>
@@ -162,6 +166,18 @@
     </url>
     <url>
          <loc>https://docs.remembra.dev/reference/configuration/</loc>
+         <lastmod>2026-03-09</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.remembra.dev/sdks/</loc>
+         <lastmod>2026-03-09</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.remembra.dev/sdks/javascript-sdk/</loc>
+         <lastmod>2026-03-09</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.remembra.dev/sdks/python-sdk/</loc>
          <lastmod>2026-03-09</lastmod>
     </url>
 </urlset>
