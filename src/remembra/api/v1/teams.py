@@ -203,14 +203,32 @@ async def create_team(
     manager: TeamManagerDep,
     user: CurrentUser,
 ) -> CreateTeamResponse:
-    # Default to pro plan for now (team features)
+    # Look up owner's billing plan to inherit
+    from remembra.cloud.plans import PlanTier, get_plan
+    
+    plan = "pro"  # Default fallback
+    max_seats = 5
+    
+    # Try to get the user's actual billing plan
+    meter = getattr(request.app.state, "usage_meter", None)
+    if meter:
+        try:
+            tenant = await meter.get_tenant(user.user_id)
+            if tenant and tenant.get("plan"):
+                plan = tenant["plan"]
+                plan_tier = PlanTier(plan)
+                plan_limits = get_plan(plan_tier)
+                max_seats = plan_limits.max_users
+        except Exception:
+            pass  # Use defaults if lookup fails
+    
     team = await manager.create_team(
         name=body.name,
         owner_id=user.user_id,
         description=body.description,
         slug=body.slug,
-        plan="pro",
-        max_seats=5,  # Pro plan default
+        plan=plan,
+        max_seats=max_seats,
     )
     return CreateTeamResponse(**team)
 

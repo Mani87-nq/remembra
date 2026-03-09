@@ -666,6 +666,16 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
                 stripe_customer_id=result.stripe_customer_id,
                 stripe_subscription_id=result.stripe_subscription_id,
             )
+            # Sync existing team plans with new billing
+            team_manager = getattr(request.app.state, "team_manager", None)
+            if team_manager:
+                plan = result.plan or PlanTier.PRO
+                plan_limits = get_plan(plan)
+                await team_manager.update_owner_teams_plan(
+                    owner_id=user_id,
+                    plan=plan.value,
+                    max_seats=plan_limits.max_users,
+                )
 
     elif result.action == "update_subscription":
         if result.user_id:
@@ -674,6 +684,16 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
                 plan=result.plan or PlanTier.PRO,
                 stripe_subscription_id=result.stripe_subscription_id,
             )
+            # Sync team plans with billing
+            team_manager = getattr(request.app.state, "team_manager", None)
+            if team_manager:
+                plan = result.plan or PlanTier.PRO
+                plan_limits = get_plan(plan)
+                await team_manager.update_owner_teams_plan(
+                    owner_id=result.user_id,
+                    plan=plan.value,
+                    max_seats=plan_limits.max_users,
+                )
 
     elif result.action == "cancel_subscription":
         if result.user_id:
@@ -681,6 +701,15 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
                 user_id=result.user_id,
                 plan=PlanTier.FREE,
             )
+            # Downgrade team plans to free
+            team_manager = getattr(request.app.state, "team_manager", None)
+            if team_manager:
+                plan_limits = get_plan(PlanTier.FREE)
+                await team_manager.update_owner_teams_plan(
+                    owner_id=result.user_id,
+                    plan="free",
+                    max_seats=plan_limits.max_users,
+                )
 
     elif result.action == "payment_failed":
         # For now, just log — don't downgrade immediately.

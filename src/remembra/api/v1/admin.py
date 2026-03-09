@@ -1068,3 +1068,78 @@ async def rebuild_vectors(
         "missing_memories": missing[:50],  # Limit preview
         "error_details": errors[:10] if errors else [],
     }
+
+
+@router.post(
+    "/users/{user_id}/sync-team-plan",
+    summary="Sync team plans with user's billing (superadmin only)",
+)
+@limiter.limit("10/minute")
+async def sync_user_team_plans(
+    request: Request,
+    user_id: str,
+    db: DatabaseDep,
+    current_user: CurrentUser,
+    _superadmin: RequireSuperadmin,
+) -> dict[str, Any]:
+    """
+    Sync all teams owned by a user to match their billing plan.
+    
+    Use this to fix teams that are out of sync with the owner's
+    actual subscription (e.g., team shows "Pro" but billing is "Enterprise").
+    
+    **Superadmin only** - requires owner_emails access.
+    """
+    from remembra.cloud.plans import PlanTier, get_plan
+    
+    # Get user
+    user_data = await db.get_user_by_id(user_id)
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found",
+        )
+    
+    # Get user's current billing plan
+    usage_meter = getattr(request.app.state, "usage_meter", None)
+    if not usage_meter:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Cloud features not enabled",
+        )
+    
+    tenant = await usage_meter.get_tenant(user_id)
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No billing record for user {user_id}",
+        )
+    
+    plan_str = tenant.get("plan", "free")
+    plan_tier = PlanTier(plan_str)
+    plan_limits = get_plan(plan_tier)
+    
+    # Get team manager
+    team_manager = getattr(request.app.state, "team_manager", None)
+    if not team_manager:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Team collaboration not enabled",
+        )
+    
+    # Update all teams owned by this user
+    teams_updated = await team_manager.update_owner_teams_plan(
+        owner_id=user_id,
+        plan=plan_str,
+        max_seats=plan_limits.max_users,
+    )
+    
+    return {
+        "status": "synced",
+        "user_id": user_id,
+        "email": user_data["email"],
+        "billing_plan": plan_str,
+        "max_seats": plan_limits.max_users,
+        "teams_updated": teams_updated,
+        "message": f"Updated {teams_updated} team(s) to {plan_str} plan",
+    }

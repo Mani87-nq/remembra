@@ -255,6 +255,76 @@ class TeamManager:
             logger.info("Team deleted: id=%s by=%s", team_id, user_id)
         return deleted
 
+    async def update_team_plan(
+        self,
+        team_id: str,
+        plan: str,
+        max_seats: int | None = None,
+    ) -> bool:
+        """Update a team's plan and seat limit.
+
+        Called when billing changes (Stripe webhook).
+        """
+        now = datetime.now(UTC).isoformat()
+        
+        if max_seats is not None:
+            await self._db.conn.execute(
+                "UPDATE teams SET plan = ?, max_seats = ?, updated_at = ? WHERE id = ?",
+                (plan, max_seats, now, team_id),
+            )
+        else:
+            await self._db.conn.execute(
+                "UPDATE teams SET plan = ?, updated_at = ? WHERE id = ?",
+                (plan, now, team_id),
+            )
+        await self._db.conn.commit()
+
+        logger.info("Team plan updated: team=%s plan=%s seats=%s", team_id, plan, max_seats)
+        return True
+
+    async def update_owner_teams_plan(
+        self,
+        owner_id: str,
+        plan: str,
+        max_seats: int | None = None,
+    ) -> int:
+        """Update all teams owned by a user to a new plan.
+
+        Called when the owner's billing subscription changes.
+        Returns number of teams updated.
+        """
+        now = datetime.now(UTC).isoformat()
+        
+        # Get all teams owned by this user
+        cursor = await self._db.conn.execute(
+            "SELECT id FROM teams WHERE owner_id = ?",
+            (owner_id,),
+        )
+        teams = await cursor.fetchall()
+        
+        if not teams:
+            return 0
+        
+        # Update each team's plan
+        if max_seats is not None:
+            await self._db.conn.execute(
+                "UPDATE teams SET plan = ?, max_seats = ?, updated_at = ? WHERE owner_id = ?",
+                (plan, max_seats, now, owner_id),
+            )
+        else:
+            await self._db.conn.execute(
+                "UPDATE teams SET plan = ?, updated_at = ? WHERE owner_id = ?",
+                (plan, now, owner_id),
+            )
+        await self._db.conn.commit()
+
+        count = len(teams)
+        logger.info(
+            "Updated %d teams for owner %s to plan=%s seats=%s",
+            count, owner_id, plan, max_seats,
+        )
+        return count
+
     # -----------------------------------------------------------------------
     # Membership
     # -----------------------------------------------------------------------
