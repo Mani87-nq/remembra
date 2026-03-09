@@ -37,7 +37,7 @@ theme:
     - content.tabs.link
   icon:
     repo: fontawesome/brands/github
-  logo: assets/logo.svg
+  logo: assets/logo.png
   favicon: assets/favicon.png
 
 plugins:
