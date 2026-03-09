@@ -5,10 +5,11 @@ import { Dashboard, type TabType } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { InviteAccept } from './pages/InviteAccept';
 import { api } from './lib/api';
 import { API_V1 } from './config';
 
-type AuthMode = 'login' | 'signup' | 'forgot-password' | 'api-key';
+type AuthMode = 'login' | 'signup' | 'forgot-password' | 'api-key' | 'invite';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -23,9 +24,17 @@ function App() {
     return !!localStorage.getItem('remembra_jwt_token') || !!api.getApiKey();
   });
   
+  const [inviteToken, setInviteToken] = useState<string | null>(() => {
+    // Check for invite URL: /invite/:token
+    const path = window.location.pathname;
+    const match = path.match(/^\/invite\/(.+)$/);
+    return match ? match[1] : localStorage.getItem('pending_invite_token');
+  });
+
   const [authMode, setAuthMode] = useState<AuthMode>(() => {
     // Check URL path to determine initial auth mode
     const path = window.location.pathname;
+    if (path.startsWith('/invite/')) return 'invite';
     if (path === '/signup') return 'signup';
     if (path === '/forgot-password') return 'forgot-password';
     return 'login';
@@ -87,13 +96,42 @@ function App() {
     setDarkMode(!darkMode);
   };
 
-  const handleLogin = (token: string, user: { id: string; email: string; name?: string }) => {
+  const handleLogin = async (token: string, user: { id: string; email: string; name?: string }) => {
     localStorage.setItem('remembra_jwt_token', token);
     localStorage.setItem('remembra_user', JSON.stringify(user));
     // Set user ID in API client for compatibility
     api.setUserId(user.id);
+    api.setJwtToken(token);
     setCurrentUser(user);
     setIsAuthenticated(true);
+    
+    // Check for pending invite
+    const pendingInvite = localStorage.getItem('pending_invite_token');
+    if (pendingInvite) {
+      // Auto-accept the invite
+      try {
+        const response = await fetch(`${API_V1}/teams/invites/accept`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token: pendingInvite }),
+        });
+        
+        if (response.ok) {
+          localStorage.removeItem('pending_invite_token');
+          setInviteToken(null);
+          setActiveTab('teams');
+          // Clear URL
+          window.history.replaceState({}, '', '/');
+          return;
+        }
+      } catch {
+        // Ignore errors, user can manually accept
+      }
+      localStorage.removeItem('pending_invite_token');
+    }
     
     // Check if user had a plan intent (signed up via pricing page with plan=pro/team)
     const planIntent = localStorage.getItem('remembra_plan_intent');
@@ -183,9 +221,27 @@ function App() {
         {authMode === 'api-key' && (
           <ApiKeyForm onAuthenticated={handleApiKeyAuth} />
         )}
+        {authMode === 'invite' && inviteToken && (
+          <InviteAccept
+            token={inviteToken}
+            isAuthenticated={false}
+            onAccepted={(teamId, teamName) => {
+              setActiveTab('teams');
+              window.history.replaceState({}, '', '/');
+            }}
+            onSwitchToLogin={() => {
+              localStorage.setItem('pending_invite_token', inviteToken);
+              setAuthMode('login');
+            }}
+            onSwitchToSignup={() => {
+              localStorage.setItem('pending_invite_token', inviteToken);
+              setAuthMode('signup');
+            }}
+          />
+        )}
         
         {/* Toggle between user auth and API key auth */}
-        {authMode !== 'api-key' && (
+        {authMode !== 'api-key' && authMode !== 'invite' && (
           <div className="fixed bottom-4 right-4">
             <button
               onClick={() => setAuthMode('api-key')}
@@ -205,6 +261,25 @@ function App() {
             </button>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Check if authenticated user is on an invite page
+  if (inviteToken) {
+    return (
+      <div className={darkMode ? 'dark' : ''}>
+        <InviteAccept
+          token={inviteToken}
+          isAuthenticated={true}
+          onAccepted={(teamId, teamName) => {
+            setInviteToken(null);
+            setActiveTab('teams');
+            window.history.replaceState({}, '', '/');
+          }}
+          onSwitchToLogin={() => {}}
+          onSwitchToSignup={() => {}}
+        />
       </div>
     );
   }

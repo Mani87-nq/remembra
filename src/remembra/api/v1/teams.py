@@ -440,7 +440,7 @@ async def invite_member(
                 await email_service.send_team_invite_email(
                     to=invite["email"],
                     team_name=invite["team_name"],
-                    inviter_email=user.email or "a team member",
+                    inviter_email=user.name or "a team member",
                     role=invite["role"],
                     invite_url=invite_url,
                     expires_at=invite["expires_at"],
