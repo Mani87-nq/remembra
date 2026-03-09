@@ -2,9 +2,9 @@
 Plan definitions and limit enforcement for Remembra Cloud.
 
 Plans:
-  - free:       50K memories, 1 project, community support
-  - pro:        $49/mo — 500K memories, 5 projects, email support
-  - team:       $99/mo — 2M memories, unlimited projects, priority support
+  - free:       25K memories, 1 project, community support
+  - pro:        $49/mo ($499/yr) — 500K memories, 5 users, email support
+  - team:       $199/mo ($1,999/yr) — 2M memories, 25 users, priority support
   - enterprise: Custom pricing — unlimited everything, SLA, SSO
 """
 
@@ -52,7 +52,8 @@ class PlanLimits:
     has_priority_support: bool = False
 
     # Stripe
-    stripe_price_id: str | None = None
+    stripe_price_id: str | None = None           # Monthly price
+    stripe_annual_price_id: str | None = None    # Annual price (discounted)
 
 
 # ---------------------------------------------------------------------------
@@ -76,7 +77,7 @@ PLANS: dict[PlanTier, PlanLimits] = {
         has_priority_support=False,
         stripe_price_id=None,
     ),
-    # Pro $49/mo: Startups, side projects
+    # Pro $49/mo ($499/yr): Startups, side projects
     PlanTier.PRO: PlanLimits(
         max_memories=500_000,       # 500K memories (research spec)
         max_storage_mb=5_000,
@@ -90,9 +91,10 @@ PLANS: dict[PlanTier, PlanLimits] = {
         has_sso=False,
         has_observability=True,
         has_priority_support=False,
-        stripe_price_id="price_1T6ZDAQ3CqXwAZA7jUWCVVF0",  # $49/mo (correct)
+        stripe_price_id="price_1T6ZDAQ3CqXwAZA7jUWCVVF0",           # $49/mo
+        stripe_annual_price_id="price_1T92ntQ3CqXwAZA7i8odzMW3",   # $499/yr (15% off)
     ),
-    # Team $99/mo: Growing companies
+    # Team $199/mo ($1,999/yr): Growing companies
     PlanTier.TEAM: PlanLimits(
         max_memories=2_000_000,     # 2M memories (research spec)
         max_storage_mb=20_000,
@@ -106,7 +108,8 @@ PLANS: dict[PlanTier, PlanLimits] = {
         has_sso=False,
         has_observability=True,
         has_priority_support=True,
-        stripe_price_id="price_1T7huSQ3CqXwAZA7p9Bc081i",  # $99/mo (Team product)
+        stripe_price_id="price_1T92njQ3CqXwAZA79F2iVamm",            # $199/mo
+        stripe_annual_price_id="price_1T92nxQ3CqXwAZA7qFVL4piW",   # $1,999/yr (16% off)
     ),
     # Enterprise: Large orgs, custom pricing
     PlanTier.ENTERPRISE: PlanLimits(
