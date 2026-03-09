@@ -12,6 +12,20 @@ from remembra.models.memory import Entity, EntityRef, Relationship
 
 log = structlog.get_logger(__name__)
 
+
+def _safe_json_loads(data: str | None, default: Any = None) -> Any:
+    """Safely parse JSON, returning default on failure.
+    
+    Handles corrupted data (e.g., concatenated JSON like '[][]').
+    """
+    if not data:
+        return default if default is not None else []
+    try:
+        return json.loads(data)
+    except json.JSONDecodeError as e:
+        log.warning("json_parse_error", data_preview=data[:100] if data else None, error=str(e))
+        return default if default is not None else []
+
 # SQL schemas
 SCHEMA_SQL = """
 -- Memories metadata (vector lives in Qdrant, metadata here)
@@ -854,9 +868,9 @@ class Database:
         return Entity(
             id=row["id"],
             canonical_name=row["canonical_name"],
-            aliases=json.loads(row["aliases"]) if row["aliases"] else [],
+            aliases=_safe_json_loads(row["aliases"], []),
             type=row["type"],
-            attributes=json.loads(row["attributes"]) if row["attributes"] else {},
+            attributes=_safe_json_loads(row["attributes"], {}),
             confidence=row["confidence"],
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),
@@ -897,8 +911,8 @@ class Database:
                 id=row["id"],
                 canonical_name=row["canonical_name"],
                 type=row["type"],
-                aliases=json.loads(row["aliases"] or "[]"),
-                attributes=json.loads(row["attributes"] or "{}"),
+                aliases=_safe_json_loads(row["aliases"], []),
+                attributes=_safe_json_loads(row["attributes"], {}),
                 confidence=row["confidence"],
             )
             for row in rows
@@ -924,8 +938,8 @@ class Database:
             id=row["id"],
             canonical_name=row["canonical_name"],
             type=row["type"],
-            aliases=json.loads(row["aliases"] or "[]"),
-            attributes=json.loads(row["attributes"] or "{}"),
+            aliases=_safe_json_loads(row["aliases"], []),
+            attributes=_safe_json_loads(row["attributes"], {}),
             confidence=row["confidence"],
         )
     
@@ -961,8 +975,8 @@ class Database:
                 id=row["id"],
                 canonical_name=row["canonical_name"],
                 type=row["type"],
-                aliases=json.loads(row["aliases"] or "[]"),
-                attributes=json.loads(row["attributes"] or "{}"),
+                aliases=_safe_json_loads(row["aliases"], []),
+                attributes=_safe_json_loads(row["attributes"], {}),
                 confidence=row["confidence"],
             )
             for row in rows
@@ -1065,7 +1079,7 @@ class Database:
                 from_entity_id=row["from_entity_id"],
                 to_entity_id=row["to_entity_id"],
                 type=row["type"],
-                properties=json.loads(row["properties"]) if row["properties"] else {},
+                properties=_safe_json_loads(row["properties"], {}),
                 confidence=row["confidence"],
                 source_memory_id=row["source_memory_id"],
                 valid_from=valid_from,
@@ -1179,7 +1193,7 @@ class Database:
                 from_entity_id=row["from_entity_id"],
                 to_entity_id=row["to_entity_id"],
                 type=row["type"],
-                properties=json.loads(row["properties"]) if row["properties"] else {},
+                properties=_safe_json_loads(row["properties"], {}),
                 confidence=row["confidence"],
                 source_memory_id=row["source_memory_id"],
                 valid_from=valid_from,
@@ -1235,7 +1249,7 @@ class Database:
                 from_entity_id=row["from_entity_id"],
                 to_entity_id=row["to_entity_id"],
                 type=row["type"],
-                properties=json.loads(row["properties"]) if row["properties"] else {},
+                properties=_safe_json_loads(row["properties"], {}),
                 confidence=row["confidence"],
                 source_memory_id=row["source_memory_id"],
                 valid_from=valid_from,
