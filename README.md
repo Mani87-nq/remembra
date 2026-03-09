@@ -94,7 +94,7 @@ docker compose -f docker-compose.quickstart.yml up -d
 
 ```bash
 # Store a memory
-curl -X POST http://localhost:8787/api/v1/memories/store \
+curl -X POST http://localhost:8787/api/v1/memories \
   -H "Content-Type: application/json" \
   -d '{"content": "Alice is CEO of Acme Corp", "user_id": "demo"}'
 

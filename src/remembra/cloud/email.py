@@ -478,3 +478,26 @@ class EmailService:
             dashboard_url="https://app.remembra.dev",
             resubscribe_url="https://app.remembra.dev/billing",
         )
+
+    async def send_password_reset_email(
+        self,
+        to: str,
+        reset_url: str,
+        expires_in: str = "1 hour",
+    ) -> EmailResult:
+        """Send password reset email.
+        
+        Args:
+            to: User's email address
+            reset_url: Full URL with reset token
+            expires_in: Human-readable expiration time
+        """
+        return await self.send_email(
+            to=to,
+            subject="Remembra: Reset your password",
+            template_name="password_reset",
+            reset_url=reset_url,
+            expires_in=expires_in,
+            dashboard_url="https://app.remembra.dev",
+            support_email="support@remembra.dev",
+        )

@@ -119,7 +119,23 @@ async def signup(
     from remembra.cloud.provisioning import TenantProvisioner
 
     key_manager = request.app.state.api_key_manager
-    provisioner = TenantProvisioner(meter=meter, key_manager=key_manager)
+    
+    # Initialize email service for welcome email
+    email_service = None
+    try:
+        from remembra.cloud.email import EmailService, EmailProvider
+        email_service = EmailService.create(provider=EmailProvider.RESEND)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Email service not available, skipping welcome email: %s", str(e)
+        )
+    
+    provisioner = TenantProvisioner(
+        meter=meter, 
+        key_manager=key_manager,
+        email_service=email_service,
+    )
 
     # Optionally create Stripe customer
     stripe_customer_id = None
@@ -516,5 +532,19 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
         # For now, just log — don't downgrade immediately.
         # Stripe retries before cancelling.
         pass
+
+    # Send email notifications for billing events
+    try:
+        from remembra.cloud.email import EmailService, EmailProvider
+        from remembra.cloud.webhook_email_integration import StripeWebhookEmailHandler
+        
+        email_service = EmailService.create(provider=EmailProvider.RESEND)
+        email_handler = StripeWebhookEmailHandler(email_service)
+        await email_handler.handle_event(event)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Failed to send email notification for webhook event: %s", str(e)
+        )
 
     return {"status": "ok", "action": result.action}

@@ -14,7 +14,7 @@ When `REMEMBRA_AUTH_ENABLED=true`, include your API key in the header:
 
 ```bash
 curl -H "Authorization: Bearer rem_your_api_key" \
-     http://localhost:8787/api/v1/store
+     http://localhost:8787/api/v1/memories
 ```
 
 ## Endpoints
@@ -42,7 +42,7 @@ GET /health
 Store a new memory with automatic extraction.
 
 ```http
-POST /api/v1/store
+POST /api/v1/memories
 ```
 
 **Request Body:**
@@ -83,7 +83,7 @@ POST /api/v1/store
 Query memories semantically.
 
 ```http
-POST /api/v1/recall
+POST /api/v1/memories/recall
 ```
 
 **Request Body:**
@@ -197,7 +197,7 @@ GET /api/v1/memories?user_id=user_123&project=default&limit=100
 Time-travel query.
 
 ```http
-POST /api/v1/recall
+POST /api/v1/memories/recall
 ```
 
 **Request Body:**
@@ -216,7 +216,7 @@ POST /api/v1/recall
 Remove expired memories.
 
 ```http
-POST /api/v1/cleanup-expired
+POST /api/v1/memories/cleanup-expired
 ```
 
 **Request Body:**
@@ -397,9 +397,9 @@ Default rate limits (per API key):
 
 | Endpoint | Limit |
 |----------|-------|
-| `POST /store` | 30/minute |
-| `POST /recall` | 60/minute |
-| `DELETE /memories` | 10/minute |
+| `POST /api/v1/memories` | 30/minute |
+| `POST /api/v1/memories/recall` | 60/minute |
+| `DELETE /api/v1/memories` | 10/minute |
 
 Rate limit headers are included in responses:
 

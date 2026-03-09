@@ -148,9 +148,7 @@ class StripeWebhookEmailHandler:
     async def _get_customer_email(self, customer_id: str) -> str | None:
         """Get customer email from Stripe customer ID.
         
-        This is a placeholder - implement based on your setup:
-        - Query your database for the email
-        - Or fetch from Stripe API
+        Fetches the customer from Stripe API to get their email.
         
         Args:
             customer_id: Stripe customer ID
@@ -158,11 +156,23 @@ class StripeWebhookEmailHandler:
         Returns:
             Customer email address or None
         """
-        # TODO: Implement based on your customer lookup strategy
-        # Option 1: Query your database
-        # Option 2: Fetch from Stripe API
-        logger.warning("_get_customer_email not implemented - returning None")
-        return None
+        if not customer_id:
+            return None
+        
+        try:
+            import os
+            import stripe
+            
+            stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+            if not stripe.api_key:
+                logger.warning("STRIPE_SECRET_KEY not set, cannot fetch customer email")
+                return None
+            
+            customer = stripe.Customer.retrieve(customer_id)
+            return customer.get("email")
+        except Exception as e:
+            logger.error("Failed to fetch customer email from Stripe: %s", str(e))
+            return None
 
 
 # Example usage in webhook endpoint

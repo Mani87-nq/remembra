@@ -423,12 +423,36 @@ async def forgot_password(
     
     reset_token, error = await user_manager.create_password_reset_token(body.email)
     
-    # In production, send email here instead of returning the token
-    # For now, we log it for testing purposes
+    # Send password reset email if token was generated
     if reset_token:
         log.info("password_reset_token_generated", 
                  email=body.email, 
                  token_preview=reset_token[:8] + "...")
+        
+        # Send the password reset email
+        try:
+            from remembra.cloud.email import EmailService, EmailProvider
+            
+            email_service = EmailService.create(provider=EmailProvider.RESEND)
+            reset_url = f"https://app.remembra.dev/reset-password?token={reset_token}&email={body.email}"
+            
+            result = await email_service.send_password_reset_email(
+                to=body.email,
+                reset_url=reset_url,
+                expires_in="1 hour",
+            )
+            
+            if result.success:
+                log.info("password_reset_email_sent", email=body.email)
+            else:
+                log.warning("password_reset_email_failed", 
+                           email=body.email, 
+                           error=result.error)
+        except Exception as e:
+            # Don't fail the request if email sending fails
+            log.error("password_reset_email_error", 
+                     email=body.email, 
+                     error=str(e))
     
     # Always return generic message for security (don't reveal if email exists)
     return ForgotPasswordResponse()
