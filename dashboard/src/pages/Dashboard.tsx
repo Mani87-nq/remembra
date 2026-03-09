@@ -12,6 +12,7 @@ import { UsageAnalytics } from '../components/UsageAnalytics';
 import { MemoryTimeline } from '../components/MemoryTimeline';
 import { ApiKeyManager } from '../components/ApiKeyManager';
 import { Billing } from '../components/Billing';
+import { Teams } from '../components/Teams';
 import { Settings } from './Settings';
 import { Admin } from './Admin';
 import { StatsOverview } from '../components/StatsOverview';
@@ -20,7 +21,7 @@ import { type Memory } from '../lib/api';
 import { RefreshCw, Plus } from 'lucide-react';
 import clsx from 'clsx';
 
-export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings' | 'admin';
+export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings' | 'teams' | 'admin';
 
 interface DashboardProps {
   activeTab: TabType;
@@ -275,6 +276,9 @@ export function Dashboard({ activeTab, onLogout }: DashboardProps) {
 
       case 'billing':
         return <Billing />;
+
+      case 'teams':
+        return <Teams />;
 
       case 'settings':
         return <Settings onLogout={onLogout || (() => {})} />;

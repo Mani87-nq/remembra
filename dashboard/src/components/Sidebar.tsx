@@ -1,6 +1,7 @@
 import { 
   Database, 
   Users, 
+  UsersRound,
   Share2, 
   TrendingDown, 
   Bug, 
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 
-export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings' | 'admin';
+export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'keys' | 'billing' | 'settings' | 'teams' | 'admin';
 
 interface NavItem {
   id: TabType;
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { id: 'decay', label: 'Decay', icon: TrendingDown, section: 'insights' },
   { id: 'debugger', label: 'Debugger', icon: Bug, section: 'insights' },
   // Account
+  { id: 'teams', label: 'Teams', icon: UsersRound, section: 'account' },
   { id: 'keys', label: 'API Keys', icon: Key, section: 'account' },
   { id: 'billing', label: 'Billing', icon: CreditCard, section: 'account' },
   { id: 'settings', label: 'Settings', icon: Settings, section: 'account' },
