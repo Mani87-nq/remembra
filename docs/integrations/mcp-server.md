@@ -147,7 +147,7 @@ Result:
   "server": "http://localhost:8787",
   "health": {
     "status": "healthy",
-    "version": "0.8.2",
+    "version": "0.9.0",
     "qdrant": "connected",
     "database": "connected"
   }
@@ -200,7 +200,7 @@ Result:
 
 ---
 
-### update_memory <span class="md-tag">v0.8.4</span>
+### update_memory <span class="md-tag">v0.9.0</span>
 
 Update an existing memory's content. Re-extracts facts and entities from the new content.
 
@@ -232,7 +232,7 @@ Result:
 
 ---
 
-### search_entities <span class="md-tag">v0.8.4</span>
+### search_entities <span class="md-tag">v0.9.0</span>
 
 Search the entity graph. Find people, companies, locations, and concepts that Remembra knows about.
 
@@ -273,7 +273,7 @@ Result:
 
 ---
 
-### list_memories <span class="md-tag">v0.8.4</span>
+### list_memories <span class="md-tag">v0.9.0</span>
 
 Browse stored memories without a search query. Returns recent memories.
 
@@ -301,6 +301,121 @@ Result:
       "id": "mem_def456",
       "content": "Meeting with Alice scheduled for Friday...",
       "created_at": "2024-03-08T14:20:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### share_memory <span class="md-tag">v0.9.0</span>
+
+Share a memory to a collaborative space for cross-agent sharing.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `memory_id` | string | ✅ | ID of the memory to share |
+| `space_id` | string | ✅ | ID of the target space |
+
+**Example:**
+```
+[Tool: share_memory]
+memory_id: "mem_abc123"
+space_id: "space_engineering"
+
+Result:
+{
+  "status": "shared",
+  "memory_id": "mem_abc123",
+  "space_id": "space_engineering",
+  "message": "Memory shared to space successfully"
+}
+```
+
+---
+
+### timeline <span class="md-tag">v0.9.0</span>
+
+Browse memories chronologically, optionally filtered by entity and date range.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `entity_name` | string | ❌ | - | Filter by entity (person, org, etc.) |
+| `start_date` | string | ❌ | - | Start of range (ISO format, e.g., `2024-01-01`) |
+| `end_date` | string | ❌ | - | End of range (ISO format) |
+| `limit` | int | ❌ | 20 | Max memories to return |
+
+**Example:**
+```
+[Tool: timeline]
+entity_name: "Alice"
+start_date: "2026-01-01"
+end_date: "2026-03-01"
+
+Result:
+{
+  "status": "ok",
+  "count": 3,
+  "entity_filter": "Alice",
+  "date_range": {"start": "2026-01-01", "end": "2026-03-01"},
+  "memories": [
+    {
+      "id": "mem_001",
+      "content": "Alice joined the engineering team",
+      "created_at": "2026-01-15T10:00:00Z"
+    },
+    {
+      "id": "mem_002",
+      "content": "Alice completed the API redesign project",
+      "created_at": "2026-02-20T14:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### relationships_at <span class="md-tag">v0.9.0</span>
+
+Query entity relationships at a specific point in time. Enables temporal queries like "Where did Alice work in January?"
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `entity_name` | string | ✅ | - | Entity to query relationships for |
+| `as_of` | string | ❌ | current | Point in time (ISO format, e.g., `2022-01-15`) |
+| `relationship_type` | string | ❌ | - | Filter: `WORKS_AT`, `SPOUSE_OF`, `ROLE`, etc. |
+| `include_history` | bool | ❌ | false | Include superseded relationships |
+
+**Example:**
+```
+[Tool: relationships_at]
+entity_name: "Alice"
+as_of: "2025-06-15"
+include_history: true
+
+Result:
+{
+  "status": "ok",
+  "entity": "Alice",
+  "as_of": "2025-06-15",
+  "count": 2,
+  "relationships": [
+    {
+      "type": "WORKS_AT",
+      "from": "Alice",
+      "to": "Google",
+      "valid_from": "2023-03-01",
+      "valid_to": null,
+      "is_current": true
+    },
+    {
+      "type": "WORKS_AT",
+      "from": "Alice",
+      "to": "Meta",
+      "valid_from": "2020-01-15",
+      "valid_to": "2023-02-28",
+      "is_current": false,
+      "superseded_by": "rel_abc123"
     }
   ]
 }

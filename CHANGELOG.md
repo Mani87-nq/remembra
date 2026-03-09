@@ -5,6 +5,51 @@ All notable changes to Remembra will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-03-09
+
+### Added
+- **Temporal Knowledge Graph** — Bi-temporal relationship model
+  - Relationships now track `valid_from`, `valid_to`, and `superseded_by`
+  - Enables point-in-time queries: "Where did Alice work in January?"
+  - Contradiction detection: new relationships auto-supersede old ones
+  - Foundation for full temporal knowledge graph (ahead of Zep/Graphiti)
+
+- **6 New MCP Tools** — MCP server goes from 5 tools → 11 tools
+  - `update_memory` — Update content without delete+recreate, re-extracts facts and entities
+  - `search_entities` — Search the entity graph by name, type, or alias
+  - `list_memories` — Browse stored memories without a search query
+  - `share_memory` — Cross-agent memory sharing via Spaces
+  - `timeline` — Temporal browsing filtered by entity and date range
+  - `relationships_at` — Query entity relationships at a specific point in time
+
+- **SDK Client Methods** — Python SDK expanded
+  - `memory.update(memory_id, content, metadata)` — Calls PATCH endpoint
+  - `memory.list_entities(entity_type, limit)` — Calls entity list endpoint
+
+- **Entity Graph Visualization** — Interactive force-directed graph with react-force-graph
+  - Flowing particle effects on relationship edges
+  - Entity nodes colored by type
+  - Click-to-explore entity neighborhoods
+
+### Changed
+- MCP server instructions updated to reflect 11 available tools
+- Entity graph retrieval now supports temporal filtering
+
+## [0.8.3] - 2026-03-08
+
+### Fixed
+- **Security: Server IP Removed** — Removed hardcoded server IP `178.156.226.84` from tracked files
+- **Security: JWT Secret Blocked** — Added quickstart JWT secret to blocked list
+- **Dashboard: Light Mode CSS** — Fixed styling issues in light mode theme
+- **Dashboard: Auth Flow** — Fixed userId not being set on token verify, added fallback to user object
+- **Dashboard: Auth Check** — Use `isAuthenticated()` for proper JWT support
+- **Dashboard: Null project_id** — Handle null project_id in API calls
+
+### Security
+- Comprehensive repository audit: no real API keys ever committed
+- Removed local filesystem paths from public-facing documentation
+- Hardened quickstart defaults
+
 ## [0.8.2] - 2026-03-07
 
 ### Added
