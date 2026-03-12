@@ -316,6 +316,32 @@ def create_app() -> FastAPI:
     # Add rate limit exception handler
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     
+    # Generic exception handler to sanitize error messages
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        """
+        Catch unhandled exceptions and return a sanitized error.
+        Don't leak internal details like stack traces or file paths.
+        """
+        # Log the full error for debugging
+        log.error(
+            "unhandled_exception",
+            path=request.url.path,
+            method=request.method,
+            error_type=type(exc).__name__,
+            error=str(exc),
+            exc_info=True,
+        )
+        
+        # Return a generic error to the client
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "An internal error occurred. Please try again or contact support.",
+                "error_id": request.headers.get("x-request-id", "unknown"),
+            },
+        )
+    
     # Add SlowAPI middleware for rate limiting
     app.add_middleware(SlowAPIMiddleware)
 
