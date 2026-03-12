@@ -317,11 +317,13 @@ async def get_analytics(
         "this_month": 0,
         "older": 0,
     }
+    # Note: these are CUMULATIVE counts for better UX
+    # "This Week" includes today, "This Month" includes this week
     cursor = await db.conn.execute(
         """SELECT
              SUM(CASE WHEN created_at >= date('now') THEN 1 ELSE 0 END) as today,
-             SUM(CASE WHEN created_at >= date('now', '-7 days') AND created_at < date('now') THEN 1 ELSE 0 END) as this_week,
-             SUM(CASE WHEN created_at >= date('now', '-30 days') AND created_at < date('now', '-7 days') THEN 1 ELSE 0 END) as this_month,
+             SUM(CASE WHEN created_at >= date('now', '-7 days') THEN 1 ELSE 0 END) as this_week,
+             SUM(CASE WHEN created_at >= date('now', '-30 days') THEN 1 ELSE 0 END) as this_month,
              SUM(CASE WHEN created_at < date('now', '-30 days') THEN 1 ELSE 0 END) as older
            FROM memories WHERE user_id = ?""",
         (current_user.user_id,),
