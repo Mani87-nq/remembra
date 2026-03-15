@@ -5,6 +5,22 @@ All notable changes to Remembra will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-03-15
+
+### Added
+- **Centralized Credentials** — `~/.remembra/credentials` with chmod 600
+  - API key saved on first install, auto-loaded for future installs
+  - Priority: CLI arg > env var > credentials file
+- **Slim Recall Mode** — 90% smaller payload for token-constrained agents
+  - `recall_memories(query, slim=True)` returns only synthesized context
+- **Bridge Lifecycle Management**
+  - `remembra-bridge --stop` gracefully stops running bridge
+  - `remembra-bridge --status` checks if bridge is running and healthy
+  - Port-in-use detection with clear error messages
+  - Health check after startup
+
+---
+
 ## [0.10.0] - 2026-03-15
 
 ### Added
