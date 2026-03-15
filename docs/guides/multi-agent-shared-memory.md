@@ -2,6 +2,15 @@
 
 Connect all your AI agents to the same Remembra memory pool. What one agent stores, all agents can recall.
 
+!!! success "New in v0.10.0: One-Command Setup"
+    ```bash
+    pip install remembra
+    remembra-install --all --api-key rem_xxx --project my-project
+    ```
+    This auto-detects and configures ALL your installed agents. See [Agent Setup Guide](../getting-started/agent-setup.md) for details.
+
+---
+
 ## Overview
 
 This guide shows how to connect multiple AI tools to a single Remembra instance:

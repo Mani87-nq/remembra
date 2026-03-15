@@ -3,8 +3,8 @@
 **Persistent memory for AI applications. Self-host in minutes.**
 
 <div class="admonition tip" markdown>
-<p class="admonition-title">🚀 v0.9.0 Released!</p>
-<p>Now with <strong>Temporal Knowledge Graph</strong>, <strong>6 New MCP Tools</strong>, <strong>Point-in-Time Queries</strong>, and <strong>Entity Graph Visualization</strong>. <a href="#whats-new-in-v099">See what's new →</a></p>
+<p class="admonition-title">🚀 v0.10.0 Released!</p>
+<p>Now with <strong>Universal Agent Installer</strong>, <strong>Setup Diagnostics</strong>, and <strong>Local Bridge</strong>. One command configures all your AI tools. <a href="getting-started/agent-setup/">Agent Setup Guide →</a></p>
 </div>
 
 ---

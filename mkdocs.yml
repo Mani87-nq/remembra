@@ -99,6 +99,7 @@ nav:
     - JetBrains IDEs: integrations/jetbrains.md
     - Any MCP Client: integrations/any-mcp-client.md
   - Guides:
+    - Multi-Agent Shared Memory: guides/multi-agent-shared-memory.md
     - Conversation Ingestion: guides/conversation-ingestion.md
     - Sleep-Time Compute: guides/sleep-time-compute.md
     - Entity Resolution: guides/entity-resolution.md
