@@ -142,6 +142,9 @@ Changelog = "https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md"
 remembra = "remembra.main:run"
 remembra-server = "remembra.main:run"
 remembra-mcp = "remembra.mcp.server:main"
+remembra-install-codex = "remembra.tools.codex:main"
+remembra-install = "remembra.tools.agents:main"
+remembra-doctor = "remembra.tools.doctor:main"
 
 # ---------------------------------------------------------------------------
 # Hatch build config
