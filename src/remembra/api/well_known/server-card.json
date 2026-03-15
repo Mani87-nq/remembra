@@ -11,6 +11,13 @@
     {
       "name": "store_memory",
       "description": "Store information in persistent memory. Automatically extracts entities (people, organizations, locations) and facts from the content.",
+      "annotations": {
+        "title": "Store Memory",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -33,6 +40,13 @@
     {
       "name": "recall_memories",
       "description": "Search persistent memory for relevant information using hybrid search (semantic + keyword). Use this BEFORE answering questions about past decisions, context, people, or projects.",
+      "annotations": {
+        "title": "Recall Memories",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -57,6 +71,13 @@
     {
       "name": "forget_memories",
       "description": "Delete memories from persistent storage. GDPR-compliant deletion. Provide exactly one of: memory_id, entity, or all_memories.",
+      "annotations": {
+        "title": "Forget Memories",
+        "readOnlyHint": false,
+        "destructiveHint": true,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -78,6 +99,13 @@
     {
       "name": "health_check",
       "description": "Check Remembra server health and connection status. Returns server version, status, and component health.",
+      "annotations": {
+        "title": "Health Check",
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false
+      },
       "inputSchema": {
         "type": "object",
         "properties": {}
@@ -86,6 +114,13 @@
     {
       "name": "ingest_conversation",
       "description": "Ingest a conversation and automatically extract memories. Processes messages and intelligently extracts facts worth remembering long-term.",
+      "annotations": {
+        "title": "Ingest Conversation",
+        "readOnlyHint": false,
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": false
+      },
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -95,10 +130,10 @@
             "items": {
               "type": "object",
               "properties": {
-                "role": {"type": "string"},
-                "content": {"type": "string"},
-                "name": {"type": "string"},
-                "timestamp": {"type": "string"}
+                "role": {"type": "string", "description": "Message role: 'user', 'assistant', or 'system'"},
+                "content": {"type": "string", "description": "The message content"},
+                "name": {"type": "string", "description": "Optional speaker name"},
+                "timestamp": {"type": "string", "description": "Optional ISO timestamp"}
               },
               "required": ["role", "content"]
             }
@@ -115,7 +150,7 @@
           "extract_from": {
             "type": "string",
             "enum": ["user", "assistant", "both"],
-            "description": "Which messages to extract from",
+            "description": "Which messages to extract from: 'user', 'assistant', or 'both'",
             "default": "both"
           },
           "store": {
