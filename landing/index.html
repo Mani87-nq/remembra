@@ -1339,6 +1339,19 @@
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Semantic search UI</li>
                     </ul>
                 </div>
+                
+                <div class="feature-card reveal">
+                    <div class="feature-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    </div>
+                    <h3 class="feature-title">Multi-Agent Ready</h3>
+                    <p class="feature-desc">One command connects ALL your AI tools. Shared memory across Claude, Codex, Cursor, and more.</p>
+                    <ul class="feature-list">
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 6+ agents supported</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> One-command installer</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Built-in diagnostics</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </section>
@@ -1650,6 +1663,34 @@
                             <td class="check">✓</td>
                             <td class="check">✓</td>
                         </tr>
+                        <tr class="highlight">
+                            <td>Universal Agent Installer</td>
+                            <td class="check">✓ One command</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                        </tr>
+                        <tr>
+                            <td>Multi-Agent Support</td>
+                            <td class="check">✓ 6+ agents</td>
+                            <td class="partial">Claude only</td>
+                            <td class="partial">Claude only</td>
+                            <td class="cross">✗</td>
+                        </tr>
+                        <tr>
+                            <td>Setup Diagnostics</td>
+                            <td class="check">✓ remembra-doctor</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                        </tr>
+                        <tr>
+                            <td>Local Bridge (Sandboxed)</td>
+                            <td class="check">✓ Auto-proxy</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                            <td class="cross">✗</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -1680,14 +1721,16 @@
                 <div class="step reveal">
                     <div class="step-number">2</div>
                     <div class="step-content">
-                        <h3>Integrate</h3>
-                        <p>Choose your integration method:</p>
-                        <ul class="step-methods">
-                            <li><span class="badge">🐍</span> pip install remembra</li>
-                            <li><span class="badge">📦</span> npm install @remembra/client</li>
-                            <li><span class="badge">🤖</span> claude mcp add remembra</li>
-                            <li><span class="badge">🌐</span> REST API (any language)</li>
-                        </ul>
+                        <h3>Connect All Agents</h3>
+                        <p>One command configures ALL your AI tools:</p>
+                        <div class="step-code">
+                            pip install remembra<br>
+                            remembra-install --all --api-key rem_xxx
+                        </div>
+                        <p style="margin-top: 12px; font-size: 14px; color: var(--gray-500);">
+                            ✓ Claude Desktop &nbsp;✓ Claude Code &nbsp;✓ Codex<br>
+                            ✓ Cursor &nbsp;✓ Windsurf &nbsp;✓ Gemini
+                        </p>
                     </div>
                 </div>
                 
