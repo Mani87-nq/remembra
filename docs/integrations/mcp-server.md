@@ -4,7 +4,23 @@ Complete reference for Remembra's MCP tools, resources, and configuration.
 
 Use Remembra as persistent memory for AI assistants via the [Model Context Protocol](https://modelcontextprotocol.io).
 
-## Setup Guides
+## Quick Setup (v0.10.1)
+
+Configure all your AI tools with one command:
+
+```bash
+pip install remembra
+remembra-install --all --api-key YOUR_API_KEY
+```
+
+This auto-detects and configures: Claude Desktop, Claude Code, Codex, Cursor, Gemini, and Windsurf.
+
+**Verify setup:**
+```bash
+remembra-doctor all
+```
+
+## Manual Setup Guides
 
 Step-by-step setup instructions for each AI tool:
 
@@ -23,10 +39,10 @@ Step-by-step setup instructions for each AI tool:
 ## Installation
 
 ```bash
-pip install remembra[mcp]
+pip install remembra
 ```
 
-This installs both the Remembra SDK and the MCP server binary (`remembra-mcp`).
+This installs the SDK, MCP server (`remembra-mcp`), and CLI tools (`remembra-install`, `remembra-doctor`, `remembra-bridge`).
 
 ---
 
@@ -146,10 +162,11 @@ Result:
   "status": "ok",
   "server": "http://localhost:8787",
   "health": {
-    "status": "healthy",
-    "version": "0.9.0",
-    "qdrant": "connected",
-    "database": "connected"
+    "status": "ok",
+    "version": "0.10.1",
+    "dependencies": {
+      "qdrant": {"status": "ok"}
+    }
   }
 }
 ```
@@ -454,7 +471,7 @@ Returns server status and configuration.
   "server": "http://localhost:8787",
   "user_id": "user_123",
   "project": "default",
-  "health": {"status": "healthy", "version": "0.9.0"}
+  "health": {"status": "ok", "version": "0.10.1"}
 }
 ```
 
@@ -504,6 +521,14 @@ REMEMBRA_MCP_TRANSPORT=streamable-http remembra-mcp
 
 ## Troubleshooting
 
+### Run Diagnostics First (v0.10.0+)
+
+```bash
+remembra-doctor all
+```
+
+This checks config files, command resolution, server health, and actual store/recall.
+
 ### "Connection refused" error
 
 1. Ensure Remembra server is running:
@@ -515,10 +540,23 @@ REMEMBRA_MCP_TRANSPORT=streamable-http remembra-mcp
 
 2. Check the URL in your config matches the running server.
 
+### Sandbox blocked (Codex, Claude Code)
+
+Some agents run in sandboxes that block network access. Use the bridge:
+
+```bash
+# Start the bridge
+remembra-bridge --url https://api.remembra.dev --api-key YOUR_KEY
+
+# Reconfigure agents to use bridge
+remembra-install --all --url http://localhost:8766
+```
+
 ### "Unauthorized" or 401 errors
 
 1. Verify your API key is correct
-2. Check if auth is enabled on the server:
+2. Check credentials file: `cat ~/.remembra/credentials`
+3. Test directly:
    ```bash
    curl -H "X-API-Key: your_key" http://localhost:8787/health
    ```
@@ -530,9 +568,9 @@ REMEMBRA_MCP_TRANSPORT=streamable-http remembra-mcp
    ```bash
    claude mcp list
    ```
-3. Check logs for errors:
+3. Run diagnostics:
    ```bash
-   claude mcp logs remembra
+   remembra-doctor claude-code
    ```
 
 ### Memory not persisting

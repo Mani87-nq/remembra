@@ -2,7 +2,33 @@
 
 See [CHANGELOG.md](https://github.com/remembra-ai/remembra/blob/main/CHANGELOG.md) for the full version history.
 
-## Latest: v0.9.0 (March 2026)
+## Latest: v0.10.1 (March 15, 2026)
+
+### Added
+- **Centralized Credentials** — API keys stored securely in `~/.remembra/credentials` (chmod 600). No more repeating `--api-key` on every command.
+- **Slim Recall Mode** — `recall(query, slim=True)` returns 90% smaller payloads for token-constrained agents.
+- **Bridge Lifecycle Management** — `remembra-bridge --stop` and `--status` commands for better control.
+
+### Fixed
+- Version sync between pyproject.toml and `__version__`
+
+---
+
+## v0.10.0 (March 15, 2026)
+
+### Added
+- **Universal Agent Installer** — `remembra-install --all` auto-detects and configures Claude, Codex, Cursor, Gemini, Windsurf
+- **Setup Diagnostics** — `remembra-doctor <agent>` diagnoses connection issues with clear failure labels
+- **Local Bridge** — `remembra-bridge` tunnels sandboxed agents to your Remembra server
+- **Security Hardening** — RBAC enforcement, error sanitization, SSRF protection
+
+### Changed
+- MCP server now supports more agents out of the box
+- Improved error messages for common setup issues
+
+---
+
+## v0.9.0 (March 2026)
 
 ### Added
 - **Temporal Knowledge Graph** — Bi-temporal relationship model with `valid_from`, `valid_to`, and `superseded_by`. Enables point-in-time queries like "Where did Alice work in January 2022?"

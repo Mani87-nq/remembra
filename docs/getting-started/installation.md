@@ -1,6 +1,6 @@
 # Installation
 
-Multiple ways to install and run Remembra.
+Multiple ways to install and run Remembra (v0.10.1).
 
 ## Quick Start (Recommended)
 
@@ -39,12 +39,30 @@ See [Docker Guide](docker.md) for production configuration.
 
 ## Python Package
 
-### SDK Only (Client)
+### SDK + CLI Tools (Recommended)
 
-If you just need the client SDK to connect to an existing Remembra server:
+Install Remembra with all CLI tools:
 
 ```bash
 pip install remembra
+```
+
+This includes:
+- **`remembra-install`** — Configure all your AI agents with one command
+- **`remembra-doctor`** — Diagnose connection issues
+- **`remembra-bridge`** — Tunnel for sandboxed agents
+- **`remembra-mcp`** — MCP server for Claude/Cursor
+
+### Configure Your AI Agents
+
+After installing, set up all your AI tools:
+
+```bash
+# Auto-detect and configure all agents
+remembra-install --all --api-key YOUR_API_KEY
+
+# Verify setup
+remembra-doctor all
 ```
 
 ### Full Server
@@ -197,12 +215,21 @@ Expected response:
 
 ```json
 {
-  "status": "healthy",
-  "version": "0.9.0",
-  "qdrant": "connected",
-  "database": "connected"
+  "status": "ok",
+  "version": "0.10.1",
+  "dependencies": {
+    "qdrant": {"status": "ok"}
+  }
 }
 ```
+
+### Verify Agent Setup
+
+```bash
+remembra-doctor all
+```
+
+This checks all configured agents and reports any issues.
 
 ### Test the SDK
 
@@ -222,6 +249,14 @@ print(result)  # Should return the test memory
 
 ## Troubleshooting
 
+### Run Diagnostics First
+
+```bash
+remembra-doctor all
+```
+
+This identifies most common issues automatically.
+
 ### "Connection refused" error
 
 Make sure the server is running:
@@ -240,6 +275,18 @@ export OPENAI_API_KEY=sk-your-key
 ```
 
 If you don't have an API key, use the zero-config quick start which uses Ollama locally and requires no API keys.
+
+### Sandboxed agent can't connect
+
+Some agents (Codex, Claude Code) run in sandboxes. Use the bridge:
+
+```bash
+# Start the bridge
+remembra-bridge --url https://api.remembra.dev --api-key YOUR_KEY
+
+# Configure agents to use the bridge
+remembra-install --all --url http://localhost:8766
+```
 
 ### Qdrant connection issues
 

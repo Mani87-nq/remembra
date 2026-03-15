@@ -8,8 +8,53 @@ This guide helps you diagnose and fix common issues with Remembra. Each section 
 
 ---
 
+## Quick Diagnostics with `remembra-doctor`
+
+**New in v0.10.0**: Run diagnostics automatically with one command:
+
+```bash
+# Check all detected agents
+remembra-doctor all
+
+# Check a specific agent
+remembra-doctor claude-code
+remembra-doctor codex
+remembra-doctor cursor
+```
+
+The doctor command checks:
+- ✅ Config file exists and is valid JSON/TOML
+- ✅ MCP server command is resolvable
+- ✅ Server health endpoint responds
+- ✅ Store and recall actually work
+
+**Example output:**
+```
+🔍 Diagnosing claude-code...
+  ✅ Config: Found at ~/.claude/settings.json
+  ✅ Command: remembra-mcp resolves to /usr/local/bin/remembra-mcp
+  ✅ Health: https://api.remembra.dev responding (v0.10.1)
+  ✅ Recall: Working (found 3 memories)
+  
+✅ claude-code: All checks passed
+```
+
+**Common failure labels:**
+| Label | Meaning | Fix |
+|-------|---------|-----|
+| `config_not_found` | No config file exists | Run `remembra-install --agent <name>` |
+| `config_invalid` | JSON/TOML parse error | Check config syntax |
+| `command_not_found` | remembra-mcp not in PATH | Run `pip install remembra` |
+| `dns_failure` | Can't resolve server hostname | Check internet/DNS |
+| `sandbox_blocked` | Agent can't reach network | Use `remembra-bridge` |
+| `auth_failure` | Invalid API key | Check credentials in `~/.remembra/credentials` |
+| `timeout` | Server not responding | Check server is running |
+
+---
+
 ## Table of Contents
 
+0. [Quick Diagnostics (remembra-doctor)](#quick-diagnostics-with-remembra-doctor)
 1. [Recall Returns Empty Results](#1-recall-returns-empty-results)
 2. [Entity Graph Not Loading](#2-entity-graph-not-loading)
 3. [Dashboard Shows Data but Search Doesn't Work](#3-dashboard-shows-data-but-search-doesnt-work)
@@ -458,17 +503,20 @@ Higher tiers have higher rate limits.
 
 ## Still Stuck?
 
-1. **Check logs**: `docker logs remembra 2>&1 | tail -100`
-2. **Enable debug mode**: Set `REMEMBRA_LOG_LEVEL=debug` and restart
-3. **Join Discord**: https://discord.gg/Bzv3JshRa3
-4. **Open an issue**: https://github.com/remembra-ai/remembra/issues
+1. **Run diagnostics**: `remembra-doctor all` (v0.10.0+)
+2. **Check logs**: `docker logs remembra 2>&1 | tail -100`
+3. **Enable debug mode**: Set `REMEMBRA_LOG_LEVEL=debug` and restart
+4. **Check bridge status**: `remembra-bridge --status` (for sandboxed agents)
+5. **Join Discord**: https://discord.gg/Bzv3JshRa3
+6. **Open an issue**: https://github.com/remembra-ai/remembra/issues
 
 When reporting issues, include:
 - Remembra version (`/health` endpoint shows it)
+- Output of `remembra-doctor all`
 - Error messages from logs
 - Steps to reproduce
 - Your deployment method (Docker, bare metal, cloud)
 
 ---
 
-*Last updated: March 9, 2026 | Remembra v0.9.0*
+*Last updated: March 15, 2026 | Remembra v0.10.1*

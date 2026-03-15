@@ -28,10 +28,18 @@ No OpenAI or other API keys are required. Ollama runs entirely locally for both 
 Once Remembra is running, configure all your AI agents to use it:
 
 ```bash
-npx remembra setup --all
+pip install remembra
+remembra-install --all
 ```
 
-This auto-detects Claude, Codex, Cursor, and other AI tools, then configures them to share memory. See [Agent Setup](agent-setup.md) for details.
+This auto-detects Claude, Codex, Cursor, Gemini, Windsurf and configures them to share memory.
+
+**Verify setup:**
+```bash
+remembra-doctor all
+```
+
+See [Agent Setup](agent-setup.md) for details.
 
 ---
 
@@ -95,7 +103,7 @@ If you prefer to configure things yourself, choose one of the options below.
 
 ```bash
 curl http://localhost:8787/health
-# {"status":"healthy","version":"0.9.0"}
+# {"status":"ok","version":"0.10.1","dependencies":{"qdrant":{"status":"ok"}}}
 ```
 
 Or open the dashboard: [http://localhost:8787](http://localhost:8787)

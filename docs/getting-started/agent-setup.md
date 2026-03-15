@@ -5,17 +5,25 @@ Configure all your AI agents to share memory with one command.
 ## Quick Setup (Recommended)
 
 ```bash
-npx remembra setup --all
+# Install Remembra
+pip install remembra
+
+# Configure all detected agents
+remembra-install --all
 ```
 
 This command:
 
-1. **Detects** all installed AI agents (Claude, Codex, Cursor, etc.)
+1. **Detects** all installed AI agents (Claude, Codex, Cursor, Gemini, Windsurf)
 2. **Configures** MCP settings for each agent
-3. **Stores** credentials securely in `~/.remembra/credentials`
+3. **Stores** credentials securely in `~/.remembra/credentials` (chmod 600)
+4. **Saves your API key** so future installs don't need `--api-key`
 
 !!! success "Zero manual config"
     No JSON editing. No copy-pasting. Just run and restart your agents.
+
+!!! tip "Verify setup with doctor"
+    After installation, run `remembra-doctor all` to verify everything is working.
 
 ---
 
@@ -36,24 +44,38 @@ This command:
 
 ### All Agents (Default)
 ```bash
-npx remembra setup --all
+remembra-install --all
 ```
 
 ### Specific Agent
 ```bash
-npx remembra setup --agent claude-code
-npx remembra setup --agent codex
-npx remembra setup --agent cursor
+remembra-install --agent claude-code
+remembra-install --agent codex
+remembra-install --agent cursor
+remembra-install --agent gemini
+remembra-install --agent windsurf
 ```
+
+### Detect Without Installing
+```bash
+remembra-install --detect
+```
+
+### First-Time Setup (With API Key)
+```bash
+remembra-install --all --api-key rem_your_key_here
+```
+
+After first setup, the API key is saved to `~/.remembra/credentials` and auto-loaded for future commands.
 
 ### With Custom Project
 ```bash
-npx remembra setup --all --project my-project
+remembra-install --all --project my-project
 ```
 
 ### With User ID
 ```bash
-npx remembra setup --all --user-id user_123
+remembra-install --all --user-id user_123
 ```
 
 ---
@@ -103,13 +125,33 @@ This file is created with `600` permissions (readable only by you).
 For self-hosted Remembra instances:
 
 ```bash
-npx remembra setup --all --url http://localhost:8787
+remembra-install --all --url http://localhost:8787
 ```
 
 Or with a custom API key:
 
 ```bash
-npx remembra setup --all --url http://localhost:8787 --api-key your-key
+remembra-install --all --url http://localhost:8787 --api-key your-key
+```
+
+## Sandboxed Agents (Codex, Claude Code)
+
+Some agents run in sandboxes that block network access. Use the **local bridge**:
+
+```bash
+# Terminal 1: Start the bridge (keeps running)
+remembra-bridge --url https://api.remembra.dev --api-key your-key
+
+# Terminal 2: Install agents pointing to bridge
+remembra-install --all --url http://localhost:8766
+```
+
+The bridge tunnels requests from the sandbox to your Remembra server.
+
+**Bridge commands:**
+```bash
+remembra-bridge --status   # Check if bridge is running
+remembra-bridge --stop     # Stop the bridge
 ```
 
 ---
@@ -183,21 +225,40 @@ If the second agent knows your color, shared memory is working! 🎉
 
 ## Troubleshooting
 
+### Run Diagnostics First
+
+```bash
+remembra-doctor all
+```
+
+This checks config files, command resolution, server health, and actual recall functionality.
+
 ### Agent not detected
 
 The installer only configures agents it finds. If an agent isn't detected:
 
 1. Make sure the agent is installed
 2. Run the agent at least once (creates config directories)
-3. Re-run `npx remembra setup --all`
+3. Re-run `remembra-install --all`
 
 ### MCP not working
 
 1. Verify `remembra-mcp` is in your PATH: `which remembra-mcp`
 2. If missing, install: `pip install remembra`
 3. Restart the AI agent completely (not just the window)
+4. Run `remembra-doctor <agent>` for specific diagnostics
 
 ### Connection errors
 
-1. Check your API key is valid: `curl -H "Authorization: Bearer your-key" https://api.remembra.dev/health`
-2. For self-hosted: verify your Remembra server is running
+1. Run `remembra-doctor <agent>` to identify the issue
+2. Check your API key: `curl -H "Authorization: Bearer your-key" https://api.remembra.dev/health`
+3. For sandboxed agents: use `remembra-bridge`
+4. For self-hosted: verify your Remembra server is running
+
+### Sandbox blocked
+
+If `remembra-doctor` shows `sandbox_blocked`:
+
+1. Start the bridge: `remembra-bridge --url https://api.remembra.dev --api-key your-key`
+2. Reconfigure agent: `remembra-install --agent <name> --url http://localhost:8766`
+3. Restart the agent
