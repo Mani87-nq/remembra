@@ -135,5 +135,18 @@
       "description": "Returns the 10 most recently stored memories for quick context"
     }
   ],
-  "prompts": []
+  "prompts": [
+    {
+      "name": "recall-context",
+      "description": "Recall recent context for session continuity. Use at the start of a conversation to restore memory."
+    },
+    {
+      "name": "store-summary",
+      "description": "Store a summary of the current session for cross-session continuity."
+    },
+    {
+      "name": "setup-check",
+      "description": "Verify Remembra connection and run health check."
+    }
+  ]
 }

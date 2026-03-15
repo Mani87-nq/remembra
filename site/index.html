@@ -106,7 +106,7 @@
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="Remembra" class="md-header__button md-logo" aria-label="Remembra" data-md-component="logo">
       
-  <img src="assets/logo.svg" alt="logo">
+  <img src="assets/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -319,7 +319,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="guides/conversation-ingestion/" class="md-tabs__link">
+        <a href="guides/multi-agent-shared-memory/" class="md-tabs__link">
           
   
   
@@ -435,7 +435,7 @@
   <label class="md-nav__title" for="__drawer">
     <a href="." title="Remembra" class="md-nav__button md-logo" aria-label="Remembra" data-md-component="logo">
       
-  <img src="assets/logo.svg" alt="logo">
+  <img src="assets/logo.png" alt="logo">
 
     </a>
     Remembra
@@ -622,6 +622,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#whats-new-in-v010x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's New in v0.10.x
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-new-in-v090" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -748,6 +759,34 @@
     
   
     Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="getting-started/agent-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Setup
   
 
     
@@ -1363,6 +1402,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guides/multi-agent-shared-memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent Shared Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -2330,6 +2397,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#whats-new-in-v010x" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's New in v0.10.x
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-new-in-v090" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2402,8 +2480,8 @@
 <h1 id="remembra">Remembra<a class="headerlink" href="#remembra" title="Permanent link">&para;</a></h1>
 <p><strong>Persistent memory for AI applications. Self-host in minutes.</strong></p>
 <div class="admonition tip">
-<p class="admonition-title">🚀 v0.9.0 Released!</p>
-<p>Now with <strong>Temporal Knowledge Graph</strong>, <strong>6 New MCP Tools</strong>, <strong>Point-in-Time Queries</strong>, and <strong>Entity Graph Visualization</strong>. <a href="#whats-new-in-v099">See what's new →</a></p>
+<p class="admonition-title">🚀 v0.10.1 Released!</p>
+<p>Now with <strong>Universal Agent Installer</strong>, <strong>Setup Diagnostics</strong>, <strong>Local Bridge</strong>, and <strong>Slim Recall Mode</strong>. One command configures all your AI tools. <a href="getting-started/agent-setup/">Agent Setup Guide →</a></p>
 </div>
 <hr />
 <h2 id="what-is-remembra">What is Remembra?<a class="headerlink" href="#what-is-remembra" title="Permanent link">&para;</a></h2>
@@ -2576,6 +2654,42 @@
 </div>
 <p><a class="md-button md-button--primary" href="getting-started/quickstart/">Get Started :material-arrow-right:</a>
 <a class="md-button" href="https://github.com/remembra-ai/remembra">View on GitHub :material-github:</a></p>
+<h2 id="whats-new-in-v010x">What's New in v0.10.x<a class="headerlink" href="#whats-new-in-v010x" title="Permanent link">&para;</a></h2>
+<div class="grid cards">
+<ul>
+<li>
+<p>:material-robot:{ .lg .middle } <strong>Universal Agent Installer</strong></p>
+<hr />
+<p><code>remembra-install --all</code> auto-detects and configures Claude, Codex, Cursor, Gemini, Windsurf in one command.</p>
+</li>
+<li>
+<p>:material-stethoscope:{ .lg .middle } <strong>Setup Diagnostics</strong></p>
+<hr />
+<p><code>remembra-doctor &lt;agent&gt;</code> diagnoses connection issues with clear failure labels: <code>dns_failure</code>, <code>sandbox_blocked</code>, <code>auth_failure</code>.</p>
+</li>
+<li>
+<p>:material-bridge:{ .lg .middle } <strong>Local Bridge</strong></p>
+<hr />
+<p><code>remembra-bridge</code> tunnels sandboxed agents (Codex, Claude Code) to your local/remote Remembra server.</p>
+</li>
+<li>
+<p>:material-key:{ .lg .middle } <strong>Centralized Credentials</strong></p>
+<hr />
+<p>API keys stored securely in <code>~/.remembra/credentials</code> (chmod 600). No more repeating <code>--api-key</code> on every command.</p>
+</li>
+<li>
+<p>:material-lightning-bolt:{ .lg .middle } <strong>Slim Recall Mode</strong></p>
+<hr />
+<p><code>recall(query, slim=True)</code> returns 90% smaller payloads—just the context string, no metadata bloat.</p>
+</li>
+<li>
+<p>:material-shield-check:{ .lg .middle } <strong>Security Hardening</strong></p>
+<hr />
+<p>RBAC enforcement, error sanitization, SSRF protection, and safer defaults across the board.</p>
+</li>
+</ul>
+</div>
+<hr />
 <h2 id="whats-new-in-v090">What's New in v0.9.0<a class="headerlink" href="#whats-new-in-v090" title="Permanent link">&para;</a></h2>
 <div class="grid cards">
 <ul>

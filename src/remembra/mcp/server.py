@@ -25,6 +25,7 @@ import sys
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from remembra.client.memory import Memory, MemoryError
 
@@ -78,7 +79,15 @@ mcp = FastMCP(
 # ---------------------------------------------------------------------------
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Store Memory",
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=False,
+        openWorldHint=False,
+    )
+)
 def store_memory(
     content: str,
     metadata: dict[str, Any] | None = None,
@@ -126,7 +135,15 @@ def store_memory(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Recall Memories",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def recall_memories(
     query: str,
     limit: int = 5,
@@ -199,7 +216,15 @@ def recall_memories(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Forget Memories",
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def forget_memories(
     memory_id: str | None = None,
     entity: str | None = None,
@@ -253,7 +278,15 @@ def forget_memories(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Health Check",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def health_check() -> str:
     """Check Remembra server health and connection status.
 
@@ -294,7 +327,15 @@ def health_check() -> str:
         )
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Ingest Conversation",
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=False,
+        openWorldHint=False,
+    )
+)
 def ingest_conversation(
     messages: list[dict[str, Any]],
     session_id: str | None = None,
@@ -378,7 +419,15 @@ def ingest_conversation(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Update Memory",
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def update_memory(
     memory_id: str,
     content: str,
@@ -417,7 +466,15 @@ def update_memory(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Search Entities",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def search_entities(
     query: str | None = None,
     entity_type: str | None = None,
@@ -474,7 +531,15 @@ def search_entities(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="List Memories",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def list_memories(
     limit: int = 10,
     project_id: str | None = None,
@@ -522,7 +587,15 @@ def list_memories(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Share Memory",
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def share_memory(
     memory_id: str,
     space_id: str,
@@ -564,7 +637,15 @@ def share_memory(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Timeline",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def timeline(
     entity_name: str | None = None,
     start_date: str | None = None,
@@ -630,7 +711,15 @@ def timeline(
         return json.dumps({"status": "error", "error": str(e)})
 
 
-@mcp.tool()
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Relationships At",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
 def relationships_at(
     entity_name: str,
     as_of: str | None = None,
@@ -701,6 +790,65 @@ def relationships_at(
         return json.dumps({"status": "error", "error": str(e), "code": e.status_code})
     except Exception as e:
         return json.dumps({"status": "error", "error": str(e)})
+
+
+# ---------------------------------------------------------------------------
+# Prompts
+# ---------------------------------------------------------------------------
+
+
+@mcp.prompt(
+    name="recall-context",
+    title="Recall Context",
+    description="Recall recent context for session continuity. Use at the start of a conversation to restore memory.",
+)
+def recall_context_prompt() -> list[dict[str, str]]:
+    """Prompt to recall recent context at session start."""
+    return [
+        {
+            "role": "user",
+            "content": (
+                "Recall any relevant context from our previous conversations. "
+                "What do you remember about me, my projects, preferences, and recent discussions?"
+            ),
+        }
+    ]
+
+
+@mcp.prompt(
+    name="store-summary",
+    title="Store Session Summary",
+    description="Store a summary of the current session for cross-session continuity.",
+)
+def store_summary_prompt(session_topic: str = "this conversation") -> list[dict[str, str]]:
+    """Prompt to store a session summary."""
+    return [
+        {
+            "role": "user",
+            "content": (
+                f"Summarize the key points, decisions, and action items from {session_topic}. "
+                "Store this summary in memory so we can continue seamlessly next time."
+            ),
+        }
+    ]
+
+
+@mcp.prompt(
+    name="setup-check",
+    title="Verify Connection",
+    description="Verify Remembra connection and run health check.",
+)
+def setup_check_prompt() -> list[dict[str, str]]:
+    """Prompt to verify Remembra setup."""
+    return [
+        {
+            "role": "user",
+            "content": (
+                "Run a health check on the Remembra memory server. "
+                "Confirm the connection is working and show me the server status."
+            ),
+        }
+    ]
 
 
 # ---------------------------------------------------------------------------

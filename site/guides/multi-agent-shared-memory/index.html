@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://docs.remembra.dev/guides/conversation-ingestion/">
+        <link rel="canonical" href="https://docs.remembra.dev/guides/multi-agent-shared-memory/">
       
       
-        <link rel="prev" href="../multi-agent-shared-memory/">
+        <link rel="prev" href="../../integrations/any-mcp-client/">
       
       
-        <link rel="next" href="../sleep-time-compute/">
+        <link rel="next" href="../conversation-ingestion/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Conversation Ingestion - Remembra</title>
+        <title>Multi-Agent Shared Memory - Remembra</title>
       
     
     
@@ -88,7 +88,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#conversation-ingestion" class="md-skip">
+        <a href="#multi-agent-shared-memory-setup" class="md-skip">
           Skip to content
         </a>
       
@@ -125,7 +125,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Conversation Ingestion
+              Multi-Agent Shared Memory
             
           </span>
         </div>
@@ -321,7 +321,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../multi-agent-shared-memory/" class="md-tabs__link">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -1204,34 +1204,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../multi-agent-shared-memory/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Multi-Agent Shared Memory
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1251,7 +1223,7 @@
   <span class="md-ellipsis">
     
   
-    Conversation Ingestion
+    Multi-Agent Shared Memory
   
 
     
@@ -1269,7 +1241,7 @@
   <span class="md-ellipsis">
     
   
-    Conversation Ingestion
+    Multi-Agent Shared Memory
   
 
     
@@ -1306,66 +1278,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        Prerequisites
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Reference">
+    <nav class="md-nav" aria-label="Prerequisites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#endpoint" class="md-nav__link">
+  <a href="#install-mcp-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Endpoint
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#request-body" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Request Body
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Response
+        Install MCP Server
       
     </span>
   </a>
@@ -1378,77 +1306,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#python-sdk" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python SDK
+        Configuration
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typescript-sdk" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TypeScript SDK
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Best Practices
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
+    <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#when-to-use-ingestion" class="md-nav__link">
+  <a href="#required-environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When to Use Ingestion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-extracted" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Gets Extracted
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-filtered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Gets Filtered
+        Required Environment Variables
       
     </span>
   </a>
@@ -1461,10 +1334,243 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comparison-with-manual-storage" class="md-nav__link">
+  <a href="#agent-configurations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comparison with Manual Storage
+        Agent Configurations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agent Configurations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#claude-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude Desktop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#claude-code-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude Code (Terminal)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codex-cli-openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex CLI (OpenAI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gemini-cli-google" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gemini CLI (Google)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clawdbot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clawdbot
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-recall-instruction-files-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Recall Instruction Files (Optional)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Recall Instruction Files (Optional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#claude-code-claudeclaudemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude Code: ~/.claude/CLAUDE.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codex-cli-codexinstructionsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex CLI: ~/.codex/instructions.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gemini-cli-geminigeminimd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gemini CLI: ~/.gemini/GEMINI.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-test-mcp-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Test MCP Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-test-api-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Test API Connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-cross-agent-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Cross-Agent Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-disconnected-in-claude-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Server disconnected" in Claude Desktop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#different-agents-seeing-different-memories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Different agents seeing different memories
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tools-not-appearing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tools not appearing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#macos-path-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS PATH issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
       
     </span>
   </a>
@@ -1472,10 +1578,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
+  <a href="#summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Related
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Docs
       
     </span>
   </a>
@@ -1486,6 +1603,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conversation-ingestion/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Ingestion
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2340,66 +2485,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        Prerequisites
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#api-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        API Reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="API Reference">
+    <nav class="md-nav" aria-label="Prerequisites">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#endpoint" class="md-nav__link">
+  <a href="#install-mcp-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Endpoint
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#request-body" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Request Body
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Options
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Response
+        Install MCP Server
       
     </span>
   </a>
@@ -2412,77 +2513,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#python-sdk" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Python SDK
+        Configuration
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typescript-sdk" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        TypeScript SDK
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Server
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Best Practices
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Best Practices">
+    <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#when-to-use-ingestion" class="md-nav__link">
+  <a href="#required-environment-variables" class="md-nav__link">
     <span class="md-ellipsis">
       
-        When to Use Ingestion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-extracted" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Gets Extracted
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#what-gets-filtered" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What Gets Filtered
+        Required Environment Variables
       
     </span>
   </a>
@@ -2495,10 +2541,243 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comparison-with-manual-storage" class="md-nav__link">
+  <a href="#agent-configurations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Comparison with Manual Storage
+        Agent Configurations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Agent Configurations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#claude-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude Desktop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#claude-code-terminal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude Code (Terminal)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codex-cli-openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex CLI (OpenAI)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gemini-cli-google" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gemini CLI (Google)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clawdbot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clawdbot
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-recall-instruction-files-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Recall Instruction Files (Optional)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Recall Instruction Files (Optional)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#claude-code-claudeclaudemd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude Code: ~/.claude/CLAUDE.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#codex-cli-codexinstructionsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex CLI: ~/.codex/instructions.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gemini-cli-geminigeminimd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gemini CLI: ~/.gemini/GEMINI.md
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-test-mcp-server" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Test MCP Server
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-test-api-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Test API Connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-cross-agent-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Cross-Agent Test
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#server-disconnected-in-claude-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Server disconnected" in Claude Desktop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#different-agents-seeing-different-memories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Different agents seeing different memories
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tools-not-appearing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tools not appearing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#macos-path-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS PATH issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
       
     </span>
   </a>
@@ -2506,10 +2785,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#related" class="md-nav__link">
+  <a href="#summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Related
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Docs
       
     </span>
   </a>
@@ -2536,199 +2826,306 @@
   
 
 
-<h1 id="conversation-ingestion">Conversation Ingestion<a class="headerlink" href="#conversation-ingestion" title="Permanent link">&para;</a></h1>
-<p><strong>NEW in v0.8.0</strong> — Automatically extract memories from chat conversations.</p>
-<p>This is Remembra's answer to Mem0's conversation parsing — but with full control over extraction and deduplication.</p>
+<h1 id="multi-agent-shared-memory-setup">Multi-Agent Shared Memory Setup<a class="headerlink" href="#multi-agent-shared-memory-setup" title="Permanent link">&para;</a></h1>
+<p>Connect all your AI agents to the same Remembra memory pool. What one agent stores, all agents can recall.</p>
+<div class="admonition success">
+<p class="admonition-title">New in v0.10.0: One-Command Setup</p>
+<p><div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>remembra
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>remembra-install<span class="w"> </span>--all<span class="w"> </span>--api-key<span class="w"> </span>rem_xxx<span class="w"> </span>--project<span class="w"> </span>my-project
+</span></code></pre></div>
+This auto-detects and configures ALL your installed agents. See <a href="../../getting-started/agent-setup/">Agent Setup Guide</a> for details.</p>
+</div>
+<hr />
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Instead of manually storing individual facts, pipe entire conversations through the ingestion service:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">remembra</span><span class="w"> </span><span class="kn">import</span> <span class="n">Memory</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">Memory</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span><span class="p">)</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># Ingest a full conversation</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">memory</span><span class="o">.</span><span class="n">ingest_conversation</span><span class="p">([</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;My name is John and I work at Acme Corp&quot;</span><span class="p">},</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;Nice to meet you John! What do you do at Acme?&quot;</span><span class="p">},</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;I&#39;m the CTO. We&#39;re building AI tools.&quot;</span><span class="p">},</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">])</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stats</span><span class="p">)</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># IngestStats(messages_processed=3, facts_extracted=4, entities_found=2, duplicates_skipped=0)</span>
-</span></code></pre></div>
-<h2 id="how-it-works">How It Works<a class="headerlink" href="#how-it-works" title="Permanent link">&para;</a></h2>
-<p>The ingestion pipeline:</p>
+<p>This guide shows how to connect multiple AI tools to a single Remembra instance:</p>
+<ul>
+<li><strong>Claude Desktop</strong> (Anthropic desktop app)</li>
+<li><strong>Claude Code</strong> (CLI terminal)</li>
+<li><strong>Codex CLI</strong> (OpenAI coding agent)</li>
+<li><strong>Gemini CLI</strong> (Google AI)</li>
+<li><strong>Clawdbot</strong> (Multi-channel AI assistant)</li>
+</ul>
+<p>All agents share the same memory — no more siloed conversations.</p>
+<hr />
+<h2 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Message Parsing</strong> — Filter and prepare messages</li>
-<li><strong>Fact Extraction</strong> — LLM extracts atomic facts from conversation</li>
-<li><strong>Entity Extraction</strong> — Identify people, organizations, locations</li>
-<li><strong>Deduplication</strong> — Skip facts that already exist in memory</li>
-<li><strong>Storage</strong> — Store new memories with proper metadata</li>
+<li><strong>Remembra server running</strong> — Self-hosted or cloud at <code>https://api.remembra.dev</code></li>
+<li><strong>API key</strong> — Get from Remembra dashboard</li>
+<li><strong>User ID and Project ID</strong> — For memory isolation</li>
 </ol>
-<h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
-<h3 id="endpoint">Endpoint<a class="headerlink" href="#endpoint" title="Permanent link">&para;</a></h3>
-<div class="language-http highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="err">POST /api/v1/memories/ingest</span>
+<h3 id="install-mcp-server">Install MCP Server<a class="headerlink" href="#install-mcp-server" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Using uv (recommended)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;remembra[mcp]&quot;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Or using pip</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;remembra[mcp]&quot;</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Verify installation</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>which<span class="w"> </span>remembra-mcp
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Should return: ~/.local/bin/remembra-mcp</span>
 </span></code></pre></div>
-<h3 id="request-body">Request Body<a class="headerlink" href="#request-body" title="Permanent link">&para;</a></h3>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;messages&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">},</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">&quot;role&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;assistant&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;content&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;...&quot;</span><span class="p">}</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nt">&quot;options&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">&quot;extract_entities&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">&quot;deduplicate&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="nt">&quot;min_importance&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.3</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="p">}</span>
-</span></code></pre></div>
-<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h3>
+<hr />
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<h3 id="required-environment-variables">Required Environment Variables<a class="headerlink" href="#required-environment-variables" title="Permanent link">&para;</a></h3>
+<p>All agents need these same values to share memory:</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Default</th>
+<th>Variable</th>
 <th>Description</th>
+<th>Example</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>extract_entities</code></td>
-<td>bool</td>
-<td><code>true</code></td>
-<td>Extract entities and relationships</td>
+<td><code>REMEMBRA_URL</code></td>
+<td>Your Remembra server URL</td>
+<td><code>https://api.remembra.dev</code></td>
 </tr>
 <tr>
-<td><code>deduplicate</code></td>
-<td>bool</td>
-<td><code>true</code></td>
-<td>Check for existing memories</td>
+<td><code>REMEMBRA_API_KEY</code></td>
+<td>API key for authentication</td>
+<td><code>rem_abc123...</code></td>
 </tr>
 <tr>
-<td><code>min_importance</code></td>
-<td>float</td>
-<td><code>0.3</code></td>
-<td>Minimum importance score to store</td>
+<td><code>REMEMBRA_PROJECT</code></td>
+<td>Project namespace</td>
+<td><code>my-project</code></td>
 </tr>
 <tr>
-<td><code>source</code></td>
-<td>string</td>
-<td><code>"conversation"</code></td>
-<td>Source tag for memories</td>
+<td><code>REMEMBRA_USER_ID</code></td>
+<td>User ID for memory isolation</td>
+<td><code>user_xyz789</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="response">Response<a class="headerlink" href="#response" title="Permanent link">&para;</a></h3>
+<p>⚠️ <strong>Critical:</strong> All agents MUST use the same <code>REMEMBRA_PROJECT</code> and <code>REMEMBRA_USER_ID</code> to share memory!</p>
+<hr />
+<h2 id="agent-configurations">Agent Configurations<a class="headerlink" href="#agent-configurations" title="Permanent link">&para;</a></h2>
+<h3 id="claude-desktop">Claude Desktop<a class="headerlink" href="#claude-desktop" title="Permanent link">&para;</a></h3>
+<p><strong>Config file:</strong> <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS)</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">&quot;remembra&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/Users/YOUR_USERNAME/.local/bin/remembra-mcp&quot;</span><span class="p">,</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.remembra.dev&quot;</span><span class="p">,</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rem_YOUR_API_KEY&quot;</span><span class="p">,</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_PROJECT&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span><span class="p">,</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_USER_ID&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user_YOUR_USER_ID&quot;</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="p">}</span>
+</span></code></pre></div>
+<p><strong>After editing:</strong> Cmd+Q to quit, then reopen Claude Desktop.</p>
+<hr />
+<h3 id="claude-code-terminal">Claude Code (Terminal)<a class="headerlink" href="#claude-code-terminal" title="Permanent link">&para;</a></h3>
+<p><strong>Config file:</strong> <code>~/.claude/settings.json</code></p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;success&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;stats&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">&quot;messages_processed&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">&quot;facts_extracted&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="p">,</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">&quot;entities_found&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">&quot;duplicates_skipped&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="nt">&quot;memories_stored&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">,</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">&quot;processing_time_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1250</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">  </span><span class="nt">&quot;memories&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;mem_abc123&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;mem_def456&quot;</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="p">]</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="p">}</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">&quot;remembra&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/Users/YOUR_USERNAME/.local/bin/remembra-mcp&quot;</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.remembra.dev&quot;</span><span class="p">,</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rem_YOUR_API_KEY&quot;</span><span class="p">,</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_PROJECT&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span><span class="p">,</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_USER_ID&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user_YOUR_USER_ID&quot;</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">}</span>
 </span></code></pre></div>
-<h2 id="python-sdk">Python SDK<a class="headerlink" href="#python-sdk" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">remembra</span><span class="w"> </span><span class="kn">import</span> <span class="n">Memory</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">remembra.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConversationMessage</span><span class="p">,</span> <span class="n">IngestOptions</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">Memory</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span><span class="p">)</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># Basic usage</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">memory</span><span class="o">.</span><span class="n">ingest_conversation</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1"># With options</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">memory</span><span class="o">.</span><span class="n">ingest_conversation</span><span class="p">(</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">messages</span><span class="o">=</span><span class="p">[</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="n">ConversationMessage</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">),</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="n">ConversationMessage</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="n">content</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">),</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="p">],</span>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">options</span><span class="o">=</span><span class="n">IngestOptions</span><span class="p">(</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>        <span class="n">extract_entities</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>        <span class="n">deduplicate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>        <span class="n">min_importance</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="p">)</span>
-</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="p">)</span>
+<hr />
+<h3 id="codex-cli-openai">Codex CLI (OpenAI)<a class="headerlink" href="#codex-cli-openai" title="Permanent link">&para;</a></h3>
+<p><strong>Config file:</strong> <code>~/.codex/config.toml</code></p>
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># MCP Servers - Shared Memory Layer</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">[mcp_servers.remembra]</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;/Users/YOUR_USERNAME/.local/bin/remembra-mcp&quot;</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">[mcp_servers.remembra.env]</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">REMEMBRA_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;https://api.remembra.dev&quot;</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">REMEMBRA_API_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;rem_YOUR_API_KEY&quot;</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">REMEMBRA_PROJECT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">REMEMBRA_USER_ID</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;user_YOUR_USER_ID&quot;</span>
 </span></code></pre></div>
-<h2 id="typescript-sdk">TypeScript SDK<a class="headerlink" href="#typescript-sdk" title="Permanent link">&para;</a></h2>
-<div class="language-typescript highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Remembra</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@remembra/client&#39;</span><span class="p">;</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">memory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Remembra</span><span class="p">({</span><span class="w"> </span><span class="nx">url</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;http://localhost:8787&#39;</span><span class="w"> </span><span class="p">});</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">memory</span><span class="p">.</span><span class="nx">ingestConversation</span><span class="p">({</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="nx">messages</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">role</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;user&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;My name is Sarah...&#39;</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">role</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;assistant&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Nice to meet you!&#39;</span><span class="w"> </span><span class="p">},</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="p">],</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span><span class="nx">options</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nx">extractEntities</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="nx">deduplicate</span><span class="o">:</span><span class="w"> </span><span class="kt">true</span><span class="p">,</span>
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">  </span><span class="p">},</span>
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="p">});</span>
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
-</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">stats</span><span class="p">.</span><span class="nx">factsExtracted</span><span class="p">);</span><span class="w"> </span><span class="c1">// 4</span>
+<hr />
+<h3 id="gemini-cli-google">Gemini CLI (Google)<a class="headerlink" href="#gemini-cli-google" title="Permanent link">&para;</a></h3>
+<p><strong>Config file:</strong> <code>~/.gemini/settings.json</code></p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">&quot;remembra&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/Users/YOUR_USERNAME/.local/bin/remembra-mcp&quot;</span><span class="p">,</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.remembra.dev&quot;</span><span class="p">,</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_API_KEY&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rem_YOUR_API_KEY&quot;</span><span class="p">,</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_PROJECT&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span><span class="p">,</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">        </span><span class="nt">&quot;REMEMBRA_USER_ID&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user_YOUR_USER_ID&quot;</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="p">}</span>
 </span></code></pre></div>
-<h2 id="mcp-server">MCP Server<a class="headerlink" href="#mcp-server" title="Permanent link">&para;</a></h2>
-<p>When using Remembra with Claude Code or Cursor, conversation ingestion happens automatically when you use the <code>remembra_ingest</code> tool:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>Claude: I&#39;ll store our entire conversation context.
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>[Tool: remembra_ingest]
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>✓ Ingested 12 messages → 8 new memories
+<hr />
+<h3 id="clawdbot">Clawdbot<a class="headerlink" href="#clawdbot" title="Permanent link">&para;</a></h3>
+<p><strong>Config file:</strong> <code>~/.clawdbot/clawdbot.json</code></p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;plugins&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">&quot;entries&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">      </span><span class="nt">&quot;remembra&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">        </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">        </span><span class="nt">&quot;config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">          </span><span class="nt">&quot;apiUrl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://api.remembra.dev&quot;</span><span class="p">,</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">          </span><span class="nt">&quot;apiKey&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rem_YOUR_API_KEY&quot;</span><span class="p">,</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">          </span><span class="nt">&quot;projectId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my-project&quot;</span><span class="p">,</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">          </span><span class="nt">&quot;userId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;user_YOUR_USER_ID&quot;</span><span class="p">,</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">          </span><span class="nt">&quot;autoSync&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">        </span><span class="p">}</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="p">}</span>
 </span></code></pre></div>
-<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
-<h3 id="when-to-use-ingestion">When to Use Ingestion<a class="headerlink" href="#when-to-use-ingestion" title="Permanent link">&para;</a></h3>
+<hr />
+<h2 id="auto-recall-instruction-files-optional">Auto-Recall Instruction Files (Optional)<a class="headerlink" href="#auto-recall-instruction-files-optional" title="Permanent link">&para;</a></h2>
+<p>Create instruction files so agents automatically recall memory at session start.</p>
+<h3 id="claude-code-claudeclaudemd">Claude Code: <code>~/.claude/CLAUDE.md</code><a class="headerlink" href="#claude-code-claudeclaudemd" title="Permanent link">&para;</a></h3>
+<div class="language-markdown highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="gh"># Shared Memory Protocol</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>You are connected to Remembra, a shared memory system.
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="gu">## On Session Start</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>BEFORE doing anything else, recall recent context:
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="k">-</span><span class="w"> </span>Use <span class="sb">`recall_memories`</span> with query: &quot;what was I just working on&quot;
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="gu">## During Session</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>Store important context continuously:
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="k">-</span><span class="w"> </span>Use <span class="sb">`store_memory`</span> after significant actions
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="k">-</span><span class="w"> </span>Format: &quot;[AGENT] [TASK] - Did X. Next: Y.&quot;
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="gu">## Connected Agents</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>All share the same memory: Claude Desktop, Claude Code, Codex, Gemini, Clawdbot.
+</span></code></pre></div>
+<h3 id="codex-cli-codexinstructionsmd">Codex CLI: <code>~/.codex/instructions.md</code><a class="headerlink" href="#codex-cli-codexinstructionsmd" title="Permanent link">&para;</a></h3>
+<p>Same content, adapted for Codex.</p>
+<h3 id="gemini-cli-geminigeminimd">Gemini CLI: <code>~/.gemini/GEMINI.md</code><a class="headerlink" href="#gemini-cli-geminigeminimd" title="Permanent link">&para;</a></h3>
+<p>Same content, adapted for Gemini.</p>
+<hr />
+<h2 id="verification">Verification<a class="headerlink" href="#verification" title="Permanent link">&para;</a></h2>
+<h3 id="1-test-mcp-server">1. Test MCP Server<a class="headerlink" href="#1-test-mcp-server" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Should start without errors</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nv">REMEMBRA_URL</span><span class="o">=</span><span class="s2">&quot;https://api.remembra.dev&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nv">REMEMBRA_API_KEY</span><span class="o">=</span><span class="s2">&quot;rem_YOUR_KEY&quot;</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>remembra-mcp<span class="w"> </span><span class="p">&amp;</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>sleep<span class="w"> </span><span class="m">2</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">kill</span><span class="w"> </span>%1
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;MCP server works!&quot;</span>
+</span></code></pre></div>
+<h3 id="2-test-api-connection">2. Test API Connection<a class="headerlink" href="#2-test-api-connection" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>curl<span class="w"> </span>https://api.remembra.dev/health
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># Should return: {&quot;status&quot;:&quot;ok&quot;,&quot;version&quot;:&quot;0.9.0&quot;,...}</span>
+</span></code></pre></div>
+<h3 id="3-cross-agent-test">3. Cross-Agent Test<a class="headerlink" href="#3-cross-agent-test" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>In Claude Desktop:</strong> "Remember that my favorite color is blue"</li>
+<li><strong>In Codex CLI:</strong> "What's my favorite color?"</li>
+<li>If Codex returns "blue" → <strong>Shared memory is working!</strong></li>
+</ol>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<h3 id="server-disconnected-in-claude-desktop">"Server disconnected" in Claude Desktop<a class="headerlink" href="#server-disconnected-in-claude-desktop" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Check MCP server is installed: <code>which remembra-mcp</code></li>
+<li>Use full path in config (not just <code>remembra-mcp</code>)</li>
+<li>Restart Claude Desktop after config changes</li>
+</ol>
+<h3 id="different-agents-seeing-different-memories">Different agents seeing different memories<a class="headerlink" href="#different-agents-seeing-different-memories" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>End of session</strong> — Ingest the full conversation when done</li>
-<li><strong>Periodic checkpoints</strong> — Ingest every N messages</li>
-<li><strong>On topic change</strong> — Ingest before switching contexts</li>
+<li>Verify ALL agents use the <strong>same</strong> <code>REMEMBRA_PROJECT</code> and <code>REMEMBRA_USER_ID</code></li>
+<li>Different values = different memory spaces</li>
 </ul>
-<h3 id="what-gets-extracted">What Gets Extracted<a class="headerlink" href="#what-gets-extracted" title="Permanent link">&para;</a></h3>
-<p>The LLM extracts:</p>
-<ul>
-<li><strong>Facts</strong> — "John is the CTO of Acme Corp"</li>
-<li><strong>Preferences</strong> — "User prefers dark mode"</li>
-<li><strong>Relationships</strong> — "John works with Sarah"</li>
-<li><strong>Temporal info</strong> — "Meeting scheduled for Friday"</li>
-</ul>
-<h3 id="what-gets-filtered">What Gets Filtered<a class="headerlink" href="#what-gets-filtered" title="Permanent link">&para;</a></h3>
-<p>Automatically skipped:</p>
-<ul>
-<li>Greetings and small talk</li>
-<li>Questions without answers</li>
-<li>Redundant information</li>
-<li>Low-importance chatter</li>
-</ul>
-<h2 id="comparison-with-manual-storage">Comparison with Manual Storage<a class="headerlink" href="#comparison-with-manual-storage" title="Permanent link">&para;</a></h2>
+<h3 id="tools-not-appearing">Tools not appearing<a class="headerlink" href="#tools-not-appearing" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Restart the agent after config changes</li>
+<li>Check JSON syntax (no trailing commas)</li>
+<li>Verify remembra-mcp is executable: <code>chmod +x ~/.local/bin/remembra-mcp</code></li>
+</ol>
+<h3 id="macos-path-issues">macOS PATH issues<a class="headerlink" href="#macos-path-issues" title="Permanent link">&para;</a></h3>
+<p>Create a wrapper script at <code>~/.local/bin/remembra-mcp-wrapper.sh</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;/opt/homebrew/bin:/usr/local/bin:</span><span class="nv">$PATH</span><span class="s2">&quot;</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="nb">exec</span><span class="w"> </span>~/.local/bin/remembra-mcp<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$@</span><span class="s2">&quot;</span>
+</span></code></pre></div>
+<p>Then use <code>/bin/bash</code> with args in config:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">{</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/bin/bash&quot;</span><span class="p">,</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">  </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;~/.local/bin/remembra-mcp-wrapper.sh&quot;</span><span class="p">],</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="err">...</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">}</span>
+</span></code></pre></div>
+<hr />
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>│  Claude Desktop │     │    Codex CLI    │     │   Gemini CLI    │
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>│   (MCP Client)  │     │   (MCP Client)  │     │   (MCP Client)  │
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>         │                       │                       │
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>         │    MCP Protocol       │                       │
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>         │   (stdio transport)   │                       │
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>         ▼                       ▼                       ▼
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>┌─────────────────────────────────────────────────────────────────┐
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>│                      remembra-mcp                                │
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a>│                   (MCP Server Binary)                            │
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a>└─────────────────────────────────────────────────────────────────┘
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>                              │
+</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>                              │  HTTPS
+</span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a>                              ▼
+</span><span id="__span-12-16"><a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>┌─────────────────────────────────────────────────────────────────┐
+</span><span id="__span-12-17"><a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>│                    api.remembra.dev                              │
+</span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>│                  (Remembra API Server)                           │
+</span><span id="__span-12-19"><a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>│                                                                  │
+</span><span id="__span-12-20"><a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+</span><span id="__span-12-21"><a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>│  │   Qdrant    │  │  Postgres   │  │   Redis     │              │
+</span><span id="__span-12-22"><a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>│  │  (Vectors)  │  │   (Data)    │  │  (Cache)    │              │
+</span><span id="__span-12-23"><a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>│  └─────────────┘  └─────────────┘  └─────────────┘              │
+</span><span id="__span-12-24"><a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>└─────────────────────────────────────────────────────────────────┘
+</span></code></pre></div>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Approach</th>
-<th>Pros</th>
-<th>Cons</th>
+<th>Setting</th>
+<th>Must Match Across All Agents</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Manual <code>store()</code></td>
-<td>Precise control</td>
-<td>Requires explicit calls</td>
+<td><code>REMEMBRA_URL</code></td>
+<td>✅ Same server</td>
 </tr>
 <tr>
-<td>Conversation Ingestion</td>
-<td>Automatic, comprehensive</td>
-<td>May extract unwanted info</td>
+<td><code>REMEMBRA_API_KEY</code></td>
+<td>✅ Same key</td>
+</tr>
+<tr>
+<td><code>REMEMBRA_PROJECT</code></td>
+<td>✅ Same project</td>
+</tr>
+<tr>
+<td><code>REMEMBRA_USER_ID</code></td>
+<td>✅ Same user</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Recommendation:</strong> Use both. Manual <code>store()</code> for critical facts, ingestion for general context.</p>
-<h2 id="related">Related<a class="headerlink" href="#related" title="Permanent link">&para;</a></h2>
+<p><strong>Result:</strong> One brain, many agents. What one stores, all can recall.</p>
+<hr />
+<h2 id="related-docs">Related Docs<a class="headerlink" href="#related-docs" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../entity-resolution/">Entity Resolution</a> — How entities are linked</li>
-<li><a href="../sleep-time-compute/">Sleep-Time Compute</a> — Background deduplication</li>
-<li><a href="../security/">Security</a> — PII detection and anomaly monitoring</li>
+<li><a href="../../integrations/claude-desktop/">Claude Desktop Setup</a></li>
+<li><a href="../../integrations/codex/">Codex CLI Setup</a></li>
+<li><a href="../../integrations/mcp-server/">MCP Server Reference</a></li>
+<li><a href="../guides/authentication.md">API Authentication</a></li>
 </ul>
 
 
