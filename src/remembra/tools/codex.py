@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -15,7 +16,15 @@ from remembra.tools.bridge import (
     DEFAULT_BRIDGE_HOST,
     DEFAULT_BRIDGE_PORT,
     DEFAULT_BRIDGE_UPSTREAM,
+    DEFAULT_PID_FILE,
+    BridgePortInUseError,
+    BridgeStartupError,
+    check_port_available,
+    is_process_running,
     parse_bridge_command,
+    read_pid_file,
+    stop_bridge,
+    wait_for_healthy,
 )
 
 DEFAULT_CODEX_CONFIG = Path.home() / ".codex" / "config.toml"
@@ -25,6 +34,7 @@ DEFAULT_BRIDGE_COMMAND = "remembra-bridge"
 DEFAULT_BRIDGE_LOG_DIR = Path.home() / ".remembra"
 DEFAULT_BRIDGE_STDOUT = DEFAULT_BRIDGE_LOG_DIR / "bridge.stdout.log"
 DEFAULT_BRIDGE_STDERR = DEFAULT_BRIDGE_LOG_DIR / "bridge.stderr.log"
+TRUTHY_ENV_VALUES = {"1", "true", "yes", "on"}
 
 
 @dataclass(slots=True)
@@ -119,17 +129,21 @@ def install_codex_config(
     user_id: str,
     url: str = DEFAULT_REMEMBRA_URL,
     command: str = DEFAULT_REMEMBRA_COMMAND,
-    use_bridge: bool = True,
+    use_bridge: bool | None = None,
     bridge_host: str = DEFAULT_BRIDGE_HOST,
     bridge_port: int = DEFAULT_BRIDGE_PORT,
+    environ: Mapping[str, str] | None = None,
 ) -> CodexInstallResult:
     """Create or update the Codex config file with Remembra MCP settings."""
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
     created = not config_path.exists()
     existing = config_path.read_text() if config_path.exists() else ""
-    target_url = build_bridge_url(bridge_host, bridge_port) if use_bridge else url
-    mcp_api_key = None if use_bridge else api_key
+    bridge_enabled = (
+        use_bridge if use_bridge is not None else is_sandboxed_codex(environ)
+    )
+    target_url = build_bridge_url(bridge_host, bridge_port) if bridge_enabled else url
+    mcp_api_key = None if bridge_enabled else api_key
     block = build_codex_mcp_block(
         command=command,
         url=target_url,
@@ -148,13 +162,24 @@ def install_codex_config(
         user_id=user_id,
         created=created,
         bridge_url=build_bridge_url(bridge_host, bridge_port),
-        bridge_enabled=use_bridge,
+        bridge_enabled=bridge_enabled,
     )
 
 
 def build_bridge_url(host: str, port: int) -> str:
     """Build the local bridge URL advertised to Codex."""
     return f"http://{host}:{port}"
+
+
+def is_sandboxed_codex(environ: Mapping[str, str] | None = None) -> bool:
+    """Detect whether the current Codex session requires the local bridge."""
+    env = os.environ if environ is None else environ
+    sandbox_mode = env.get("CODEX_SANDBOX", "").strip().lower()
+    if sandbox_mode and sandbox_mode not in {"0", "false", "off", "none"}:
+        return True
+
+    network_disabled = env.get("CODEX_SANDBOX_NETWORK_DISABLED", "").strip().lower()
+    return network_disabled in TRUTHY_ENV_VALUES
 
 
 def resolve_bridge_launch_command(command: str | None) -> list[str]:
@@ -175,8 +200,27 @@ def start_bridge_background(
     command: str | None = None,
     stdout_path: Path = DEFAULT_BRIDGE_STDOUT,
     stderr_path: Path = DEFAULT_BRIDGE_STDERR,
+    pid_file: Path = DEFAULT_PID_FILE,
+    health_timeout: float = 5.0,
 ) -> int:
-    """Start the local bridge as a detached background process."""
+    """Start the local bridge as a detached background process.
+
+    Raises:
+        BridgePortInUseError: If the port is already in use.
+        BridgeStartupError: If the bridge fails to start or become healthy.
+    """
+    # Check if bridge is already running
+    existing_pid = read_pid_file(pid_file)
+    if existing_pid and is_process_running(existing_pid):
+        # Verify it's actually responding
+        if wait_for_healthy(host, port, timeout=1.0):
+            return existing_pid  # Already running and healthy
+        # Process exists but not responding, stop it
+        stop_bridge(pid_file)
+
+    # Check port availability
+    check_port_available(host, port)
+
     stdout_path.parent.mkdir(parents=True, exist_ok=True)
 
     argv = resolve_bridge_launch_command(command)
@@ -188,6 +232,8 @@ def start_bridge_background(
             host,
             "--port",
             str(port),
+            "--pid-file",
+            str(pid_file),
         ]
     )
 
@@ -202,6 +248,19 @@ def start_bridge_background(
             env=env,
             start_new_session=True,
         )
+
+    # Wait for bridge to become healthy
+    if not wait_for_healthy(host, port, timeout=health_timeout):
+        # Check if process died
+        if process.poll() is not None:
+            raise BridgeStartupError(
+                f"Bridge process exited immediately. Check logs at {stderr_path}"
+            )
+        raise BridgeStartupError(
+            f"Bridge started (PID {process.pid}) but failed health check after {health_timeout}s. "
+            f"Check logs at {stderr_path}"
+        )
+
     return process.pid
 
 
@@ -280,20 +339,27 @@ def main() -> None:
         user_id=args.user_id,
         url=args.upstream_url,
         command=args.command,
-        use_bridge=not args.no_bridge,
+        use_bridge=False if args.no_bridge else None,
         bridge_host=args.bridge_host,
         bridge_port=args.bridge_port,
     )
 
     if args.start_bridge and result.bridge_enabled:
-        result.bridge_pid = start_bridge_background(
-            upstream=args.upstream_url,
-            port=args.bridge_port,
-            api_key=args.api_key,
-            host=args.bridge_host,
-            command=args.bridge_command,
-        )
-        result.bridge_started = True
+        try:
+            result.bridge_pid = start_bridge_background(
+                upstream=args.upstream_url,
+                port=args.bridge_port,
+                api_key=args.api_key,
+                host=args.bridge_host,
+                command=args.bridge_command,
+            )
+            result.bridge_started = True
+        except BridgePortInUseError as exc:
+            print(f"Warning: {exc}", file=sys.stderr)
+            print("Config installed but bridge not started.", file=sys.stderr)
+        except BridgeStartupError as exc:
+            print(f"Warning: {exc}", file=sys.stderr)
+            print("Config installed but bridge may not be healthy.", file=sys.stderr)
 
     print("Remembra Codex install complete")
     print(f"Config: {result.config_path}")
@@ -305,6 +371,7 @@ def main() -> None:
         print(f"Bridge URL: {result.bridge_url}")
     if result.bridge_started:
         print(f"Bridge PID: {result.bridge_pid}")
+        print("Bridge health: OK")
 
 
 if __name__ == "__main__":

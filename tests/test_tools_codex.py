@@ -10,6 +10,7 @@ import httpx
 from remembra.tools.codex import (
     build_codex_mcp_block,
     install_codex_config,
+    is_sandboxed_codex,
     start_bridge_background,
     upsert_codex_mcp_block,
 )
@@ -60,6 +61,7 @@ def test_install_codex_config_creates_expected_file(tmp_path: Path) -> None:
         user_id="user_123",
         command="/tmp/remembra-mcp",
         url="https://api.remembra.dev",
+        use_bridge=True,
     )
 
     content = config_path.read_text()
@@ -85,6 +87,27 @@ def test_install_codex_config_can_disable_bridge(tmp_path: Path) -> None:
     content = config_path.read_text()
     assert 'REMEMBRA_URL = "https://api.remembra.dev"' in content
     assert 'REMEMBRA_API_KEY = "rem_test"' in content
+
+
+def test_install_codex_config_detects_sandboxed_codex(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.toml"
+
+    result = install_codex_config(
+        config_path,
+        api_key="rem_test",
+        project="clawdbot",
+        user_id="user_123",
+        url="https://api.remembra.dev",
+        environ={
+            "CODEX_SANDBOX": "seatbelt",
+            "CODEX_SANDBOX_NETWORK_DISABLED": "1",
+        },
+    )
+
+    content = config_path.read_text()
+    assert 'REMEMBRA_URL = "http://127.0.0.1:8765"' in content
+    assert 'REMEMBRA_API_KEY = "rem_test"' not in content
+    assert result.bridge_enabled is True
 
 
 def test_load_codex_target_parses_nested_toml(tmp_path: Path) -> None:
@@ -158,12 +181,26 @@ def test_classify_http_error_maps_dns_and_sandbox() -> None:
     assert classify_http_error(RuntimeError("Operation not permitted")) == "sandbox_blocked"
 
 
+def test_is_sandboxed_codex_uses_known_env_markers() -> None:
+    assert is_sandboxed_codex({"CODEX_SANDBOX": "seatbelt"}) is True
+    assert is_sandboxed_codex({"CODEX_SANDBOX_NETWORK_DISABLED": "1"}) is True
+    assert is_sandboxed_codex({}) is False
+
+
 def test_start_bridge_background_uses_bridge_command_and_env(tmp_path: Path) -> None:
     stdout_path = tmp_path / "bridge.stdout.log"
     stderr_path = tmp_path / "bridge.stderr.log"
+    pid_file = tmp_path / "bridge.pid"
 
-    with patch("remembra.tools.codex.subprocess.Popen") as popen_mock:
+    with (
+        patch("remembra.tools.codex.shutil.which", return_value="remembra-bridge"),
+        patch("remembra.tools.codex.subprocess.Popen") as popen_mock,
+        patch("remembra.tools.codex.read_pid_file", return_value=None),
+        patch("remembra.tools.codex.check_port_available"),
+        patch("remembra.tools.codex.wait_for_healthy", return_value=True),
+    ):
         popen_mock.return_value.pid = 321
+        popen_mock.return_value.poll.return_value = None
         pid = start_bridge_background(
             upstream="https://api.remembra.dev",
             port=8765,
@@ -171,6 +208,7 @@ def test_start_bridge_background_uses_bridge_command_and_env(tmp_path: Path) -> 
             command="remembra-bridge",
             stdout_path=stdout_path,
             stderr_path=stderr_path,
+            pid_file=pid_file,
         )
 
     assert pid == 321

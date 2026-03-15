@@ -6,9 +6,14 @@ import argparse
 import json
 import os
 import shlex
+import signal
+import socket
+import sys
+import time
 from dataclasses import dataclass
 from http.client import HTTPMessage
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import cast
 
 import httpx
@@ -16,6 +21,7 @@ import httpx
 DEFAULT_BRIDGE_HOST = "127.0.0.1"
 DEFAULT_BRIDGE_PORT = 8765
 DEFAULT_BRIDGE_UPSTREAM = "https://api.remembra.dev"
+DEFAULT_PID_FILE = Path.home() / ".remembra" / "bridge.pid"
 HOP_BY_HOP_HEADERS = {
     "connection",
     "content-length",
@@ -28,6 +34,123 @@ HOP_BY_HOP_HEADERS = {
     "transfer-encoding",
     "upgrade",
 }
+
+
+class BridgePortInUseError(Exception):
+    """Raised when the bridge port is already in use."""
+
+
+class BridgeStartupError(Exception):
+    """Raised when the bridge fails to start or become healthy."""
+
+
+def check_port_available(host: str, port: int) -> None:
+    """Check if a port is available for binding.
+
+    Raises:
+        BridgePortInUseError: If the port is already in use.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            sock.bind((host, port))
+        except OSError as exc:
+            raise BridgePortInUseError(
+                f"Port {port} is already in use on {host}. "
+                f"Stop the existing bridge with 'remembra-bridge --stop' "
+                f"or use a different port with '--port'."
+            ) from exc
+
+
+def write_pid_file(pid: int, pid_file: Path = DEFAULT_PID_FILE) -> None:
+    """Write the bridge PID to a file for later cleanup."""
+    pid_file.parent.mkdir(parents=True, exist_ok=True)
+    pid_file.write_text(str(pid))
+
+
+def read_pid_file(pid_file: Path = DEFAULT_PID_FILE) -> int | None:
+    """Read the bridge PID from the file, or None if not found."""
+    if not pid_file.exists():
+        return None
+    try:
+        return int(pid_file.read_text().strip())
+    except (ValueError, OSError):
+        return None
+
+
+def remove_pid_file(pid_file: Path = DEFAULT_PID_FILE) -> None:
+    """Remove the PID file."""
+    import contextlib
+
+    with contextlib.suppress(OSError):
+        pid_file.unlink(missing_ok=True)
+
+
+def is_process_running(pid: int) -> bool:
+    """Check if a process with the given PID is running."""
+    try:
+        os.kill(pid, 0)
+        return True
+    except (OSError, ProcessLookupError):
+        return False
+
+
+def stop_bridge(pid_file: Path = DEFAULT_PID_FILE) -> bool:
+    """Stop a running bridge using the PID file.
+
+    Returns:
+        True if a bridge was stopped, False if none was running.
+    """
+    pid = read_pid_file(pid_file)
+    if pid is None:
+        return False
+
+    if not is_process_running(pid):
+        remove_pid_file(pid_file)
+        return False
+
+    try:
+        os.kill(pid, signal.SIGTERM)
+        # Wait up to 3 seconds for graceful shutdown
+        for _ in range(30):
+            if not is_process_running(pid):
+                break
+            time.sleep(0.1)
+        else:
+            # Force kill if still running
+            os.kill(pid, signal.SIGKILL)
+    except (OSError, ProcessLookupError):
+        pass
+
+    remove_pid_file(pid_file)
+    return True
+
+
+def wait_for_healthy(
+    host: str,
+    port: int,
+    timeout: float = 5.0,
+    interval: float = 0.2,
+) -> bool:
+    """Wait for the bridge to become healthy.
+
+    Returns:
+        True if healthy, False if timeout reached.
+    """
+    url = f"http://{host}:{port}/health"
+    deadline = time.monotonic() + timeout
+
+    while time.monotonic() < deadline:
+        try:
+            with httpx.Client(timeout=1.0) as client:
+                resp = client.get(url)
+                if resp.status_code == 200:
+                    return True
+        except (httpx.HTTPError, OSError):
+            pass
+        time.sleep(interval)
+
+    return False
 
 
 @dataclass(slots=True)
@@ -84,14 +207,15 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
         server = self._server()
         body = self._read_body()
         path = self.path if self.path.startswith("/") else f"/{self.path}"
-        headers = build_forward_headers(self.headers, api_key=server.config.api_key)
 
         try:
-            response = server.client.request(
+            response = forward_upstream_request(
+                client=server.client,
                 method=self.command,
-                url=path,
-                content=body,
-                headers=headers,
+                path=path,
+                headers=self.headers,
+                body=body,
+                api_key=server.config.api_key,
             )
         except httpx.HTTPError as exc:
             self._write_json_error(502, str(exc))
@@ -154,6 +278,25 @@ def build_forward_headers(headers: HTTPMessage, *, api_key: str | None) -> dict[
     return forwarded
 
 
+def forward_upstream_request(
+    *,
+    client: httpx.Client,
+    method: str,
+    path: str,
+    headers: HTTPMessage,
+    body: bytes | None,
+    api_key: str | None,
+) -> httpx.Response:
+    """Forward a request to the upstream Remembra API."""
+    forwarded_headers = build_forward_headers(headers, api_key=api_key)
+    return client.request(
+        method=method,
+        url=path,
+        content=body,
+        headers=forwarded_headers,
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI parser for the bridge."""
     parser = argparse.ArgumentParser(description="Start the local Remembra bridge.")
@@ -184,6 +327,22 @@ def build_parser() -> argparse.ArgumentParser:
         default=30.0,
         help="Upstream request timeout in seconds",
     )
+    parser.add_argument(
+        "--stop",
+        action="store_true",
+        help="Stop a running bridge (using PID file)",
+    )
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help="Check if a bridge is running",
+    )
+    parser.add_argument(
+        "--pid-file",
+        type=Path,
+        default=DEFAULT_PID_FILE,
+        help="Path to the PID file",
+    )
     return parser
 
 
@@ -199,6 +358,38 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
+    # Handle --stop
+    if args.stop:
+        if stop_bridge(args.pid_file):
+            print("Bridge stopped.")
+        else:
+            print("No running bridge found.")
+        return
+
+    # Handle --status
+    if args.status:
+        pid = read_pid_file(args.pid_file)
+        if pid and is_process_running(pid):
+            print(f"Bridge is running (PID {pid})")
+            # Try to get health
+            if wait_for_healthy(args.host, args.port, timeout=1.0):
+                print(f"  Listening on http://{args.host}:{args.port}")
+                print("  Status: healthy")
+            else:
+                print("  Status: not responding")
+        else:
+            print("Bridge is not running.")
+            if pid:
+                remove_pid_file(args.pid_file)
+        return
+
+    # Check if port is available before starting
+    try:
+        check_port_available(args.host, args.port)
+    except BridgePortInUseError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
     config = BridgeConfig(
         upstream=args.upstream,
         host=args.host,
@@ -206,16 +397,21 @@ def main() -> None:
         api_key=args.api_key,
         timeout=args.timeout,
     )
+
+    # Write PID file
+    write_pid_file(os.getpid(), args.pid_file)
+
     server = RemembraBridgeServer(config)
 
     print(f"Remembra bridge listening on {config.base_url}")
     print(f"Forwarding to {config.upstream}")
+    print(f"PID file: {args.pid_file}")
     try:
         server.serve_forever()
     finally:
         server.server_close()
+        remove_pid_file(args.pid_file)
 
 
 if __name__ == "__main__":
     main()
-

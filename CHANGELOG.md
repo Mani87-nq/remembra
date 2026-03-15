@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `remembra-bridge` runs local HTTP proxy on 127.0.0.1:8765
   - Forwards requests to remote Remembra API
   - Auto-configured by installer for sandboxed environments
+  - `remembra-bridge --stop` gracefully stops running bridge
+  - `remembra-bridge --status` checks if bridge is running and healthy
+  - Port-in-use detection with clear error messages
+  - Health check after startup (fails fast if bridge unhealthy)
+  - PID file management for clean process lifecycle
 
 - **Security Hardening**
   - RBAC permissions enforced on all memory endpoints

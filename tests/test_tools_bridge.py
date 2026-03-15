@@ -2,15 +2,28 @@
 
 from __future__ import annotations
 
+from email.message import Message
 import json
-import threading
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import httpx
+import pytest
 
-from remembra.tools.bridge import BridgeConfig, RemembraBridgeServer
+from remembra.tools.bridge import (
+    BridgePortInUseError,
+    build_forward_headers,
+    check_port_available,
+    forward_upstream_request,
+    is_process_running,
+    read_pid_file,
+    remove_pid_file,
+    stop_bridge,
+    write_pid_file,
+)
 
 
-def test_bridge_forwards_request_and_injects_api_key() -> None:
+def test_forward_upstream_request_injects_api_key_and_forwards_json() -> None:
     seen: dict[str, str] = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -20,60 +33,94 @@ def test_bridge_forwards_request_and_injects_api_key() -> None:
         body = json.loads(request.content.decode())
         return httpx.Response(200, json={"echo": body, "status": "ok"})
 
-    server = RemembraBridgeServer(
-        BridgeConfig(
-            upstream="https://api.remembra.dev",
-            host="127.0.0.1",
-            port=0,
+    headers = Message()
+    headers["Content-Type"] = "application/json"
+    body = json.dumps({"query": "hello"}).encode()
+
+    with httpx.Client(
+        base_url="https://api.remembra.dev",
+        transport=httpx.MockTransport(handler),
+    ) as client:
+        response = forward_upstream_request(
+            client=client,
+            method="POST",
+            path="/api/v1/memories/recall?source=test",
+            headers=headers,
+            body=body,
             api_key="rem_test",
-        ),
-        transport=httpx.MockTransport(handler),
-    )
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-
-    port = server.server_address[1]
-    try:
-        response = httpx.post(
-            f"http://127.0.0.1:{port}/api/v1/memories/recall?source=test",
-            json={"query": "hello"},
         )
-        assert response.status_code == 200
-        assert response.json() == {"echo": {"query": "hello"}, "status": "ok"}
-        assert seen == {
-            "path": "/api/v1/memories/recall",
-            "query": "source=test",
-            "api_key": "rem_test",
-        }
-    finally:
-        server.shutdown()
-        thread.join(timeout=2)
-        server.server_close()
+
+    assert response.status_code == 200
+    assert response.json() == {"echo": {"query": "hello"}, "status": "ok"}
+    assert seen == {
+        "path": "/api/v1/memories/recall",
+        "query": "source=test",
+        "api_key": "rem_test",
+    }
 
 
-def test_bridge_preserves_client_api_key_when_not_configured() -> None:
-    seen: dict[str, str] = {}
+def test_build_forward_headers_preserves_client_api_key_when_not_configured() -> None:
+    headers = Message()
+    headers["X-API-Key"] = "from-client"
+    headers["Content-Type"] = "application/json"
 
-    def handler(request: httpx.Request) -> httpx.Response:
-        seen["api_key"] = request.headers["X-API-Key"]
-        return httpx.Response(200, json={"status": "ok"})
+    forwarded = build_forward_headers(headers, api_key=None)
 
-    server = RemembraBridgeServer(
-        BridgeConfig(upstream="https://api.remembra.dev", host="127.0.0.1", port=0),
-        transport=httpx.MockTransport(handler),
-    )
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
+    assert forwarded["X-API-Key"] == "from-client"
+    assert forwarded["Content-Type"] == "application/json"
 
-    port = server.server_address[1]
-    try:
-        response = httpx.get(
-            f"http://127.0.0.1:{port}/health",
-            headers={"X-API-Key": "from-client"},
-        )
-        assert response.status_code == 200
-        assert seen["api_key"] == "from-client"
-    finally:
-        server.shutdown()
-        thread.join(timeout=2)
-        server.server_close()
+
+def test_check_port_available_raises_on_port_in_use() -> None:
+    """Test that check_port_available raises BridgePortInUseError when port is busy."""
+    port = 8765
+    mock_socket = MagicMock()
+    mock_socket.bind.side_effect = OSError("Address already in use")
+    mock_context = MagicMock()
+    mock_context.__enter__.return_value = mock_socket
+
+    with patch("remembra.tools.bridge.socket.socket", return_value=mock_context):
+        with pytest.raises(BridgePortInUseError) as exc_info:
+            check_port_available("127.0.0.1", port)
+        assert str(port) in str(exc_info.value)
+        assert "already in use" in str(exc_info.value)
+
+
+def test_pid_file_operations(tmp_path: Path) -> None:
+    """Test PID file write/read/remove operations."""
+    pid_file = tmp_path / "test.pid"
+
+    # Initially no PID file
+    assert read_pid_file(pid_file) is None
+
+    # Write and read back
+    write_pid_file(12345, pid_file)
+    assert read_pid_file(pid_file) == 12345
+
+    # Remove
+    remove_pid_file(pid_file)
+    assert not pid_file.exists()
+    assert read_pid_file(pid_file) is None
+
+
+def test_stop_bridge_returns_false_when_no_pid_file(tmp_path: Path) -> None:
+    """Test stop_bridge returns False when no PID file exists."""
+    pid_file = tmp_path / "nonexistent.pid"
+    assert stop_bridge(pid_file) is False
+
+
+def test_stop_bridge_cleans_up_stale_pid_file(tmp_path: Path) -> None:
+    """Test stop_bridge cleans up stale PID file for non-running process."""
+    pid_file = tmp_path / "stale.pid"
+    # Write a PID that doesn't exist (very high number)
+    write_pid_file(999999999, pid_file)
+
+    with patch("remembra.tools.bridge.is_process_running", return_value=False):
+        result = stop_bridge(pid_file)
+
+    assert result is False
+    assert not pid_file.exists()
+
+
+def test_is_process_running_returns_false_for_invalid_pid() -> None:
+    """Test is_process_running returns False for non-existent process."""
+    assert is_process_running(999999999) is False
