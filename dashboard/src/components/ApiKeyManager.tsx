@@ -571,9 +571,11 @@ function DeleteKeyModal({ keyData, onClose, onDeleted }: DeleteKeyModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmName, setConfirmName] = useState('');
+  const [deleteMode, setDeleteMode] = useState<'revoke' | 'permanent'>('revoke');
 
   const handleDelete = async () => {
-    if (confirmName !== keyData.name) {
+    // For permanent delete, require name confirmation
+    if (deleteMode === 'permanent' && confirmName !== keyData.name) {
       setError('Key name does not match');
       return;
     }
@@ -582,7 +584,7 @@ function DeleteKeyModal({ keyData, onClose, onDeleted }: DeleteKeyModalProps) {
     setError(null);
 
     try {
-      await api.revokeKey(keyData.id);
+      await api.revokeKey(keyData.id, deleteMode === 'permanent');
       onDeleted();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete API key');
@@ -599,7 +601,7 @@ function DeleteKeyModal({ keyData, onClose, onDeleted }: DeleteKeyModalProps) {
           <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
             <AlertTriangle className="w-5 h-5" />
             <h2 className="text-lg font-semibold">
-              Delete API Key
+              Remove API Key
             </h2>
           </div>
           <button
@@ -612,47 +614,104 @@ function DeleteKeyModal({ keyData, onClose, onDeleted }: DeleteKeyModalProps) {
 
         {/* Content */}
         <div className="p-4 space-y-4">
-          <p className="text-gray-600 dark:text-gray-300">
-            This action cannot be undone. Any applications using this key will immediately lose access.
-          </p>
-
           {/* Key Info */}
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-medium text-gray-900 dark:text-white">{keyData.name}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{keyData.name || 'Unnamed Key'}</span>
               <span className={clsx(
                 'px-2 py-0.5 rounded text-xs font-medium',
-                PERMISSION_STYLES[keyData.permission]
+                PERMISSION_STYLES[keyData.permission || keyData.role || 'editor']
               )}>
-                {PERMISSION_LABELS[keyData.permission]}
+                {PERMISSION_LABELS[keyData.permission || keyData.role || 'editor']}
               </span>
             </div>
             <code className="text-sm text-gray-500 dark:text-gray-400 font-mono">
-              rem_{keyData.key_preview}
+              rem_{keyData.key_preview}...
             </code>
           </div>
 
-          {/* Confirmation Input */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Type <span className="font-mono text-red-600 dark:text-red-400">"{keyData.name}"</span> to confirm
+          {/* Delete Mode Selection */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              How do you want to remove this key?
             </label>
-            <input
-              type="text"
-              value={confirmName}
-              onChange={(e) => setConfirmName(e.target.value)}
-              placeholder="Enter key name to confirm"
+            
+            {/* Revoke Option */}
+            <label
               className={clsx(
-                'w-full px-4 py-3 rounded-lg border',
-                'bg-white dark:bg-gray-900',
-                'border-gray-300 dark:border-gray-600',
-                'text-gray-900 dark:text-white',
-                'placeholder-gray-400 dark:placeholder-gray-500',
-                'focus:ring-2 focus:ring-red-500 focus:border-transparent'
+                'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                deleteMode === 'revoke'
+                  ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
               )}
-              disabled={loading}
-            />
+            >
+              <input
+                type="radio"
+                name="deleteMode"
+                value="revoke"
+                checked={deleteMode === 'revoke'}
+                onChange={() => setDeleteMode('revoke')}
+                className="mt-1 text-amber-500"
+                disabled={loading}
+              />
+              <div>
+                <span className="font-medium text-gray-900 dark:text-white">Revoke (Recommended)</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Key is disabled but kept for audit trail. Can see it was revoked.
+                </p>
+              </div>
+            </label>
+            
+            {/* Permanent Delete Option */}
+            <label
+              className={clsx(
+                'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
+                deleteMode === 'permanent'
+                  ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              )}
+            >
+              <input
+                type="radio"
+                name="deleteMode"
+                value="permanent"
+                checked={deleteMode === 'permanent'}
+                onChange={() => setDeleteMode('permanent')}
+                className="mt-1 text-red-500"
+                disabled={loading}
+              />
+              <div>
+                <span className="font-medium text-red-600 dark:text-red-400">Delete Permanently</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Key is completely removed from database. Use for leaked keys.
+                </p>
+              </div>
+            </label>
           </div>
+
+          {/* Confirmation Input (only for permanent delete) */}
+          {deleteMode === 'permanent' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Type <span className="font-mono text-red-600 dark:text-red-400">"{keyData.name || 'Unnamed Key'}"</span> to confirm
+              </label>
+              <input
+                type="text"
+                value={confirmName}
+                onChange={(e) => setConfirmName(e.target.value)}
+                placeholder="Enter key name to confirm permanent deletion"
+                className={clsx(
+                  'w-full px-4 py-3 rounded-lg border',
+                  'bg-white dark:bg-gray-900',
+                  'border-gray-300 dark:border-gray-600',
+                  'text-gray-900 dark:text-white',
+                  'placeholder-gray-400 dark:placeholder-gray-500',
+                  'focus:ring-2 focus:ring-red-500 focus:border-transparent'
+                )}
+                disabled={loading}
+              />
+            </div>
+          )}
 
           {/* Error */}
           {error && (
@@ -677,23 +736,26 @@ function DeleteKeyModal({ keyData, onClose, onDeleted }: DeleteKeyModalProps) {
             </button>
             <button
               onClick={handleDelete}
-              disabled={loading || confirmName !== keyData.name}
+              disabled={loading || (deleteMode === 'permanent' && confirmName !== (keyData.name || 'Unnamed Key'))}
               className={clsx(
                 'px-4 py-2 rounded-lg font-medium',
-                'bg-red-600 hover:bg-red-700 text-white',
+                deleteMode === 'permanent' 
+                  ? 'bg-red-600 hover:bg-red-700' 
+                  : 'bg-amber-500 hover:bg-amber-600',
+                'text-white',
                 'flex items-center gap-2',
-                (loading || confirmName !== keyData.name) && 'opacity-50 cursor-not-allowed'
+                (loading || (deleteMode === 'permanent' && confirmName !== (keyData.name || 'Unnamed Key'))) && 'opacity-50 cursor-not-allowed'
               )}
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Deleting...
+                  {deleteMode === 'permanent' ? 'Deleting...' : 'Revoking...'}
                 </>
               ) : (
                 <>
                   <Trash2 className="w-4 h-4" />
-                  Delete Key
+                  {deleteMode === 'permanent' ? 'Delete Permanently' : 'Revoke Key'}
                 </>
               )}
             </button>

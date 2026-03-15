@@ -1363,6 +1363,27 @@ class Database:
         await self.conn.commit()
         return cursor.rowcount > 0
 
+    async def delete_api_key_permanently(self, key_id: str, user_id: str) -> bool:
+        """
+        Permanently delete an API key from the database (hard delete).
+        
+        Also removes associated role assignments.
+        Returns True if found and deleted.
+        """
+        # First delete any role assignments
+        await self.conn.execute(
+            "DELETE FROM api_key_roles WHERE api_key_id = ?",
+            (key_id,),
+        )
+        
+        # Then delete the key itself
+        cursor = await self.conn.execute(
+            "DELETE FROM api_keys WHERE id = ? AND user_id = ?",
+            (key_id, user_id),
+        )
+        await self.conn.commit()
+        return cursor.rowcount > 0
+
     async def get_api_key_by_id(self, key_id: str) -> dict[str, Any] | None:
         """Get API key by ID."""
         cursor = await self.conn.execute(

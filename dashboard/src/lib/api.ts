@@ -427,8 +427,9 @@ class ApiClient {
     });
   }
 
-  async revokeKey(id: string): Promise<RevokeApiKeyResponse> {
-    return this.fetchApi<RevokeApiKeyResponse>(`/keys/${id}`, {
+  async revokeKey(id: string, hard: boolean = false): Promise<RevokeApiKeyResponse> {
+    const params = hard ? '?hard=true' : '';
+    return this.fetchApi<RevokeApiKeyResponse>(`/keys/${id}${params}`, {
       method: 'DELETE',
     });
   }

@@ -478,14 +478,14 @@ async def update_api_key(
 
 
 # ---------------------------------------------------------------------------
-# Revoke Key (user can revoke their own keys)
+# Revoke/Delete Key (user can revoke or permanently delete their own keys)
 # ---------------------------------------------------------------------------
 
 
 @router.delete(
     "/{key_id}",
     response_model=RevokeKeyResponse,
-    summary="Revoke an API key",
+    summary="Revoke or permanently delete an API key",
 )
 @limiter.limit("5/minute")  # Prevent abuse
 async def revoke_api_key(
@@ -495,12 +495,26 @@ async def revoke_api_key(
     role_manager: RoleManagerDep,
     audit_logger: AuditLoggerDep,
     current_user: JWTOrAPIKeyUser,
+    hard: bool = False,
 ) -> RevokeKeyResponse:
     """
-    Revoke (deactivate) an API key.
+    Revoke or permanently delete an API key.
     
-    Users can only revoke their own keys.
-    Revoked keys cannot be used for authentication.
+    Users can only manage their own keys.
+    
+    **Query Parameters:**
+    - `hard` (bool): If true, permanently delete the key from the database.
+                     If false (default), soft-revoke (mark as inactive).
+    
+    **Soft revoke (default):**
+    - Key is marked as inactive but remains in database
+    - Useful for audit trails and compliance
+    - Key cannot be used for authentication
+    
+    **Hard delete (`?hard=true`):**
+    - Key is permanently removed from database
+    - No recovery possible
+    - Use for leaked keys or security incidents
     """
     if not current_user:
         raise HTTPException(
@@ -508,23 +522,33 @@ async def revoke_api_key(
             detail="Authentication required. Use JWT token or API key.",
         )
     
-    success = await key_manager.revoke_key(key_id, current_user.user_id)
+    if hard:
+        # Permanently delete the key
+        success = await key_manager.delete_key_permanently(key_id, current_user.user_id)
+        action = "key_deleted_permanently"
+        message = f"API key {key_id} has been permanently deleted"
+    else:
+        # Soft revoke (existing behavior)
+        success = await key_manager.revoke_key(key_id, current_user.user_id)
+        action = "key_revoked"
+        message = f"API key {key_id} has been revoked"
     
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Key {key_id} not found or already revoked",
+            detail=f"Key {key_id} not found or already revoked/deleted",
         )
     
     # Clean up role assignment
     await role_manager.remove_role(key_id)
     
     # Audit log
-    await audit_logger.log_key_revoked(
+    await audit_logger.log_event(
         user_id=current_user.user_id,
-        key_id=key_id,
+        action=action,
+        resource_id=key_id,
         ip_address=get_client_ip(request),
-        success=True,
+        details={"hard_delete": hard},
     )
     
     return RevokeKeyResponse(

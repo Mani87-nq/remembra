@@ -219,7 +219,7 @@ class APIKeyManager:
     
     async def revoke_key(self, key_id: str, user_id: str) -> bool:
         """
-        Revoke an API key. Returns True if found and revoked.
+        Revoke an API key (soft delete). Returns True if found and revoked.
         
         The user_id is required to ensure users can only revoke their own keys.
         """
@@ -233,6 +233,28 @@ class APIKeyManager:
             log.info("api_key_revoked", key_id=key_id, user_id=user_id)
         else:
             log.warning("api_key_revoke_failed", key_id=key_id, user_id=user_id)
+        
+        return success
+    
+    async def delete_key_permanently(self, key_id: str, user_id: str) -> bool:
+        """
+        Permanently delete an API key from the database (hard delete).
+        
+        Use this for leaked keys or security incidents.
+        The user_id is required to ensure users can only delete their own keys.
+        
+        Returns True if found and deleted.
+        """
+        global _key_cache
+        
+        success = await self.db.delete_api_key_permanently(key_id, user_id)
+        
+        if success:
+            # Invalidate cache entries for this key
+            _key_cache = {k: v for k, v in _key_cache.items() if v.get("id") != key_id}
+            log.info("api_key_deleted_permanently", key_id=key_id, user_id=user_id)
+        else:
+            log.warning("api_key_delete_failed", key_id=key_id, user_id=user_id)
         
         return success
     
