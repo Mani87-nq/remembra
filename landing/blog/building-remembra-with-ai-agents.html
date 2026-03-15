@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building Remembra with AI Agents: A Meta Journey - Remembra Blog</title>
+    <meta name="description" content="How we used Claude, Codex, and our own memory layer to build an AI memory product. A real-world case study in multi-agent collaboration.">
+    <meta name="keywords" content="AI agents, multi-agent, Claude Code, Codex CLI, AI collaboration, Remembra, MCP server, AI development">
+    
+    <meta property="og:title" content="Building Remembra with AI Agents: A Meta Journey">
+    <meta property="og:description" content="How we used Claude, Codex, and our own memory layer to build an AI memory product.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://remembra.dev/blog/building-remembra-with-ai-agents">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@remembradev">
+    <meta name="twitter:title" content="Building Remembra with AI Agents">
+    <meta name="twitter:description" content="A multi-agent collaboration case study">
+    
+    <link rel="canonical" href="https://remembra.dev/blog/building-remembra-with-ai-agents">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#8B5CF6', 'primary-dark': '#7C3AED', dark: '#0F0F0F', 'dark-card': '#1F1F1F' } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text { background: linear-gradient(135deg, #8B5CF6, #A78BFA, #C4B5FD); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .prose { line-height: 1.8; }
+        .prose h2 { margin-top: 2.5rem; margin-bottom: 1rem; }
+        .prose p { margin-bottom: 1.25rem; }
+        .prose code { background: rgba(139, 92, 246, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        .prose pre { background: #1a1a1a; padding: 1.5rem; border-radius: 12px; overflow-x: auto; margin: 1.5rem 0; }
+        .prose pre code { background: none; padding: 0; }
+        .chat-bubble { padding: 1rem 1.25rem; border-radius: 1rem; margin: 0.75rem 0; max-width: 85%; }
+        .chat-human { background: #2563eb; margin-left: auto; border-bottom-right-radius: 4px; }
+        .chat-agent { background: #1F1F1F; border: 1px solid rgba(255,255,255,0.1); border-bottom-left-radius: 4px; }
+        .agent-tag { font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.25rem; }
+    </style>
+</head>
+<body class="bg-dark text-white">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-dark/80 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3">
+                <img src="/logo.jpg" alt="Remembra" class="h-8 w-8 rounded-lg">
+                <span class="text-xl font-bold">Remembra</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="https://docs.remembra.dev" class="text-gray-300 hover:text-white">Docs</a>
+                <a href="/blog" class="text-gray-300 hover:text-white">Blog</a>
+                <a href="/signup.html" class="px-5 py-2.5 bg-primary hover:bg-primary-dark rounded-lg font-medium">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <article class="pt-32 pb-24 px-6">
+        <div class="max-w-3xl mx-auto">
+            <header class="mb-12">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-medium">Case Study</span>
+                    <time class="text-gray-500">March 15, 2026</time>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-6">Building Remembra with AI Agents: A Meta Journey</h1>
+                <p class="text-xl text-gray-400">How we used Claude, Codex, and our own memory layer to build an AI memory product. Yes, we're eating our own dog food.</p>
+            </header>
+
+            <div class="prose text-gray-300">
+                <p class="text-lg">Remembra was built by AI agents using Remembra. That's not marketing speak—it's literally how this product came to be. Here's the story of multi-agent collaboration in action.</p>
+
+                <h2 class="text-2xl font-bold text-white">The Setup: Three Agents, One Mission</h2>
+                
+                <p>Our development workflow involves multiple AI agents working in concert:</p>
+                
+                <ul class="list-disc list-inside space-y-2 mb-6">
+                    <li><strong class="text-white">General (Claude)</strong> — Main orchestrator, handles architecture decisions, user communication, and high-level planning</li>
+                    <li><strong class="text-white">Codex CLI</strong> — Specialized coding agent for implementation, runs in sandboxed environment</li>
+                    <li><strong class="text-white">Sub-agents</strong> — Spawned for parallel tasks like documentation, testing, and research</li>
+                </ul>
+
+                <p>The challenge? Every agent wakes up fresh. Without persistent memory, they'd constantly ask "wait, what were we building again?"</p>
+
+                <h2 class="text-2xl font-bold text-white">Real Conversation: Debugging Memory Leaks</h2>
+
+                <p>Here's an actual exchange from building v0.10.0:</p>
+
+                <div class="my-8">
+                    <div class="chat-bubble chat-human">
+                        <div class="agent-tag">👤 Human</div>
+                        Memory recall is slow. Takes 2+ seconds on simple queries.
+                    </div>
+                    
+                    <div class="chat-bubble chat-agent">
+                        <div class="agent-tag">🤖 General (Claude)</div>
+                        Let me recall what we know about the current implementation...<br><br>
+                        <em>[Queries Remembra: "recall performance optimization history"]</em><br><br>
+                        Found it. Last week we identified the SQLite-to-Qdrant sync was running synchronously. We started async implementation but got interrupted by the security audit. The branch is <code>feat/async-sync</code>.
+                    </div>
+
+                    <div class="chat-bubble chat-human">
+                        <div class="agent-tag">👤 Human</div>
+                        Perfect. Spin up Codex to finish it.
+                    </div>
+
+                    <div class="chat-bubble chat-agent">
+                        <div class="agent-tag">🤖 General</div>
+                        Spawning Codex with context... storing current state to Remembra so it can pick up where we left off.
+                    </div>
+
+                    <div class="chat-bubble chat-agent">
+                        <div class="agent-tag">⚡ Codex CLI</div>
+                        Got the context. I see the partial implementation in <code>sync/async_bridge.py</code>. The issue is the batch size—we're syncing one memory at a time. Implementing batch operations now...<br><br>
+                        <em>[30 minutes of autonomous coding]</em><br><br>
+                        Done. Recall latency down to 180ms. PR ready for review.
+                    </div>
+                </div>
+
+                <p>Without Remembra, that entire context—the previous optimization attempt, the branch name, the specific file—would have been lost. The human would need to re-explain everything.</p>
+
+                <h2 class="text-2xl font-bold text-white">The Memory Layer in Action</h2>
+
+                <p>Throughout development, agents continuously store and recall context:</p>
+
+                <pre><code class="language-python"># Codex storing progress before session ends
+remembra.store(
+    "Implemented async sync bridge. Batch size of 100 optimal. "
+    "Still need to add retry logic for Qdrant failures. "
+    "See feat/async-sync branch, sync/async_bridge.py"
+)
+
+# Next session, any agent can recall
+context = remembra.recall("async sync implementation status")
+# Returns: full context about the branch, progress, and next steps</code></pre>
+
+                <h2 class="text-2xl font-bold text-white">Cross-Agent Knowledge Transfer</h2>
+
+                <p>The real power shows when different agents need the same information. When we spawned a documentation agent to write the API reference:</p>
+
+                <div class="my-8">
+                    <div class="chat-bubble chat-agent">
+                        <div class="agent-tag">📚 Docs Agent</div>
+                        <em>[Recalls: "API endpoint changes recent"]</em><br><br>
+                        Found 3 new endpoints added this week: <code>/api/v1/slim-recall</code>, <code>/api/v1/bridge/health</code>, and <code>/api/v1/credentials</code>. Let me document these...
+                    </div>
+                </div>
+
+                <p>The docs agent had never seen the code changes directly. But because the coding agents stored their work, the knowledge transferred automatically.</p>
+
+                <h2 class="text-2xl font-bold text-white">Lessons Learned</h2>
+
+                <ol class="list-decimal list-inside space-y-4 mb-6">
+                    <li><strong class="text-white">Store continuously, not "when done"</strong> — Sessions can end abruptly. Store after every significant action.</li>
+                    <li><strong class="text-white">Include specifics</strong> — "Working on feature" is useless. "Implemented X in Y file, next step is Z" is gold.</li>
+                    <li><strong class="text-white">Recall before acting</strong> — Always check what's already known. Prevents duplicate work and contradictions.</li>
+                    <li><strong class="text-white">Entity extraction matters</strong> — When we mention "async-sync branch", Remembra links it to the file, the agent who created it, and related memories.</li>
+                </ol>
+
+                <h2 class="text-2xl font-bold text-white">The Meta Result</h2>
+
+                <p>Remembra v0.10.0 shipped with:</p>
+                
+                <ul class="list-disc list-inside space-y-2 mb-6">
+                    <li>Universal installer supporting 6 agents</li>
+                    <li>Setup diagnostics (<code>remembra-doctor</code>)</li>
+                    <li>Local bridge for sandboxed agents</li>
+                    <li>Security hardening (RBAC, SSRF protection)</li>
+                    <li>90% smaller recall payloads</li>
+                </ul>
+
+                <p>All built by AI agents that remember what they're doing. The recursion is satisfying.</p>
+
+                <div class="bg-dark-card border border-primary/30 rounded-xl p-6 mt-8">
+                    <h3 class="text-xl font-bold mb-3">Try It Yourself</h3>
+                    <p class="mb-4">Give your AI agents persistent memory. Self-host in 5 minutes or use our cloud.</p>
+                    <a href="https://docs.remembra.dev/getting-started/quickstart" class="inline-flex items-center gap-2 text-primary hover:underline font-medium">
+                        Get started with Remembra →
+                    </a>
+                </div>
+            </div>
+
+            <footer class="mt-16 pt-8 border-t border-white/10">
+                <div class="flex items-center gap-4">
+                    <img src="/logo.jpg" alt="DolphyTech" class="w-12 h-12 rounded-full">
+                    <div>
+                        <p class="font-medium">DolphyTech</p>
+                        <p class="text-gray-500 text-sm">Building tools for the AI-native future</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </article>
+
+    <footer class="border-t border-white/10 py-8 text-center text-gray-500 text-sm">
+        <p>© 2026 DolphyTech. <a href="/" class="hover:text-white">remembra.dev</a></p>
+    </footer>
+</body>
+</html>

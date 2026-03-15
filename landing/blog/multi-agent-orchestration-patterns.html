@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Orchestration: How AI Agents Work Together - Remembra Blog</title>
+    <meta name="description" content="Patterns for coordinating multiple AI agents. Sub-agent spawning, context handoff, and the role of persistent memory in multi-agent systems.">
+    <meta name="keywords" content="multi-agent AI, AI orchestration, Claude agents, sub-agents, AI coordination, persistent memory, MCP">
+    
+    <meta property="og:title" content="Multi-Agent Orchestration: How AI Agents Work Together">
+    <meta property="og:description" content="Patterns for coordinating multiple AI agents with shared memory.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://remembra.dev/blog/multi-agent-orchestration-patterns">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@remembradev">
+    
+    <link rel="canonical" href="https://remembra.dev/blog/multi-agent-orchestration-patterns">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#8B5CF6', 'primary-dark': '#7C3AED', dark: '#0F0F0F', 'dark-card': '#1F1F1F' } } } }</script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text { background: linear-gradient(135deg, #8B5CF6, #A78BFA, #C4B5FD); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .prose { line-height: 1.8; }
+        .prose h2 { margin-top: 2.5rem; margin-bottom: 1rem; }
+        .prose h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .prose p { margin-bottom: 1.25rem; }
+        .prose code { background: rgba(139, 92, 246, 0.2); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        .prose pre { background: #1a1a1a; padding: 1.5rem; border-radius: 12px; overflow-x: auto; margin: 1.5rem 0; }
+        .prose pre code { background: none; padding: 0; }
+        .pattern-card { background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3); }
+    </style>
+</head>
+<body class="bg-dark text-white">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-dark/80 backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-3">
+                <img src="/logo.jpg" alt="Remembra" class="h-8 w-8 rounded-lg">
+                <span class="text-xl font-bold">Remembra</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="https://docs.remembra.dev" class="text-gray-300 hover:text-white">Docs</a>
+                <a href="/blog" class="text-gray-300 hover:text-white">Blog</a>
+                <a href="/signup.html" class="px-5 py-2.5 bg-primary hover:bg-primary-dark rounded-lg font-medium">Get Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <article class="pt-32 pb-24 px-6">
+        <div class="max-w-3xl mx-auto">
+            <header class="mb-12">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-medium">Architecture</span>
+                    <time class="text-gray-500">March 14, 2026</time>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-6">Multi-Agent Orchestration: How AI Agents Work Together</h1>
+                <p class="text-xl text-gray-400">Patterns for coordinating multiple AI agents. Sub-agent spawning, context handoff, and why persistent memory is the missing piece.</p>
+            </header>
+
+            <div class="prose text-gray-300">
+                <p class="text-lg">The era of single-agent AI is ending. Modern AI systems involve multiple specialized agents working together—coding agents, research agents, documentation agents, testing agents. But coordination is hard when each agent starts with amnesia.</p>
+
+                <h2 class="text-2xl font-bold text-white">The Multi-Agent Coordination Problem</h2>
+                
+                <p>Consider a typical development workflow:</p>
+                
+                <ol class="list-decimal list-inside space-y-2 mb-6">
+                    <li>Human describes a feature</li>
+                    <li>Orchestrator agent breaks it into tasks</li>
+                    <li>Coding agent implements the feature</li>
+                    <li>Testing agent validates the implementation</li>
+                    <li>Documentation agent updates the docs</li>
+                </ol>
+
+                <p>Each handoff requires context transfer. Without persistent memory, you're stuck with two bad options:</p>
+
+                <ul class="list-disc list-inside space-y-2 mb-6">
+                    <li><strong class="text-white">Massive prompts</strong> — Stuff all context into each agent's initial prompt. Token-expensive, hits context limits.</li>
+                    <li><strong class="text-white">Human relay</strong> — Human manually copies context between agents. Defeats the purpose of automation.</li>
+                </ul>
+
+                <h2 class="text-2xl font-bold text-white">Pattern 1: Store Before Spawn</h2>
+                
+                <div class="pattern-card rounded-xl p-6 my-6">
+                    <h3 class="text-lg font-bold text-white mb-2">The Pattern</h3>
+                    <p class="text-gray-300 mb-0">Before spawning a sub-agent, store the current context to shared memory. The sub-agent recalls on startup.</p>
+                </div>
+
+                <pre><code class="language-python"># Orchestrator before spawning
+remembra.store(
+    f"Task for coding agent: Implement {feature}. "
+    f"Requirements: {requirements}. "
+    f"Related files: {file_list}. "
+    f"Architecture decision: {decision_context}"
+)
+
+# Spawn coding agent with minimal prompt
+spawn_agent(
+    task="Recall context for current task, then implement"
+)
+
+# Coding agent on startup
+context = remembra.recall("current task implementation requirements")
+# Has full context without token bloat</code></pre>
+
+                <h2 class="text-2xl font-bold text-white">Pattern 2: Continuous Checkpointing</h2>
+                
+                <div class="pattern-card rounded-xl p-6 my-6">
+                    <h3 class="text-lg font-bold text-white mb-2">The Pattern</h3>
+                    <p class="text-gray-300 mb-0">Store progress after every significant action, not just at completion. Sessions can die unexpectedly.</p>
+                </div>
+
+                <pre><code class="language-python"># Bad: Only store at the end
+def complete_task():
+    do_step_1()
+    do_step_2()
+    do_step_3()
+    remembra.store("Completed task")  # What if we crash at step 2?
+
+# Good: Checkpoint continuously
+def complete_task():
+    do_step_1()
+    remembra.store("Completed step 1: {details}. Next: step 2")
+    
+    do_step_2()
+    remembra.store("Completed step 2: {details}. Next: step 3")
+    
+    do_step_3()
+    remembra.store("Task complete: {summary}")</code></pre>
+
+                <p>If the session dies mid-task, the next agent knows exactly where to resume.</p>
+
+                <h2 class="text-2xl font-bold text-white">Pattern 3: Entity-Based Memory Sharing</h2>
+                
+                <div class="pattern-card rounded-xl p-6 my-6">
+                    <h3 class="text-lg font-bold text-white mb-2">The Pattern</h3>
+                    <p class="text-gray-300 mb-0">Use consistent entity names. Remembra automatically links memories about the same entities.</p>
+                </div>
+
+                <pre><code class="language-python"># Coding agent stores:
+remembra.store("Implemented AsyncBridge class in sync/async_bridge.py")
+
+# Later, docs agent queries:
+context = remembra.recall("AsyncBridge implementation")
+# Returns: implementation details, file location, related changes
+
+# Testing agent queries:
+context = remembra.recall("async_bridge.py test requirements")
+# Returns: implementation context that informs test design</code></pre>
+
+                <p>The entity "AsyncBridge" becomes a shared reference point across agents. No coordination protocol needed—just consistent naming.</p>
+
+                <h2 class="text-2xl font-bold text-white">Pattern 4: Temporal Queries for Context</h2>
+                
+                <div class="pattern-card rounded-xl p-6 my-6">
+                    <h3 class="text-lg font-bold text-white mb-2">The Pattern</h3>
+                    <p class="text-gray-300 mb-0">Query memories by time range to get relevant recent context without keyword guessing.</p>
+                </div>
+
+                <pre><code class="language-python"># "What happened in the last 2 hours?"
+recent = remembra.timeline(
+    start=datetime.now() - timedelta(hours=2)
+)
+
+# "What did we decide about the API last week?"
+decisions = remembra.recall(
+    "API decisions",
+    time_range=("2026-03-08", "2026-03-15")
+)</code></pre>
+
+                <h2 class="text-2xl font-bold text-white">Pattern 5: Memory Spaces for Isolation</h2>
+                
+                <div class="pattern-card rounded-xl p-6 my-6">
+                    <h3 class="text-lg font-bold text-white mb-2">The Pattern</h3>
+                    <p class="text-gray-300 mb-0">Use memory spaces to scope visibility. Not all agents need all memories.</p>
+                </div>
+
+                <pre><code class="language-python"># Production debugging agent - limited scope
+debug_agent = Agent(
+    memory_space="production-incidents",
+    permissions=["read"]  # Can't modify production memories
+)
+
+# Development agent - full access to dev space
+dev_agent = Agent(
+    memory_space="development",
+    permissions=["read", "write"]
+)
+
+# Cross-space sharing when needed
+remembra.share_memory(
+    memory_id=incident_memory,
+    from_space="production-incidents",
+    to_space="development"
+)</code></pre>
+
+                <h2 class="text-2xl font-bold text-white">Real-World Example: Feature Development</h2>
+
+                <p>Here's how these patterns combine in practice. Building the <code>remembra-doctor</code> diagnostic tool:</p>
+
+                <pre><code class="language-text">1. Human: "Build a diagnostic tool for agent setups"
+
+2. Orchestrator (General):
+   - Recalls: "What diagnostic tools exist in similar projects?"
+   - Stores: "Building remembra-doctor: checks config, connectivity, 
+             auth. Priority: Codex CLI support (sandboxed)."
+   - Spawns: Research agent for prior art
+
+3. Research Agent:
+   - Recalls: Task context
+   - Searches: npm/PyPI for diagnostic patterns
+   - Stores: "Common patterns: health checks, config validation,
+             network tests. Reference: pytest --doctor, npm doctor"
+
+4. Orchestrator:
+   - Recalls: Research findings
+   - Stores: "Architecture: CLI command, check registry, 
+             colored output. File: cli/doctor.py"
+   - Spawns: Coding agent
+
+5. Coding Agent (Codex):
+   - Recalls: Architecture decisions, file location
+   - Implements: Full diagnostic tool
+   - Stores: "remembra-doctor implemented. 5 check types:
+             config, command, health, auth, recall_test.
+             PR ready: #127"
+
+6. Testing Agent:
+   - Recalls: Implementation details
+   - Writes: Integration tests
+   - Stores: "Tests passing. Edge case found: bridge not running"
+
+7. Coding Agent (recalled):
+   - Recalls: Edge case from testing
+   - Fixes: Add bridge detection
+   - Stores: "Bridge check added. PR updated."
+
+8. Docs Agent:
+   - Recalls: Full feature context
+   - Writes: Documentation with examples
+   - Stores: "Docs complete: getting-started/agent-setup"</code></pre>
+
+                <p>Eight handoffs, zero context loss. Each agent knew exactly what it needed to know.</p>
+
+                <h2 class="text-2xl font-bold text-white">Key Takeaways</h2>
+
+                <ol class="list-decimal list-inside space-y-4 mb-6">
+                    <li><strong class="text-white">Memory is the coordination layer</strong> — Shared persistent memory replaces complex agent-to-agent protocols.</li>
+                    <li><strong class="text-white">Store continuously</strong> — Don't wait for task completion. Store after every significant action.</li>
+                    <li><strong class="text-white">Be specific</strong> — Include file names, branch names, decision rationale. Vague memories are useless memories.</li>
+                    <li><strong class="text-white">Use consistent entities</strong> — Same names for same things. Let the memory layer link them.</li>
+                    <li><strong class="text-white">Scope appropriately</strong> — Not every agent needs every memory. Use spaces and permissions.</li>
+                </ol>
+
+                <div class="bg-dark-card border border-primary/30 rounded-xl p-6 mt-8">
+                    <h3 class="text-xl font-bold mb-3">Build Your Multi-Agent System</h3>
+                    <p class="mb-4">Remembra provides the memory layer your agents need to work together. Self-host for full control or use our cloud for instant setup.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="https://docs.remembra.dev/getting-started/quickstart" class="inline-flex items-center gap-2 text-primary hover:underline font-medium">
+                            Quick Start Guide →
+                        </a>
+                        <a href="https://discord.gg/eVQbSwJNEX" class="inline-flex items-center gap-2 text-gray-400 hover:text-white font-medium">
+                            Join Discord Community
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="mt-16 pt-8 border-t border-white/10">
+                <div class="flex items-center gap-4">
+                    <img src="/logo.jpg" alt="DolphyTech" class="w-12 h-12 rounded-full">
+                    <div>
+                        <p class="font-medium">DolphyTech</p>
+                        <p class="text-gray-500 text-sm">Building tools for the AI-native future</p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </article>
+
+    <footer class="border-t border-white/10 py-8 text-center text-gray-500 text-sm">
+        <p>© 2026 DolphyTech. <a href="/" class="hover:text-white">remembra.dev</a></p>
+    </footer>
+</body>
+</html>
