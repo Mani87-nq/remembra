@@ -104,13 +104,56 @@
                 <!-- Timeline line -->
                 <div class="absolute left-0 md:left-8 top-0 bottom-0 w-px bg-gradient-to-b from-primary via-primary/50 to-transparent"></div>
 
+                <!-- v0.10.0 -->
+                <article class="relative pl-8 md:pl-24 pb-16">
+                    <div class="absolute left-0 md:left-8 top-0 w-4 h-4 -translate-x-1/2 rounded-full bg-primary version-dot"></div>
+                    <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+                        <time class="text-sm text-gray-500 font-medium">March 15, 2026</time>
+                        <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-semibold w-fit">v0.10.0</span>
+                        <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-medium w-fit">Latest</span>
+                    </div>
+                    
+                    <h2 class="text-2xl font-bold mb-4">Universal Agent Installer & Setup Diagnostics</h2>
+                    <p class="text-gray-400 mb-6">One command configures all your AI tools. Setup diagnostics and local bridge for sandboxed agents.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-dark-card border border-white/10 rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="tag-added px-2 py-0.5 rounded text-xs font-medium">Added</span>
+                                <span class="text-sm text-gray-500">Universal Agent Installer</span>
+                            </div>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><code class="bg-white/10 px-1.5 py-0.5 rounded text-xs">remembra-install --all</code> — Auto-detect and configure all agents</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>6+ Agents Supported</strong> — Claude Desktop, Claude Code, Codex, Cursor, Windsurf, Gemini</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><code class="bg-white/10 px-1.5 py-0.5 rounded text-xs">remembra-doctor</code> — Diagnose setup issues with clear failure labels</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><code class="bg-white/10 px-1.5 py-0.5 rounded text-xs">remembra-bridge</code> — Local proxy for sandboxed agents</span></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-dark-card border border-white/10 rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="tag-added px-2 py-0.5 rounded text-xs font-medium">Added</span>
+                                <span class="text-sm text-gray-500">Security Hardening</span>
+                            </div>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>RBAC Enforcement</strong> — Permissions on all memory endpoints</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Error Sanitization</strong> — No stack traces leaked</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Webhook SSRF Protection</strong> — URL validation before delivery</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <a href="/changelog/v0.10.0" class="inline-flex items-center gap-2 text-primary hover:text-primary-dark mt-4 text-sm font-medium">
+                        Full release notes →
+                    </a>
+                </article>
+
                 <!-- v0.9.0 -->
                 <article class="relative pl-8 md:pl-24 pb-16">
                     <div class="absolute left-0 md:left-8 top-0 w-4 h-4 -translate-x-1/2 rounded-full bg-primary version-dot"></div>
                     <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
                         <time class="text-sm text-gray-500 font-medium">March 9, 2026</time>
                         <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-semibold w-fit">v0.9.0</span>
-                        <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-medium w-fit">Latest</span>
                     </div>
                     
                     <h2 class="text-2xl font-bold mb-4">Temporal Knowledge Graph & 11 MCP Tools</h2>
