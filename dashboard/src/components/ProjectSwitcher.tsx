@@ -85,8 +85,26 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
         setProjects(projectList);
 
         // Determine current project
-        const savedProjectId = api.getProjectId();
+        let savedProjectId = api.getProjectId();
+        
+        // Fix for corrupted localStorage: if saved ID looks like a UUID but doesn't
+        // match any known project namespace, reset to 'default'
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (savedProjectId && uuidPattern.test(savedProjectId)) {
+          const matchesKnownProject = projectList.some((p: Project) => p.namespace === savedProjectId);
+          if (!matchesKnownProject) {
+            console.warn(`[ProjectSwitcher] Corrupted project ID detected (${savedProjectId}), resetting to 'default'`);
+            savedProjectId = 'default';
+            api.setProjectId('default');
+          }
+        }
+        
         let current = projectList.find((p: Project) => p.namespace === savedProjectId);
+        
+        if (!current) {
+          // Try to find 'default' project explicitly
+          current = projectList.find((p: Project) => p.namespace === 'default');
+        }
         
         if (!current && projectList.length > 0) {
           current = projectList[0];
@@ -97,15 +115,15 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
           api.setProjectId(current.namespace);
           emitProjectChange(current.namespace);
         } else {
-          // Fallback: create a default project representation
+          // Fallback: always use 'default' as the project namespace
           const defaultProject = {
-            id: savedProjectId || 'default',
-            namespace: savedProjectId || 'default',
-            name: savedProjectId || 'Default Project',
+            id: 'default',
+            namespace: 'default',
+            name: 'Default Project',
           };
           setCurrentProject(defaultProject);
-          api.setProjectId(defaultProject.namespace);
-          emitProjectChange(defaultProject.namespace);
+          api.setProjectId('default');
+          emitProjectChange('default');
         }
       } else {
         // Spaces API not available, show current project ID only
