@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from './components/AppLayout';
 import { ApiKeyForm } from './components/ApiKeyForm';
+import { CommandPalette } from './components/CommandPalette';
 import { Dashboard, type TabType } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -185,16 +186,17 @@ function App() {
     setAuthMode('login');
   };
 
-  const handleSearch = () => {
-    // Focus on search in memories tab
-    setActiveTab('memories');
-    // TODO: Open search modal or focus search input
-  };
+  // Command palette state
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [showNewMemoryModal, setShowNewMemoryModal] = useState(false);
 
-  const handleNewMemory = () => {
-    setActiveTab('memories');
-    // TODO: Open new memory modal
-  };
+  const handleSearch = useCallback(() => {
+    setCommandPaletteOpen(true);
+  }, []);
+
+  const handleNewMemory = useCallback(() => {
+    setShowNewMemoryModal(true);
+  }, []);
 
   // Not authenticated - show auth screens
   if (!isAuthenticated) {
@@ -298,8 +300,24 @@ function App() {
         onNewMemory={handleNewMemory}
         onSearch={handleSearch}
       >
-        <Dashboard activeTab={activeTab} onLogout={handleLogout} />
+        <Dashboard
+          activeTab={activeTab}
+          onLogout={handleLogout}
+          showNewMemory={showNewMemoryModal}
+          onCloseNewMemory={() => setShowNewMemoryModal(false)}
+        />
       </AppLayout>
+
+      {/* Command Palette (⌘K) */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onNavigate={(tab) => setActiveTab(tab)}
+        onNewMemory={() => {
+          setCommandPaletteOpen(false);
+          setShowNewMemoryModal(true);
+        }}
+      />
     </div>
   );
 }

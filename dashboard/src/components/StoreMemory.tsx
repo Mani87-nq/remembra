@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '../lib/api';
-import { Plus, Send, X, Clock, Loader2, Eye, Users, Lock } from 'lucide-react';
+import { Plus, Send, X, Clock, Loader2, Eye, Users, Lock, Check, Brain } from 'lucide-react';
 import clsx from 'clsx';
 
 interface StoreMemoryProps {
   onStored?: () => void;
   projectId?: string;
-  startOpen?: boolean;  // Auto-open the modal
+  startOpen?: boolean;
 }
 
 const TTL_OPTIONS = [
@@ -26,6 +27,37 @@ const VISIBILITY_OPTIONS = [
 
 type Visibility = 'personal' | 'project' | 'team';
 
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
+
+const modalVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.96,
+    y: 16,
+    filter: 'blur(4px)',
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    filter: 'blur(0px)',
+    transition: {
+      duration: 0.25,
+      ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.98,
+    y: -8,
+    filter: 'blur(2px)',
+    transition: { duration: 0.15, ease: [0.4, 0, 1, 1] as [number, number, number, number] },
+  },
+};
+
 export function StoreMemory({ onStored, projectId, startOpen = false }: StoreMemoryProps) {
   const [isOpen, setIsOpen] = useState(startOpen);
   const [content, setContent] = useState('');
@@ -34,6 +66,24 @@ export function StoreMemory({ onStored, projectId, startOpen = false }: StoreMem
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-focus textarea when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,8 +95,8 @@ export function StoreMemory({ onStored, projectId, startOpen = false }: StoreMem
 
     try {
       await api.storeMemory(
-        content.trim(), 
-        projectId, 
+        content.trim(),
+        projectId,
         ttl || undefined,
         visibility,
       );
@@ -58,7 +108,7 @@ export function StoreMemory({ onStored, projectId, startOpen = false }: StoreMem
         setSuccess(false);
         setIsOpen(false);
         onStored?.();
-      }, 1500);
+      }, 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to store memory');
     } finally {
@@ -67,6 +117,7 @@ export function StoreMemory({ onStored, projectId, startOpen = false }: StoreMem
   };
 
   const handleClose = () => {
+    if (loading) return;
     setIsOpen(false);
     setContent('');
     setTtl('');
@@ -75,180 +126,216 @@ export function StoreMemory({ onStored, projectId, startOpen = false }: StoreMem
     setSuccess(false);
   };
 
+  // Character count for feedback
+  const charCount = content.length;
+  const charColor = charCount === 0
+    ? 'text-[hsl(var(--muted-foreground))]'
+    : charCount < 20
+      ? 'text-amber-400'
+      : 'text-emerald-400';
+
   if (!isOpen) {
     return (
-      <button
+      <motion.button
         onClick={() => setIsOpen(true)}
-        className={clsx(
-          'fixed bottom-6 right-6 p-4 rounded-full shadow-lg',
-          'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white',
-          'transition-all hover:scale-105',
-          'flex items-center gap-2'
-        )}
+        whileHover={{ scale: 1.04, y: -2 }}
+        whileTap={{ scale: 0.96 }}
+        className="fixed bottom-6 right-6 p-4 rounded-2xl btn-primary flex items-center gap-2 z-40"
       >
-        <Plus className="w-6 h-6" />
-        <span className="font-medium">Add Memory</span>
-      </button>
+        <Plus className="w-5 h-5" />
+        <span className="font-medium text-sm">Add Memory</span>
+      </motion.button>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Store New Memory
-          </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop"
+          variants={overlayVariants}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          transition={{ duration: 0.2 }}
+          onClick={handleClose}
+        >
+          <motion.div
+            className="w-full max-w-lg modal-surface rounded-2xl overflow-hidden"
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border)/0.5)]">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-[hsl(var(--primary)/0.12)] border border-[hsl(var(--primary)/0.2)]">
+                  <Brain className="w-4 h-4 text-[hsl(var(--primary))]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-[hsl(var(--foreground))]">
+                    Store New Memory
+                  </h2>
+                  <p className="text-xs text-[hsl(var(--muted-foreground))]">
+                    Facts are extracted and indexed automatically
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleClose}
+                className="p-2 rounded-xl text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--muted)/0.6)] transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* Content */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Memory Content
-            </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Enter information to remember..."
-              rows={5}
-              className={clsx(
-                'w-full px-4 py-3 rounded-lg border',
-                'bg-white dark:bg-gray-900',
-                'border-gray-300 dark:border-gray-600',
-                'text-gray-900 dark:text-white',
-                'placeholder-gray-400 dark:placeholder-gray-500',
-                'focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent',
-                'resize-none'
-              )}
-              disabled={loading}
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Facts will be automatically extracted and indexed
-            </p>
-          </div>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              {/* Content */}
+              <div>
+                <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                  Memory Content
+                </label>
+                <textarea
+                  ref={textareaRef}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Enter information to remember..."
+                  rows={5}
+                  className="w-full px-4 py-3 rounded-xl input-premium resize-none text-sm leading-relaxed"
+                  disabled={loading}
+                />
+                <div className="flex items-center justify-between mt-1.5">
+                  <p className="text-[11px] text-[hsl(var(--muted-foreground))]">
+                    Tip: Be specific — facts are extracted per sentence
+                  </p>
+                  <span className={clsx('text-[11px] font-medium tabular-nums', charColor)}>
+                    {charCount} chars
+                  </span>
+                </div>
+              </div>
 
-          {/* Visibility Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <Eye className="w-4 h-4 inline mr-1" />
-              Visibility
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {VISIBILITY_OPTIONS.map((opt) => {
-                const Icon = opt.icon;
-                const isSelected = visibility === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setVisibility(opt.value as Visibility)}
-                    disabled={loading}
-                    className={clsx(
-                      'flex flex-col items-center p-3 rounded-lg border-2 transition-all',
-                      isSelected
-                        ? 'border-[#8B5CF6] bg-[#8B5CF6]/10 text-[#8B5CF6]'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-[#8B5CF6]/50 text-gray-600 dark:text-gray-400'
-                    )}
+              {/* Visibility Selector */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                  <Eye className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                  Visibility
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {VISIBILITY_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    const isSelected = visibility === opt.value;
+                    return (
+                      <motion.button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setVisibility(opt.value as Visibility)}
+                        disabled={loading}
+                        whileTap={{ scale: 0.96 }}
+                        className={clsx(
+                          'flex flex-col items-center p-3 rounded-xl border transition-all duration-150',
+                          isSelected
+                            ? 'border-[hsl(var(--primary)/0.5)] bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] shadow-[0_0_12px_hsl(var(--primary)/0.08)]'
+                            : 'border-[hsl(var(--border)/0.6)] bg-[hsl(var(--card)/0.5)] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--foreground))]'
+                        )}
+                      >
+                        <Icon className="w-4 h-4 mb-1" />
+                        <span className="text-xs font-medium">{opt.label}</span>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-[11px] text-[hsl(var(--muted-foreground))]">
+                  {VISIBILITY_OPTIONS.find(o => o.value === visibility)?.description}
+                </p>
+              </div>
+
+              {/* TTL Selector */}
+              <div>
+                <label className="flex items-center gap-1.5 text-sm font-medium text-[hsl(var(--foreground))] mb-2">
+                  <Clock className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
+                  Time to Live
+                </label>
+                <select
+                  value={ttl}
+                  onChange={(e) => setTtl(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl input-premium text-sm"
+                  disabled={loading}
+                >
+                  {TTL_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Error */}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -4, height: 0 }}
+                    className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
                   >
-                    <Icon className="w-5 h-5 mb-1" />
-                    <span className="text-xs font-medium">{opt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {VISIBILITY_OPTIONS.find(o => o.value === visibility)?.description}
-            </p>
-          </div>
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-          {/* TTL Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              <Clock className="w-4 h-4 inline mr-1" />
-              Time to Live (optional)
-            </label>
-            <select
-              value={ttl}
-              onChange={(e) => setTtl(e.target.value)}
-              className={clsx(
-                'w-full px-4 py-2 rounded-lg border',
-                'bg-white dark:bg-gray-900',
-                'border-gray-300 dark:border-gray-600',
-                'text-gray-900 dark:text-white',
-                'focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent'
-              )}
-              disabled={loading}
-            >
-              {TTL_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Success */}
+              <AnimatePresence>
+                {success && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm"
+                  >
+                    <Check className="w-4 h-4" />
+                    Memory stored and indexed
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-          {/* Error */}
-          {error && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Success */}
-          {success && (
-            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm">
-              ✓ Memory stored successfully!
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={handleClose}
-              className={clsx(
-                'px-4 py-2 rounded-lg font-medium',
-                'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600',
-                'text-gray-700 dark:text-gray-200'
-              )}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || !content.trim()}
-              className={clsx(
-                'px-4 py-2 rounded-lg font-medium',
-                'bg-[#8B5CF6] hover:bg-[#7C3AED] text-white',
-                'flex items-center gap-2',
-                (loading || !content.trim()) && 'opacity-50 cursor-not-allowed'
-              )}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Storing...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Store Memory
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-4 py-2.5 rounded-xl btn-ghost text-sm font-medium"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || !content.trim()}
+                  className={clsx(
+                    'px-5 py-2.5 rounded-xl btn-primary text-sm',
+                    'flex items-center gap-2',
+                  )}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Storing...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Store Memory
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -90,6 +90,15 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<string>>(new Set());
+  const [pulsePhase, setPulsePhase] = useState(0);
+
+  // Pulse animation for high-memory nodes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPulsePhase(p => (p + 0.05) % (2 * Math.PI));
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
 
   // Get container dimensions
   useEffect(() => {
@@ -228,29 +237,40 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
     const fontSize = Math.max(12 / globalScale, 3);
     const nodeSize = node.size || 6;
     
-    // Glow effect for highlighted nodes
-    if (isHighlighted || isSelected) {
-      ctx.shadowColor = node.color || '#fff';
-      ctx.shadowBlur = 15;
-    }
+    // ALWAYS have subtle ambient glow - circuit board aesthetic
+    ctx.shadowColor = node.color || '#6b7280';
+    ctx.shadowBlur = isHighlighted || isSelected ? 25 : 8;
     
-    // Draw node circle with gradient
+    // Modern flat gradient for the node core
     const gradient = ctx.createRadialGradient(
       node.x, node.y, 0,
       node.x, node.y, nodeSize
     );
-    gradient.addColorStop(0, node.color || '#6b7280');
-    gradient.addColorStop(1, adjustColor(node.color || '#6b7280', -30));
+    // Lighter center, matching color at edge
+    gradient.addColorStop(0, adjustColor(node.color || '#6b7280', 40));
+    gradient.addColorStop(1, node.color || '#6b7280');
     
     ctx.beginPath();
     ctx.arc(node.x, node.y, nodeSize, 0, 2 * Math.PI);
     ctx.fillStyle = gradient;
     ctx.fill();
     
-    // Ring for selected node
-    if (isSelected) {
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2 / globalScale;
+    // Add outer ring glow for highlighted/selected nodes
+    if (isHighlighted || isSelected) {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, nodeSize + 4, 0, 2 * Math.PI);
+      ctx.strokeStyle = `${node.color}40`; // 25% opacity
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+    
+    // Pulsing outer ring for high-memory nodes (circuit board data flow)
+    if (node.memoryCount > 5) {
+      const pulseRadius = nodeSize + 6 + Math.sin(pulsePhase) * 2;
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, pulseRadius, 0, 2 * Math.PI);
+      ctx.strokeStyle = `${node.color}30`;
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
     
@@ -263,20 +283,37 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       
-      // Label background
+      // Premium Glassmorphic Label Background
       const textWidth = ctx.measureText(label).width;
-      const padding = 2 / globalScale;
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(
-        node.x - textWidth / 2 - padding,
-        node.y + nodeSize + 2,
-        textWidth + padding * 2,
-        fontSize + padding
-      );
+      const paddingX = 6 / globalScale;
+      const paddingY = 3 / globalScale;
+      
+      // Draw rounded rectangle for label background
+      const rectX = node.x - textWidth / 2 - paddingX;
+      const rectY = node.y + nodeSize + 4 / globalScale;
+      const rectWidth = textWidth + paddingX * 2;
+      const rectHeight = fontSize + paddingY * 2;
+      const radius = 4 / globalScale;
+      
+      ctx.beginPath();
+      ctx.moveTo(rectX + radius, rectY);
+      ctx.arcTo(rectX + rectWidth, rectY, rectX + rectWidth, rectY + rectHeight, radius);
+      ctx.arcTo(rectX + rectWidth, rectY + rectHeight, rectX, rectY + rectHeight, radius);
+      ctx.arcTo(rectX, rectY + rectHeight, rectX, rectY, radius);
+      ctx.arcTo(rectX, rectY, rectX + rectWidth, rectY, radius);
+      ctx.closePath();
+      
+      ctx.fillStyle = isHighlighted ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.6)';
+      ctx.fill();
+      
+      // Subtle border
+      ctx.strokeStyle = isHighlighted ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 1 / globalScale;
+      ctx.stroke();
       
       // Label text
-      ctx.fillStyle = isHighlighted ? '#fff' : 'rgba(255,255,255,0.8)';
-      ctx.fillText(label, node.x, node.y + nodeSize + 3);
+      ctx.fillStyle = isHighlighted ? '#ffffff' : 'rgba(255,255,255,0.7)';
+      ctx.fillText(label, node.x, rectY + paddingY + 1 / globalScale);
     }
   }, [highlightNodes, selectedNode]);
 
@@ -301,23 +338,44 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
     ctx.lineTo(target.x, target.y);
     
     if (isHighlighted) {
-      ctx.strokeStyle = 'rgba(168, 85, 247, 0.8)';  // Purple highlight
-      ctx.lineWidth = 2.5 / globalScale;
+      // Circuit-trace glow for highlighted links
+      ctx.shadowColor = 'rgba(168, 85, 247, 0.8)';
+      ctx.shadowBlur = 10;
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.9)';
+      ctx.lineWidth = 3 / globalScale;
     } else {
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';  // More visible base
-      ctx.lineWidth = 1.5 / globalScale;
+      // Gradient stroke for circuit-trace effect
+      const gradient = ctx.createLinearGradient(source.x, source.y, target.x, target.y);
+      gradient.addColorStop(0, `${source.color || '#a855f7'}60`);
+      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.4)');
+      gradient.addColorStop(1, `${target.color || '#a855f7'}60`);
+      
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 2 / globalScale;
     }
     
     ctx.stroke();
+    ctx.shadowBlur = 0; // Reset shadow for other drawn elements
     
-    // Draw relationship label on hover
+    // Draw relationship label on hover with sleek background
     if (isHighlighted && link.type && globalScale > 1) {
       const midX = (source.x + target.x) / 2;
       const midY = (source.y + target.y) / 2;
       
-      ctx.font = `${10 / globalScale}px Inter, system-ui, sans-serif`;
+      const fontSize = 10 / globalScale;
+      ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.textBaseline = 'middle';
+      
+      const textWidth = ctx.measureText(link.type).width;
+      const px = 4 / globalScale;
+      const py = 2 / globalScale;
+      
+      ctx.fillStyle = 'rgba(0,0,0,0.8)';
+      ctx.fillRect(midX - textWidth/2 - px, midY - fontSize/2 - py, textWidth + px*2, fontSize + py*2);
+      
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.fillText(link.type, midX, midY);
     }
   }, [highlightLinks]);
@@ -378,7 +436,15 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative rounded-lg overflow-hidden bg-gradient-to-br from-gray-900 via-gray-900 to-purple-900/20">
+    <div ref={containerRef} className="relative rounded-lg overflow-hidden">
+      {/* Depth background with radial glow - circuit board aesthetic */}
+      <div className="absolute inset-0 bg-[#0a0a0f]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(168,85,247,0.15)_0%,_transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(59,130,246,0.1)_0%,_transparent_50%)]" />
+        <div className="absolute inset-0 opacity-30" style={{
+          backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(168,85,247,0.1) 0%, transparent 50%)',
+        }} />
+      </div>
       {/* Top Controls Bar */}
       <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/60 to-transparent">
         <div className="flex items-center justify-between gap-4">
@@ -482,29 +548,35 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
 
       {/* Selected Node Info */}
       {selectedNode && (
-        <div className="absolute top-20 right-4 z-10 w-64 bg-black/80 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-          <div className="flex items-start justify-between mb-3">
+        <div className="absolute top-20 right-4 z-10 w-72 bg-black/60 backdrop-blur-xl rounded-xl p-5 border border-white/5 shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-right-4">
+          <div className="flex items-start justify-between mb-4">
             <div>
-              <h3 className="font-semibold text-white text-lg">{selectedNode.name}</h3>
-              <p className="text-sm" style={{ color: selectedNode.color }}>
-                {TYPE_LABELS[selectedNode.type] || selectedNode.type}
-              </p>
+              <h3 className="font-semibold text-white text-lg tracking-tight">{selectedNode.name}</h3>
+              <div className="flex items-center gap-2 mt-1">
+                <div 
+                  className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)]"
+                  style={{ backgroundColor: selectedNode.color, boxShadow: `0 0 8px ${selectedNode.color}` }}
+                />
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: selectedNode.color }}>
+                  {selectedNode.type}
+                </p>
+              </div>
             </div>
             <button 
               onClick={() => setSelectedNode(null)}
-              className="text-gray-400 hover:text-white"
+              className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
           </div>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Memories</span>
-              <span className="text-white font-medium">{selectedNode.memoryCount}</span>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between items-center py-2 border-t border-white/5">
+              <span className="text-gray-400">Total Memories</span>
+              <span className="text-white font-medium bg-white/10 px-2 py-0.5 rounded-md">{selectedNode.memoryCount}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Connections</span>
-              <span className="text-white font-medium">
+            <div className="flex justify-between items-center py-2 border-t border-white/5">
+              <span className="text-gray-400">Direct Connections</span>
+              <span className="text-white font-medium bg-white/10 px-2 py-0.5 rounded-md">
                 {graphData.links.filter(l => {
                   const sourceId = typeof l.source === 'object' ? l.source.id : l.source;
                   const targetId = typeof l.target === 'object' ? l.target.id : l.target;
@@ -519,17 +591,23 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       {/* Hover Tooltip */}
       {hoveredNode && !selectedNode && (
         <div 
-          className="absolute z-20 px-3 py-2 bg-black/90 rounded-lg text-sm pointer-events-none"
+          className="absolute z-20 px-4 py-3 bg-black/70 backdrop-blur-md rounded-xl text-sm pointer-events-none border border-white/10 shadow-xl transition-all duration-150"
           style={{
-            left: Math.min((hoveredNode.x || 0) + 20, dimensions.width - 150),
+            left: Math.min((hoveredNode.x || 0) + 20, dimensions.width - 200),
             top: (hoveredNode.y || 0) + 20,
           }}
         >
-          <div className="font-medium text-white">{hoveredNode.name}</div>
-          <div className="text-xs" style={{ color: hoveredNode.color }}>
-            {TYPE_LABELS[hoveredNode.type] || hoveredNode.type}
+          <div className="font-semibold text-white tracking-tight">{hoveredNode.name}</div>
+          <div className="flex items-center gap-2 mt-1.5">
+            <div 
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: hoveredNode.color, boxShadow: `0 0 4px ${hoveredNode.color}` }}
+            />
+            <div className="text-[11px] font-medium uppercase tracking-wider text-gray-300">
+              {hoveredNode.type}
+            </div>
           </div>
-          <div className="text-xs text-gray-400">{hoveredNode.memoryCount} memories</div>
+          <div className="mt-2 text-xs text-gray-400">{hoveredNode.memoryCount} referenced memories</div>
         </div>
       )}
 
@@ -548,10 +626,13 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
           ctx.fill();
         }}
         linkCanvasObject={paintLink}
-        linkDirectionalParticles={2}
-        linkDirectionalParticleWidth={2}
+        linkDirectionalParticles={l => highlightLinks.has(`${(l.source as any).id}-${(l.target as any).id}`) ? 4 : 1}
+        linkDirectionalParticleWidth={1.5}
         linkDirectionalParticleSpeed={0.005}
-        linkDirectionalParticleColor={() => 'rgba(168, 85, 247, 0.8)'}
+        linkDirectionalParticleColor={(link) => {
+          const source = (link as GraphLink).source as GraphNode;
+          return source.color || 'rgba(168, 85, 247, 0.8)';
+        }}
         onNodeHover={handleNodeHover as any}
         onNodeClick={handleNodeClick as any}
         cooldownTicks={Infinity}
@@ -575,4 +656,13 @@ function adjustColor(color: string, amount: number): string {
   const g = Math.max(0, Math.min(255, parseInt(hex.slice(2, 4), 16) + amount));
   const b = Math.max(0, Math.min(255, parseInt(hex.slice(4, 6), 16) + amount));
   return `rgb(${r},${g},${b})`;
+}
+
+// Helper to convert hex to rgb string format
+function hexToRgb(hex: string): string {
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.slice(0, 2), 16);
+  const g = parseInt(cleanHex.slice(2, 4), 16);
+  const b = parseInt(cleanHex.slice(4, 6), 16);
+  return `${r}, ${g}, ${b}`;
 }

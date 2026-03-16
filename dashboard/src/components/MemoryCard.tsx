@@ -1,6 +1,8 @@
+import { motion } from 'framer-motion';
 import { User, Tag, ChevronRight, Clock, Sparkles } from 'lucide-react';
 import type { Memory } from '../lib/api';
 import clsx from 'clsx';
+import { staggerItem } from '../lib/motion';
 
 interface MemoryCardProps {
   memory: Memory;
@@ -64,18 +66,20 @@ export function MemoryCard({ memory, onClick, showRelevance = false, compact = f
   const relevanceStyles = getRelevanceStyles(relevance);
 
   return (
-    <div
+    <motion.div
+      variants={staggerItem}
       onClick={onClick}
+      whileHover={onClick ? { y: -1, transition: { type: 'spring', stiffness: 500, damping: 30 } } : undefined}
+      whileTap={onClick ? { scale: 0.995, transition: { duration: 0.1 } } : undefined}
       className={clsx(
         'group relative',
         'bg-[hsl(var(--card))] rounded-xl',
         'border border-[hsl(var(--border))]',
-        'transition-all duration-200 ease-out',
+        'transition-[border-color,box-shadow] duration-200 ease-out',
         onClick && [
           'cursor-pointer',
           'hover:border-[#8B5CF6]/40',
           'hover:shadow-lg hover:shadow-purple-500/5',
-          'hover:translate-y-[-1px]'
         ],
         compact ? 'p-3' : 'p-4'
       )}
@@ -174,6 +178,6 @@ export function MemoryCard({ memory, onClick, showRelevance = false, compact = f
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 
 interface SearchBarProps {
@@ -18,6 +18,7 @@ export function SearchBar({
   debounceMs = 500,
 }: SearchBarProps) {
   const [value, setValue] = useState('');
+  const [focused, setFocused] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -58,40 +59,52 @@ export function SearchBar({
   };
 
   return (
-    <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-        {loading ? (
-          <Loader2 className="w-5 h-5 text-[#8B5CF6] animate-spin" />
-        ) : (
-          <Search className="w-5 h-5 text-gray-400" />
-        )}
-      </div>
-      
-      <input
-        ref={inputRef}
-        type="text"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+    <div className="relative group">
+      {/* Focus glow ring */}
+      <div
         className={clsx(
-          'w-full pl-12 pr-10 py-3 rounded-lg',
-          'bg-white dark:bg-gray-800',
-          'border border-gray-200 dark:border-gray-700',
-          'text-gray-900 dark:text-gray-100 placeholder-gray-400',
-          'focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-transparent',
-          'transition-all duration-200'
+          'absolute -inset-[1px] rounded-xl transition-opacity duration-200 pointer-events-none',
+          'bg-gradient-to-r from-[hsl(var(--primary)/0.2)] via-[hsl(var(--shell-glow)/0.15)] to-[hsl(var(--primary)/0.2)]',
+          'blur-sm',
+          focused ? 'opacity-100' : 'opacity-0'
         )}
       />
 
-      {value && (
-        <button
-          onClick={handleClear}
-          className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      )}
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+          {loading ? (
+            <Loader2 className="w-4 h-4 text-[hsl(var(--primary))] animate-spin" />
+          ) : focused || value ? (
+            <Sparkles className="w-4 h-4 text-[hsl(var(--primary))]" />
+          ) : (
+            <Search className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          )}
+        </div>
+
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder}
+          className={clsx(
+            'w-full pl-11 pr-10 py-3 rounded-xl text-sm',
+            'input-premium'
+          )}
+        />
+
+        {value && (
+          <button
+            onClick={handleClear}
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors z-10"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

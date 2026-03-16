@@ -1,6 +1,9 @@
+import { motion } from 'framer-motion';
 import type { Memory } from '../lib/api';
 import { MemoryCard } from './MemoryCard';
-import { Loader2, Brain } from 'lucide-react';
+import { Brain } from 'lucide-react';
+import { staggerContainer } from '../lib/motion';
+import { MemoryListSkeleton } from './Skeleton';
 
 interface MemoryListProps {
   memories: Memory[];
@@ -34,6 +37,10 @@ export function MemoryList({
     );
   }
 
+  if (loading && memories.length === 0) {
+    return <MemoryListSkeleton count={5} />;
+  }
+
   if (!loading && memories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -46,7 +53,12 @@ export function MemoryList({
   }
 
   return (
-    <div className="space-y-3">
+    <motion.div
+      className="space-y-3"
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+    >
       {memories.map((memory) => (
         <MemoryCard
           key={memory.id}
@@ -57,19 +69,19 @@ export function MemoryList({
       ))}
 
       {loading && (
-        <div className="flex justify-center p-6">
-          <Loader2 className="w-6 h-6 text-[#8B5CF6] animate-spin" />
-        </div>
+        <MemoryListSkeleton count={3} />
       )}
 
       {!loading && hasMore && onLoadMore && (
-        <button
+        <motion.button
           onClick={onLoadMore}
-          className="w-full py-3 text-sm font-medium text-[#8B5CF6] dark:text-[#A78BFA] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          className="w-full py-3 text-sm font-medium text-[#8B5CF6] dark:text-[#A78BFA] hover:bg-[hsl(var(--muted))] rounded-lg transition-colors"
         >
           Load more
-        </button>
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMemories, useSearch } from '../hooks/useMemories';
 import { SearchBar } from '../components/SearchBar';
 import { MemoryList } from '../components/MemoryList';
@@ -21,20 +22,30 @@ import { EmptyState } from '../components/EmptyState';
 import { type Memory, api } from '../lib/api';
 import { RefreshCw, Plus } from 'lucide-react';
 import clsx from 'clsx';
+import { pageTransition } from '../lib/motion';
 
 export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'projects' | 'keys' | 'billing' | 'settings' | 'teams' | 'admin';
 
 interface DashboardProps {
   activeTab: TabType;
   onLogout?: () => void;
+  showNewMemory?: boolean;
+  onCloseNewMemory?: () => void;
 }
 
-export function Dashboard({ activeTab, onLogout }: DashboardProps) {
+export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryProp, onCloseNewMemory }: DashboardProps) {
   const { memories, loading, error, hasMore, refresh, loadMore } = useMemories();
   const { results, loading: searchLoading, error: searchError, search, clear } = useSearch();
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showNewMemory, setShowNewMemory] = useState(false);
+
+  // Sync with parent's showNewMemory prop
+  useEffect(() => {
+    if (showNewMemoryProp) {
+      setShowNewMemory(true);
+    }
+  }, [showNewMemoryProp]);
 
   // Stats from API
   const [stats, setStats] = useState({
@@ -118,26 +129,17 @@ export function Dashboard({ activeTab, onLogout }: DashboardProps) {
     );
   }
 
-  // New memory modal
-  if (showNewMemory) {
-    return (
-      <div>
-        <button
-          onClick={() => setShowNewMemory(false)}
-          className="mb-4 text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-        >
-          ← Back to memories
-        </button>
-        <StoreMemory 
-          startOpen={true}
-          onStored={() => {
-            setShowNewMemory(false);
-            refresh();
-          }} 
-        />
-      </div>
-    );
-  }
+  // New memory modal — rendered as overlay, not page replacement
+  const newMemoryModal = showNewMemory ? (
+    <StoreMemory
+      startOpen={true}
+      onStored={() => {
+        setShowNewMemory(false);
+        onCloseNewMemory?.();
+        refresh();
+      }}
+    />
+  ) : null;
 
   const displayMemories = isSearching && results ? results.memories : memories;
   const displayLoading = isSearching ? searchLoading : loading;
@@ -327,7 +329,18 @@ export function Dashboard({ activeTab, onLogout }: DashboardProps) {
 
   return (
     <div className="min-h-full">
-      {renderContent()}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          variants={pageTransition}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        >
+          {renderContent()}
+        </motion.div>
+      </AnimatePresence>
+      {newMemoryModal}
     </div>
   );
 }
