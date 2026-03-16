@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Mail, UserPlus, Settings, Trash2, Crown, Shield, User, Eye, X, Copy, Check } from 'lucide-react';
+import { Users, Plus, Mail, UserPlus, Trash2, Crown, Shield, User, Eye, X, Copy, Check, FolderOpen, Link2, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import { API_V1 } from '../config';
 
@@ -46,6 +46,13 @@ interface InviteResponse {
   created_at: string;
 }
 
+interface LinkedProject {
+  id: string;
+  name: string;
+  description: string;
+  project_id: string;
+}
+
 const roleIcons: Record<string, React.ElementType> = {
   owner: Crown,
   admin: Shield,
@@ -65,8 +72,11 @@ export function Teams() {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
+  const [linkedProjects, setLinkedProjects] = useState<LinkedProject[]>([]);
+  const [availableProjects, setAvailableProjects] = useState<LinkedProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [teamActionError, setTeamActionError] = useState<string | null>(null);
   
   // Modals
   const [showCreateTeam, setShowCreateTeam] = useState(false);
@@ -81,6 +91,9 @@ export function Teams() {
   const [inviteRole, setInviteRole] = useState('member');
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [roleUpdateLoading, setRoleUpdateLoading] = useState<string | null>(null);
+  const [spaceActionLoading, setSpaceActionLoading] = useState(false);
+  const [selectedSpaceId, setSelectedSpaceId] = useState('');
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('remembra_jwt_token');
@@ -90,7 +103,7 @@ export function Teams() {
     // Fallback to API key if no JWT
     const apiKey = localStorage.getItem('remembra_api_key');
     if (apiKey) {
-      return { 'X-Api-Key': apiKey };
+      return { 'X-API-Key': apiKey };
     }
     return {};
   };
@@ -104,8 +117,10 @@ export function Teams() {
   useEffect(() => {
     if (selectedTeam) {
       fetchMembers(selectedTeam.id);
+      fetchLinkedProjects(selectedTeam.id);
       if (selectedTeam.role === 'owner' || selectedTeam.role === 'admin') {
         fetchInvites(selectedTeam.id);
+        fetchAvailableProjects();
       }
     }
   }, [selectedTeam]);
@@ -166,6 +181,65 @@ export function Teams() {
       setPendingInvites(data);
     } catch (err) {
       console.error('Failed to fetch invites:', err);
+    }
+  };
+
+  const fetchAvailableProjects = async () => {
+    try {
+      const response = await fetch(`${API_V1}/spaces`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+      const spaces = Array.isArray(data) ? data : data.spaces || [];
+      setAvailableProjects(spaces);
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+    }
+  };
+
+  const fetchLinkedProjects = async (teamId: string) => {
+    try {
+      const response = await fetch(`${API_V1}/teams/${teamId}/spaces`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        setLinkedProjects([]);
+        return;
+      }
+
+      const spaceIds: string[] = await response.json();
+      const resolved = await Promise.all(spaceIds.map(async (spaceId) => {
+        try {
+          const detailResponse = await fetch(`${API_V1}/spaces/${spaceId}`, {
+            headers: getAuthHeaders(),
+          });
+
+          if (!detailResponse.ok) {
+            return null;
+          }
+
+          const detail = await detailResponse.json();
+          return {
+            id: detail.id,
+            name: detail.name,
+            description: detail.description,
+            project_id: detail.project_id,
+          } satisfies LinkedProject;
+        } catch {
+          return null;
+        }
+      }));
+
+      setLinkedProjects(resolved.filter((item): item is LinkedProject => item !== null));
+    } catch (err) {
+      console.error('Failed to fetch linked projects:', err);
+      setLinkedProjects([]);
     }
   };
 
@@ -285,6 +359,119 @@ export function Teams() {
     }
   };
 
+  const updateMemberRole = async (memberId: string, role: string) => {
+    if (!selectedTeam) return;
+
+    setRoleUpdateLoading(memberId);
+    setTeamActionError(null);
+
+    try {
+      const response = await fetch(`${API_V1}/teams/${selectedTeam.id}/members/${memberId}/role`, {
+        method: 'PATCH',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ role }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to update member role');
+      }
+
+      await fetchMembers(selectedTeam.id);
+      await fetchTeams();
+    } catch (err) {
+      setTeamActionError(err instanceof Error ? err.message : 'Failed to update member role');
+    } finally {
+      setRoleUpdateLoading(null);
+    }
+  };
+
+  const linkProject = async () => {
+    if (!selectedTeam || !selectedSpaceId) return;
+
+    setSpaceActionLoading(true);
+    setTeamActionError(null);
+
+    try {
+      const response = await fetch(`${API_V1}/teams/${selectedTeam.id}/spaces`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ space_id: selectedSpaceId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to link project');
+      }
+
+      setSelectedSpaceId('');
+      await fetchLinkedProjects(selectedTeam.id);
+    } catch (err) {
+      setTeamActionError(err instanceof Error ? err.message : 'Failed to link project');
+    } finally {
+      setSpaceActionLoading(false);
+    }
+  };
+
+  const unlinkProject = async (spaceId: string) => {
+    if (!selectedTeam) return;
+
+    setSpaceActionLoading(true);
+    setTeamActionError(null);
+
+    try {
+      const response = await fetch(`${API_V1}/teams/${selectedTeam.id}/spaces/${spaceId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to unlink project');
+      }
+
+      await fetchLinkedProjects(selectedTeam.id);
+    } catch (err) {
+      setTeamActionError(err instanceof Error ? err.message : 'Failed to unlink project');
+    } finally {
+      setSpaceActionLoading(false);
+    }
+  };
+
+  const leaveTeam = async () => {
+    if (!selectedTeam) return;
+    if (!confirm(`Leave ${selectedTeam.name}?`)) return;
+
+    setTeamActionError(null);
+
+    try {
+      const response = await fetch(`${API_V1}/teams/${selectedTeam.id}/leave`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to leave team');
+      }
+
+      const remainingTeams = teams.filter((team) => team.id !== selectedTeam.id);
+      setTeams(remainingTeams);
+      setSelectedTeam(remainingTeams[0] || null);
+      setMembers([]);
+      setPendingInvites([]);
+      setLinkedProjects([]);
+    } catch (err) {
+      setTeamActionError(err instanceof Error ? err.message : 'Failed to leave team');
+    }
+  };
+
   const copyInviteUrl = async () => {
     if (!lastInvite) return;
     
@@ -298,6 +485,9 @@ export function Teams() {
   };
 
   const canManageTeam = selectedTeam?.role === 'owner' || selectedTeam?.role === 'admin';
+  const selectableProjects = availableProjects.filter(
+    (project) => !linkedProjects.some((linked) => linked.id === project.id),
+  );
 
   if (loading && teams.length === 0) {
     return (
@@ -420,6 +610,12 @@ export function Teams() {
                     </button>
                   )}
                 </div>
+
+                {teamActionError && (
+                  <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                    {teamActionError}
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-3 rounded-lg bg-[hsl(var(--muted))]">
@@ -441,6 +637,18 @@ export function Teams() {
                     </p>
                   </div>
                 </div>
+
+                {selectedTeam.role !== 'owner' && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={leaveTeam}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:border-red-500/30 hover:bg-red-500/5 transition-colors text-sm"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Leave Team
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Members */}
@@ -477,6 +685,19 @@ export function Teams() {
                           <span className={clsx('text-sm font-medium capitalize', roleColors[member.role])}>
                             {member.role}
                           </span>
+
+                          {canManageTeam && member.role !== 'owner' && (
+                            <select
+                              value={member.role}
+                              onChange={(event) => updateMemberRole(member.user_id, event.target.value)}
+                              disabled={roleUpdateLoading === member.user_id}
+                              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-2 py-1 text-xs text-[hsl(var(--foreground))]"
+                            >
+                              <option value="viewer">Viewer</option>
+                              <option value="member">Member</option>
+                              <option value="admin">Admin</option>
+                            </select>
+                          )}
                           
                           {canManageTeam && member.role !== 'owner' && (
                             <button
@@ -492,6 +713,74 @@ export function Teams() {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Linked Projects */}
+              <div className="p-6 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
+                <div className="flex items-center gap-2 mb-4">
+                  <FolderOpen className="w-5 h-5 text-[#8B5CF6]" />
+                  <h3 className="text-lg font-semibold text-[hsl(var(--foreground))]">
+                    Linked Projects ({linkedProjects.length})
+                  </h3>
+                </div>
+
+                {canManageTeam && (
+                  <div className="mb-4 flex flex-col sm:flex-row gap-3">
+                    <select
+                      value={selectedSpaceId}
+                      onChange={(event) => setSelectedSpaceId(event.target.value)}
+                      className="flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm text-[hsl(var(--foreground))]"
+                    >
+                      <option value="">Select a project to link</option>
+                      {selectableProjects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name} ({project.project_id})
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={linkProject}
+                      disabled={spaceActionLoading || !selectedSpaceId}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#8B5CF6] px-4 py-2 text-sm font-medium text-white hover:bg-[#7C3AED] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Link2 className="w-4 h-4" />
+                      Link Project
+                    </button>
+                  </div>
+                )}
+
+                {linkedProjects.length === 0 ? (
+                  <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                    No projects linked yet.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {linkedProjects.map((project) => (
+                      <div
+                        key={project.id}
+                        className="flex items-center justify-between rounded-lg bg-[hsl(var(--muted))] px-4 py-3"
+                      >
+                        <div>
+                          <div className="font-medium text-[hsl(var(--foreground))]">{project.name}</div>
+                          <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                            Namespace: <code>{project.project_id}</code>
+                          </div>
+                        </div>
+
+                        {canManageTeam && (
+                          <button
+                            onClick={() => unlinkProject(project.id)}
+                            disabled={spaceActionLoading}
+                            className="rounded-lg p-2 text-[hsl(var(--muted-foreground))] hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                            title="Unlink project"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Pending Invites */}

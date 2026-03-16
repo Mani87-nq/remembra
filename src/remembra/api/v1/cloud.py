@@ -1,10 +1,8 @@
 """Cloud billing, usage, and subscription endpoints – /api/v1/cloud."""
 
-from __future__ import annotations
-
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from remembra.auth.middleware import CurrentUser, RequireMasterKey
@@ -144,7 +142,7 @@ class BillingContextResponse(BaseModel):
 @limiter.limit("5/minute")
 async def signup(
     request: Request,
-    body: SignupRequest,
+    body: Annotated[SignupRequest, Body(...)],
     meter: UsageMeterDep,
     settings: SettingsDep,
     _: RequireMasterKey,
@@ -448,7 +446,7 @@ async def get_billing_context(
 @limiter.limit("10/minute")
 async def create_checkout(
     request: Request,
-    body: CheckoutRequest,
+    body: Annotated[CheckoutRequest, Body(...)],
     current_user: CurrentUser,
     meter: UsageMeterDep,
     settings: SettingsDep,

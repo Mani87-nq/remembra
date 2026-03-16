@@ -13,19 +13,21 @@ import {
   Calendar,
   Clock,
   AlertTriangle,
-  Lock
+  Lock,
+  FolderKanban,
+  Globe,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import { api, type ApiKeyInfo, type CreateApiKeyResponse } from '../lib/api';
+import { api, type ApiKeyInfo, type CreateApiKeyResponse, type ProjectScopeOption } from '../lib/api';
 
 type ApiKey = ApiKeyInfo;
 type CreateKeyResponse = CreateApiKeyResponse;
 
 const PERMISSION_STYLES = {
-  admin: 'bg-red-500/10 border-red-500/20 text-red-400',
-  editor: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
-  viewer: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+  admin: 'bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400',
+  editor: 'bg-purple-500/10 border-purple-500/20 text-purple-700 dark:text-purple-400',
+  viewer: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400',
 };
 
 const PERMISSION_LABELS = {
@@ -86,11 +88,11 @@ export function ApiKeyManager() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Lock className="w-5 h-5 text-purple-400" />
+          <h2 className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2">
+            <Lock className="w-5 h-5 text-[hsl(var(--primary))]" />
             API Keys
           </h2>
-          <p className="text-[13px] text-gray-400 mt-1 font-medium">
+          <p className="text-[13px] text-[hsl(var(--muted-foreground))] mt-1 font-medium">
             Manage programmatic access and agent tokens for this workspace.
           </p>
         </div>
@@ -121,17 +123,17 @@ export function ApiKeyManager() {
           <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
         </div>
       ) : keys.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 px-4 text-center rounded-2xl bg-white/[0.02] border border-white/5 border-dashed">
-          <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 border border-white/10">
-            <Key className="w-7 h-7 text-gray-400" />
+        <div className="flex flex-col items-center justify-center py-24 px-4 text-center rounded-2xl premium-chip border border-dashed border-[hsl(var(--border))/0.95]">
+          <div className="w-16 h-16 rounded-full premium-chip flex items-center justify-center mb-4">
+            <Key className="w-7 h-7 text-[hsl(var(--muted-foreground))]" />
           </div>
-          <h3 className="text-base font-semibold text-white mb-2">No active API keys</h3>
-          <p className="text-sm text-gray-400 max-w-sm mb-6">
+          <h3 className="text-base font-semibold text-[hsl(var(--foreground))] mb-2">No active API keys</h3>
+          <p className="text-sm text-[hsl(var(--muted-foreground))] max-w-sm mb-6">
             Generate a secure token to authenticate external tools, agents, and CI/CD pipelines against the Remembra network.
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-medium text-sm transition-colors"
+            className="btn-ghost px-5 py-2.5 rounded-xl font-medium text-sm"
           >
             Create your first key
           </button>
@@ -146,15 +148,15 @@ export function ApiKeyManager() {
                 transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
                 key={key.id}
                 className={clsx(
-                  'group bg-white/[0.02] backdrop-blur-md rounded-2xl border border-white/5',
+                  'group dashboard-surface rounded-2xl',
                   'p-5 transition-all duration-300',
-                  'hover:bg-white/[0.04] hover:shadow-xl hover:shadow-purple-500/5 hover:border-purple-500/20'
+                  'hover:shadow-xl hover:shadow-purple-500/5 hover:border-[hsl(var(--primary))/0.26]'
                 )}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2.5">
-                      <h3 className="text-[15px] font-semibold tracking-tight text-white truncate">
+                      <h3 className="text-[15px] font-semibold tracking-tight text-[hsl(var(--foreground))] truncate">
                         {key.name || 'Unnamed Application'}
                       </h3>
                       <span className={clsx(
@@ -166,12 +168,12 @@ export function ApiKeyManager() {
                     </div>
                     
                     <div className="flex items-center gap-3 mb-3">
-                      <code className="px-2.5 py-1 rounded-md bg-black/40 border border-white/5 text-[13px] font-mono tracking-wider text-gray-300">
+                      <code className="px-2.5 py-1 rounded-md premium-chip border border-[hsl(var(--border))/0.9] text-[13px] font-mono tracking-wider text-[hsl(var(--foreground))]">
                         rem_{key.key_preview}&bull;&bull;&bull;&bull;&bull;&bull;
                       </code>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] font-medium text-gray-500">
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px] font-medium text-[hsl(var(--muted-foreground))]">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 opacity-70" />
                         <span>Created {formatDate(key.created_at)}</span>
@@ -179,6 +181,18 @@ export function ApiKeyManager() {
                       <div className="flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5 opacity-70" />
                         <span>Last used {formatRelativeDate(key.last_used_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {(key.project_ids?.length ?? 0) > 0 ? (
+                          <FolderKanban className="w-3.5 h-3.5 opacity-70" />
+                        ) : (
+                          <Globe className="w-3.5 h-3.5 opacity-70" />
+                        )}
+                        <span>
+                          {(key.project_ids?.length ?? 0) > 0
+                            ? `Scoped to ${key.project_ids.join(', ')}`
+                            : 'All projects'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -248,7 +262,7 @@ function ModalOverlay({ children, onClose }: { children: React.ReactNode, onClos
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }} 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget && onClose) onClose();
       }}
@@ -258,7 +272,7 @@ function ModalOverlay({ children, onClose }: { children: React.ReactNode, onClos
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 10 }}
         transition={{ type: "spring", duration: 0.4 }}
-        className="w-full max-w-md bg-[#111111] border border-white/10 rounded-2xl shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden"
+        className="modal-surface w-full max-w-md rounded-2xl overflow-hidden"
       >
         {children}
       </motion.div>
@@ -269,16 +283,60 @@ function ModalOverlay({ children, onClose }: { children: React.ReactNode, onClos
 function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated: (result: CreateKeyResponse) => void }) {
   const [name, setName] = useState('');
   const [permission, setPermission] = useState<'admin' | 'editor' | 'viewer'>('editor');
+  const [scopeMode, setScopeMode] = useState<'all' | 'selected'>('all');
+  const [projects, setProjects] = useState<ProjectScopeOption[]>([]);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void (async () => {
+      try {
+        const availableProjects = await api.listProjects();
+        if (isMounted) {
+          setProjects(availableProjects);
+        }
+      } catch {
+        if (isMounted) {
+          setProjects([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingProjects(false);
+        }
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const toggleProject = (projectId: string) => {
+    setSelectedProjectIds((current) =>
+      current.includes(projectId)
+        ? current.filter((id) => id !== projectId)
+        : [...current, projectId],
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return setError('Please enter a name for this token');
+    if (scopeMode === 'selected' && selectedProjectIds.length === 0) {
+      return setError('Select at least one project or switch the token scope back to all projects');
+    }
     setLoading(true);
     setError(null);
     try {
-      const result = await api.createKey(name.trim(), permission);
+      const result = await api.createKey(
+        name.trim(),
+        permission,
+        scopeMode === 'selected' ? selectedProjectIds : [],
+      );
       onCreated(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create API key');
@@ -289,36 +347,32 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
-        <h2 className="text-[17px] font-semibold tracking-tight text-white flex items-center gap-2">
-          <Key className="w-4 h-4 text-purple-400" />
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))/0.8] bg-[hsl(var(--card))/0.45]">
+        <h2 className="text-[17px] font-semibold tracking-tight text-[hsl(var(--foreground))] flex items-center gap-2">
+          <Key className="w-4 h-4 text-[hsl(var(--primary))]" />
           Generate Access Token
         </h2>
-        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 transition-colors">
+        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[hsl(var(--muted))/0.82] text-[hsl(var(--muted-foreground))] transition-colors">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">Token Name</label>
+          <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-2">Token Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. CI/CD Pipeline, Production Bot"
-            className={clsx(
-              'w-full px-4 py-2.5 rounded-xl border border-white/10 bg-black/40',
-              'text-white text-sm placeholder-gray-600 focus:outline-none',
-              'focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all'
-            )}
+            className="input-premium w-full px-4 py-2.5 rounded-xl text-sm"
             disabled={loading}
             autoFocus
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-3">
+          <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-3">
             <Shield className="w-4 h-4 inline mr-1.5 opacity-70" />
             Authorization Scope
           </label>
@@ -330,7 +384,7 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
                   'flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200',
                   permission === perm
                     ? 'border-purple-500/50 bg-purple-500/10 shadow-[inner_0_0_0_1px_rgba(168,85,247,0.2)]'
-                    : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04]'
+                    : 'border-[hsl(var(--border))/0.8] bg-[hsl(var(--card))/0.4] hover:bg-[hsl(var(--muted))/0.55]'
                 )}
               >
                 <input
@@ -349,9 +403,9 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-white text-sm">{PERMISSION_LABELS[perm]}</span>
+                    <span className="font-semibold text-[hsl(var(--foreground))] text-sm">{PERMISSION_LABELS[perm]}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
                     {perm === 'admin' && 'Full root access. Can delete workspaces and manage billing.'}
                     {perm === 'editor' && 'Standard access. Can read, write, and modify memory blocks.'}
                     {perm === 'viewer' && 'Strict read-only access. Cannot create or alter data.'}
@@ -362,16 +416,110 @@ function CreateKeyModal({ onClose, onCreated }: { onClose: () => void; onCreated
           </div>
         </div>
 
-        {error && <div className="text-red-400 text-sm font-medium">{error}</div>}
+        <div>
+          <label className="block text-sm font-medium text-[hsl(var(--foreground))] mb-3">
+            <FolderKanban className="w-4 h-4 inline mr-1.5 opacity-70" />
+            Project Access
+          </label>
+          <div className="space-y-2">
+            <label
+              className={clsx(
+                'flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200',
+                scopeMode === 'all'
+                  ? 'border-purple-500/50 bg-purple-500/10 shadow-[inner_0_0_0_1px_rgba(168,85,247,0.2)]'
+                  : 'border-[hsl(var(--border))/0.8] bg-[hsl(var(--card))/0.4] hover:bg-[hsl(var(--muted))/0.55]'
+              )}
+            >
+              <input
+                type="radio"
+                name="scope-mode"
+                value="all"
+                checked={scopeMode === 'all'}
+                onChange={() => setScopeMode('all')}
+                className="hidden"
+              />
+              <Globe className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+              <div>
+                <div className="font-semibold text-[hsl(var(--foreground))] text-sm">All projects</div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                  This key can access every project the owner can access.
+                </p>
+              </div>
+            </label>
+
+            <label
+              className={clsx(
+                'flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200',
+                scopeMode === 'selected'
+                  ? 'border-purple-500/50 bg-purple-500/10 shadow-[inner_0_0_0_1px_rgba(168,85,247,0.2)]'
+                  : 'border-[hsl(var(--border))/0.8] bg-[hsl(var(--card))/0.4] hover:bg-[hsl(var(--muted))/0.55]'
+              )}
+            >
+              <input
+                type="radio"
+                name="scope-mode"
+                value="selected"
+                checked={scopeMode === 'selected'}
+                onChange={() => setScopeMode('selected')}
+                className="hidden"
+              />
+              <FolderKanban className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+              <div>
+                <div className="font-semibold text-[hsl(var(--foreground))] text-sm">Selected projects</div>
+                <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                  Restrict this key to one or more specific project namespaces.
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {scopeMode === 'selected' && (
+            <div className="mt-3 rounded-xl border border-[hsl(var(--border))/0.8] bg-[hsl(var(--card))/0.35] p-3 space-y-2">
+              {loadingProjects ? (
+                <div className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading projects...
+                </div>
+              ) : projects.length === 0 ? (
+                <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                  No projects available yet. Create a project first or use all-project scope.
+                </p>
+              ) : (
+                projects.map((project) => (
+                  <label
+                    key={project.id}
+                    className="flex items-start gap-3 rounded-xl border border-[hsl(var(--border))/0.7] bg-[hsl(var(--background))/0.6] px-3 py-2.5 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedProjectIds.includes(project.project_id)}
+                      onChange={() => toggleProject(project.project_id)}
+                      className="mt-1 rounded border-[hsl(var(--border))]"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-[hsl(var(--foreground))]">
+                        {project.name}
+                      </div>
+                      <div className="text-xs text-[hsl(var(--muted-foreground))]">
+                        Namespace: <code>{project.project_id}</code>
+                      </div>
+                    </div>
+                  </label>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {error && <div className="text-red-500 dark:text-red-400 text-sm font-medium">{error}</div>}
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={onClose} disabled={loading} className="px-4 py-2.5 rounded-xl font-medium text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+          <button type="button" onClick={onClose} disabled={loading} className="btn-ghost px-4 py-2.5 rounded-xl font-medium text-sm">
             Cancel
           </button>
           <button type="submit" disabled={loading || !name.trim()} className={clsx(
-              'px-5 py-2.5 rounded-xl font-semibold text-sm transition-all',
-              'bg-white text-black hover:bg-gray-200',
-              (loading || !name.trim()) ? 'opacity-50 cursor-not-allowed' : 'shadow-[0_0_15px_rgba(255,255,255,0.2)]'
+              'btn-primary px-5 py-2.5 rounded-xl font-semibold text-sm',
+              (loading || !name.trim()) && 'opacity-50 cursor-not-allowed'
             )}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Generate Token'}
           </button>
@@ -398,25 +546,34 @@ function NewKeyResultModal({ keyData, onClose }: { keyData: CreateKeyResponse; o
           </div>
         </div>
         
-        <h2 className="text-xl font-bold text-center text-white mb-2">Token Generated</h2>
+        <h2 className="text-xl font-bold text-center text-[hsl(var(--foreground))] mb-2">Token Generated</h2>
         <p className="text-sm text-center text-emerald-400 font-medium mb-6">
           Please copy this token now. You will not be able to see it again.
         </p>
 
-        <div className="bg-black/50 border border-white/10 rounded-xl p-1 mb-6 flex items-center">
-          <code className="flex-1 px-4 text-[13px] font-mono text-white tracking-wider overflow-x-auto scrollbar-hide py-2">
+        <div className="mb-4 flex justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--border))/0.8] bg-[hsl(var(--muted))/0.35] px-3 py-1 text-xs font-medium text-[hsl(var(--muted-foreground))]">
+            {(keyData.project_ids?.length ?? 0) > 0 ? <FolderKanban className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+            {(keyData.project_ids?.length ?? 0) > 0
+              ? `Scoped to ${keyData.project_ids.join(', ')}`
+              : 'All projects'}
+          </span>
+        </div>
+
+        <div className="premium-chip border border-[hsl(var(--border))/0.85] rounded-xl p-1 mb-6 flex items-center">
+          <code className="flex-1 px-4 text-[13px] font-mono text-[hsl(var(--foreground))] tracking-wider overflow-x-auto scrollbar-hide py-2">
             {keyData.key}
           </code>
           <button onClick={handleCopy} className={clsx(
               "px-4 py-2 ml-1 rounded-lg text-sm font-semibold transition-all flex items-center gap-2",
-              copied ? "bg-emerald-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
+              copied ? "bg-emerald-500 text-white" : "btn-ghost text-[hsl(var(--foreground))]"
             )}>
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied' : 'Copy'}
           </button>
         </div>
 
-        <button onClick={onClose} className="w-full py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-200 transition-colors">
+        <button onClick={onClose} className="btn-primary w-full py-3 rounded-xl font-semibold text-sm">
           I have securely stored this token
         </button>
       </div>
@@ -444,29 +601,29 @@ function DeleteKeyModal({ keyData, onClose, onDeleted }: { keyData: ApiKey; onCl
       <div className="p-6">
         <div className="flex items-center gap-3 text-red-400 mb-4">
           <AlertTriangle className="w-6 h-6" />
-          <h2 className="text-xl font-bold text-white">Revoke Token</h2>
+          <h2 className="text-xl font-bold text-[hsl(var(--foreground))]">Revoke Token</h2>
         </div>
         
-        <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-          This will permanently disable <strong className="text-white">"{keyData.name}"</strong>. 
+        <p className="text-sm text-[hsl(var(--muted-foreground))] mb-6 leading-relaxed">
+          This will permanently disable <strong className="text-[hsl(var(--foreground))]">"{keyData.name}"</strong>. 
           Any agents or applications using this token will lose access to Remembra immediately. This action cannot be undone.
         </p>
 
         <div className="mb-6">
-          <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <label className="block text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider mb-2">
             Type "{keyData.name}" to confirm
           </label>
           <input
             type="text"
             value={confirmName}
             onChange={(e) => setConfirmName(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-red-500/30 bg-red-500/5 text-white text-sm focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50"
+            className="input-premium w-full px-4 py-2.5 rounded-xl text-sm border-red-500/30 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50"
             autoFocus
           />
         </div>
 
         <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="px-5 py-2.5 rounded-xl font-medium text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+          <button onClick={onClose} className="btn-ghost px-5 py-2.5 rounded-xl font-medium text-sm">
             Cancel
           </button>
           <button 

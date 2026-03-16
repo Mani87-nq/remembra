@@ -26,6 +26,7 @@ class AuthenticatedUser:
     name: str | None = None
     role: str = "editor"  # Populated by RBAC layer if enabled
     scopes: list[str] | None = None  # Explicit scope restrictions
+    project_ids: list[str] | None = None  # Optional project restrictions
 
 
 def get_client_ip(request: Request) -> str:
@@ -122,6 +123,7 @@ async def get_current_user(
                 name=key_info.get("name"),
                 role=key_info.get("role", "editor"),  # RBAC FIX: Extract role from key
                 scopes=key_info.get("scopes"),
+                project_ids=key_info.get("project_ids"),
             )
         else:
             log.warning(
@@ -227,9 +229,50 @@ async def get_user_from_jwt_or_api_key(
                 api_key_id=key_info["id"],
                 rate_limit_tier=key_info.get("rate_limit_tier", "standard"),
                 name=key_info.get("name"),
+                role=key_info.get("role", "editor"),
+                scopes=key_info.get("scopes"),
+                project_ids=key_info.get("project_ids"),
             )
-    
+
     return None
+
+
+def ensure_project_access(user: AuthenticatedUser, project_id: str) -> str:
+    """Validate that the authenticated user can access a specific project."""
+    if user.project_ids and project_id not in user.project_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"No access to project '{project_id}'.",
+        )
+    return project_id
+
+
+def resolve_project_access(
+    user: AuthenticatedUser,
+    project_id: str | None,
+) -> str | None:
+    """
+    Resolve the effective project for project-scoped keys.
+
+    Unrestricted users keep the caller-provided value.
+    Restricted keys:
+    - may access an explicitly requested allowed project
+    - default to the sole allowed project if only one exists
+    - must provide `project_id` explicitly when multiple projects are allowed
+    """
+    if not user.project_ids:
+        return project_id
+
+    if project_id:
+        return ensure_project_access(user, project_id)
+
+    if len(user.project_ids) == 1:
+        return user.project_ids[0]
+
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="This API key is restricted to multiple projects. Provide project_id explicitly.",
+    )
 
 
 async def require_master_key(

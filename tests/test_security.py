@@ -1,13 +1,13 @@
 """Security tests for Week 7 - Authentication, Rate Limiting, Memory Protection."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
-from fastapi.testclient import TestClient
 
-from remembra.auth.keys import APIKeyManager, APIKey, KEY_PREFIX
-from remembra.auth.middleware import AuthenticatedUser, get_current_user
-from remembra.security.sanitizer import ContentSanitizer, SanitizationResult
+from remembra.auth.keys import APIKeyManager, KEY_PREFIX
+from remembra.auth.middleware import AuthenticatedUser, resolve_project_access
+from remembra.auth.rbac import Role, RoleManager
+from remembra.security.sanitizer import ContentSanitizer
 from remembra.security.audit import AuditLogger, AuditAction
 
 
@@ -129,6 +129,89 @@ class TestAPIKeyManager:
         success = await manager.revoke_key("key_123", "other_user")
         
         assert not success
+
+    async def test_validate_key_includes_project_restrictions(self):
+        """Validated keys should surface project restrictions from RBAC."""
+        import os
+        import tempfile
+
+        from remembra.storage.database import Database
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = os.path.join(tmpdir, "test.db")
+            db = Database(db_path)
+            await db.connect()
+            await db.init_schema()
+
+            role_manager = RoleManager(db)
+            await role_manager.init_schema()
+
+            manager = APIKeyManager(db)
+            api_key = await manager.create_key(user_id="user_123", name="Scoped Key")
+            await role_manager.assign_role(
+                api_key_id=api_key.id,
+                role=Role.EDITOR,
+                project_ids=["alpha", "beta"],
+            )
+
+            key_info = await manager.validate_key(api_key.key)
+
+            assert key_info is not None
+            assert key_info["project_ids"] == ["alpha", "beta"]
+
+            await db.close()
+
+
+class TestProjectScopeResolution:
+    """Tests for project-restricted API key behavior."""
+
+    def test_unrestricted_key_keeps_requested_project(self):
+        user = AuthenticatedUser(
+            user_id="user_123",
+            api_key_id="key_123",
+            rate_limit_tier="standard",
+            project_ids=None,
+        )
+
+        assert resolve_project_access(user, "alpha") == "alpha"
+        assert resolve_project_access(user, None) is None
+
+    def test_single_project_key_defaults_to_allowed_project(self):
+        user = AuthenticatedUser(
+            user_id="user_123",
+            api_key_id="key_123",
+            rate_limit_tier="standard",
+            project_ids=["alpha"],
+        )
+
+        assert resolve_project_access(user, None) == "alpha"
+        assert resolve_project_access(user, "alpha") == "alpha"
+
+    def test_multi_project_key_requires_explicit_project(self):
+        user = AuthenticatedUser(
+            user_id="user_123",
+            api_key_id="key_123",
+            rate_limit_tier="standard",
+            project_ids=["alpha", "beta"],
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            resolve_project_access(user, None)
+
+        assert exc_info.value.status_code == 400
+
+    def test_restricted_key_cannot_access_other_project(self):
+        user = AuthenticatedUser(
+            user_id="user_123",
+            api_key_id="key_123",
+            rate_limit_tier="standard",
+            project_ids=["alpha"],
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            resolve_project_access(user, "beta")
+
+        assert exc_info.value.status_code == 403
 
 
 # ---------------------------------------------------------------------------
@@ -379,7 +462,6 @@ class TestRateLimiting:
     def test_rate_limit_key_with_api_key(self):
         """Rate limit should use API key when present."""
         from remembra.core.limiter import get_key_func as get_rate_limit_key
-        from unittest.mock import MagicMock
         
         mock_request = MagicMock()
         mock_request.headers.get.return_value = "rem_abc123456789"
@@ -392,7 +474,6 @@ class TestRateLimiting:
     def test_rate_limit_key_without_api_key(self):
         """Rate limit should fall back to IP without API key."""
         from remembra.core.limiter import get_key_func as get_rate_limit_key
-        from unittest.mock import MagicMock
         
         mock_request = MagicMock()
         mock_request.headers.get.return_value = None
@@ -414,7 +495,6 @@ class TestDatabaseSecurity:
     
     async def test_api_keys_table_exists(self):
         """API keys table should be created by schema."""
-        import aiosqlite
         import tempfile
         import os
         
@@ -496,7 +576,6 @@ def test_client():
     from fastapi.testclient import TestClient
     
     # Reset settings to pick up env vars
-    from remembra.config import _settings
     import remembra.config
     remembra.config._settings = None
     

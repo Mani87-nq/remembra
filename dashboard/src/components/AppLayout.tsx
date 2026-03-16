@@ -131,6 +131,9 @@ export function AppLayout({
   };
 
   const activeMeta = tabMeta[activeTab];
+  const contentShellClass = activeTab === 'graph'
+    ? 'page-enter px-3 py-4 md:px-4 md:py-5'
+    : 'page-enter max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-7';
 
   return (
     <div className="dashboard-shell flex h-screen bg-[hsl(var(--background))] overflow-hidden">
@@ -294,7 +297,7 @@ export function AppLayout({
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto">
-          <div key={activeTab} className="page-enter max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-7">
+          <div key={activeTab} className={contentShellClass}>
             {children}
           </div>
         </main>
@@ -305,6 +308,10 @@ export function AppLayout({
         isOpen={settingsPanelOpen}
         onClose={() => setSettingsPanelOpen(false)}
         onLogout={onLogout}
+        onOpenApiKeys={() => {
+          setSettingsPanelOpen(false);
+          onTabChange('keys');
+        }}
       />
     </div>
   );

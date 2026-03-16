@@ -418,6 +418,59 @@ class Database:
             return None
         return dict(row)
 
+    async def list_memories(
+        self,
+        user_id: str,
+        project_id: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        """List active memories for a user, optionally scoped to one project."""
+        query = """
+            SELECT id, user_id, project_id, content, metadata, created_at, updated_at,
+                   expires_at, access_count, last_accessed
+            FROM memories
+            WHERE user_id = ?
+              AND (expires_at IS NULL OR expires_at > ?)
+        """
+        params: list[Any] = [user_id, datetime.utcnow().isoformat()]
+
+        if project_id:
+            query += " AND project_id = ?"
+            params.append(project_id)
+
+        query += """
+            ORDER BY datetime(created_at) DESC, id DESC
+            LIMIT ? OFFSET ?
+        """
+        params.extend([limit, offset])
+
+        cursor = await self.conn.execute(query, params)
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    async def count_memories(
+        self,
+        user_id: str,
+        project_id: str | None = None,
+    ) -> int:
+        """Count active memories for a user, optionally scoped to one project."""
+        query = """
+            SELECT COUNT(*) AS total
+            FROM memories
+            WHERE user_id = ?
+              AND (expires_at IS NULL OR expires_at > ?)
+        """
+        params: list[Any] = [user_id, datetime.utcnow().isoformat()]
+
+        if project_id:
+            query += " AND project_id = ?"
+            params.append(project_id)
+
+        cursor = await self.conn.execute(query, params)
+        row = await cursor.fetchone()
+        return int(row["total"]) if row and row["total"] is not None else 0
+
     async def update_memory(
         self,
         memory_id: str,
@@ -561,7 +614,7 @@ class Database:
     async def get_expired_memories(
         self,
         user_id: str | None = None,
-        project_id: str = "default",
+        project_id: str | None = None,
         before: datetime | None = None,
     ) -> list[str]:
         """
@@ -569,7 +622,7 @@ class Database:
         
         Args:
             user_id: Filter by user (optional)
-            project_id: Project namespace
+            project_id: Project namespace (omit for all projects)
             before: Check expiry before this time (default: now)
         """
         check_time = (before or datetime.utcnow()).isoformat()
@@ -584,8 +637,9 @@ class Database:
             query += " AND user_id = ?"
             params.append(user_id)
         
-        query += " AND project_id = ?"
-        params.append(project_id)
+        if project_id:
+            query += " AND project_id = ?"
+            params.append(project_id)
         
         cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
@@ -644,7 +698,7 @@ class Database:
     async def get_memories_with_decay_info(
         self,
         user_id: str,
-        project_id: str = "default",
+        project_id: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
         """
@@ -652,17 +706,28 @@ class Database:
         
         Returns memories with access_count and last_accessed for decay calculation.
         """
-        cursor = await self.conn.execute(
-            """
+        query = """
             SELECT id, content, created_at, updated_at, expires_at,
                    access_count, last_accessed
             FROM memories
-            WHERE user_id = ? AND project_id = ?
+            WHERE user_id = ?
               AND (expires_at IS NULL OR expires_at > ?)
+        """
+        params: list[Any] = [user_id, datetime.utcnow().isoformat()]
+
+        if project_id:
+            query += " AND project_id = ?"
+            params.append(project_id)
+
+        query += """
             ORDER BY created_at DESC
             LIMIT ?
-            """,
-            (user_id, project_id, datetime.utcnow().isoformat(), limit),
+        """
+        params.append(limit)
+
+        cursor = await self.conn.execute(
+            query,
+            params,
         )
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
@@ -926,11 +991,23 @@ class Database:
         await self.conn.commit()
         return cursor.rowcount
     
-    async def get_entity(self, entity_id: str) -> Entity | None:
-        """Get entity by ID."""
-        cursor = await self.conn.execute(
-            "SELECT * FROM entities WHERE id = ?", (entity_id,)
-        )
+    async def get_entity(
+        self,
+        entity_id: str,
+        user_id: str | None = None,
+        project_id: str | None = None,
+    ) -> Entity | None:
+        """Get entity by ID, optionally scoped to a user/project."""
+        query = "SELECT * FROM entities WHERE id = ?"
+        params: list[Any] = [entity_id]
+        if user_id:
+            query += " AND user_id = ?"
+            params.append(user_id)
+        if project_id:
+            query += " AND project_id = ?"
+            params.append(project_id)
+
+        cursor = await self.conn.execute(query, params)
         row = await cursor.fetchone()
         if not row:
             return None
@@ -1001,12 +1078,28 @@ class Database:
         )
         await self.conn.commit()
     
-    async def get_memories_by_entity(self, entity_id: str) -> list[str]:
-        """Get all memory IDs linked to an entity."""
-        cursor = await self.conn.execute(
-            "SELECT memory_id FROM memory_entities WHERE entity_id = ?",
-            (entity_id,),
-        )
+    async def get_memories_by_entity(
+        self,
+        entity_id: str,
+        user_id: str | None = None,
+        project_id: str | None = None,
+    ) -> list[str]:
+        """Get linked memory IDs, optionally scoped to a user/project."""
+        query = """
+            SELECT me.memory_id
+            FROM memory_entities me
+            JOIN memories m ON m.id = me.memory_id
+            WHERE me.entity_id = ?
+        """
+        params: list[Any] = [entity_id]
+        if user_id:
+            query += " AND m.user_id = ?"
+            params.append(user_id)
+        if project_id:
+            query += " AND m.project_id = ?"
+            params.append(project_id)
+
+        cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
         return [row["memory_id"] for row in rows]
 

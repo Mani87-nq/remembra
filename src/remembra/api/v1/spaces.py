@@ -4,8 +4,6 @@ Cross-agent memory sharing: named collections that multiple agents
 can read from and write to, with per-agent access control.
 """
 
-from __future__ import annotations
-
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status

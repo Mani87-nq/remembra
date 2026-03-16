@@ -9,6 +9,7 @@ from remembra.auth.middleware import (
     CurrentUser,
     get_client_ip,
     has_permission,
+    resolve_project_access,
 )
 from remembra.cloud.limits import (
     EnforceRecallLimit,
@@ -26,6 +27,7 @@ from remembra.models.memory import (
     BatchStoreResponse,
     BatchStoreResult,
     ForgetResponse,
+    MemorySummary,
     RecallRequest,
     RecallResponse,
     StoreRequest,
@@ -82,6 +84,51 @@ async def _dispatch_webhook(request: Request, event: WebhookEvent) -> None:
 
 
 # ---------------------------------------------------------------------------
+# List
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "",
+    response_model=list[MemorySummary],
+    summary="List stored memories for the current user",
+)
+@limiter.limit("60/minute")
+async def list_memories(
+    request: Request,
+    memory_service: MemoryServiceDep,
+    current_user: CurrentUser,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    project_id: Annotated[
+        str | None,
+        Query(description="Filter by project. Omit to list memories across all projects."),
+    ] = None,
+) -> list[MemorySummary]:
+    """List memories for dashboard browsing and pagination."""
+    if not has_permission(current_user, "memory:recall"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied: memory:recall required",
+        )
+
+    project_id = resolve_project_access(current_user, project_id)
+
+    try:
+        return await memory_service.list_memories(
+            user_id=current_user.user_id,
+            project_id=project_id,
+            limit=limit,
+            offset=offset,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list memories: {str(e)}",
+        )
+
+
+# ---------------------------------------------------------------------------
 # Store
 # ---------------------------------------------------------------------------
 
@@ -123,6 +170,7 @@ async def store_memory(
     
     # Override user_id with authenticated user (security: prevent user spoofing)
     body.user_id = current_user.user_id
+    body.project_id = resolve_project_access(current_user, body.project_id) or "default"
     
     # Sanitize content and compute trust score
     sanitization = None
@@ -253,6 +301,7 @@ async def batch_store(
         try:
             # Enforce authenticated user
             item.user_id = current_user.user_id
+            item.project_id = resolve_project_access(current_user, item.project_id) or "default"
             
             resp = await memory_service.store(item)
             results.append(BatchStoreResult(index=i, success=True, response=resp))
@@ -325,6 +374,7 @@ async def batch_recall(
     for query in body.queries:
         # Enforce authenticated user
         query.user_id = current_user.user_id
+        query.project_id = resolve_project_access(current_user, query.project_id) or "default"
         
         resp = await memory_service.recall(query)
         results.append(resp)
@@ -381,6 +431,7 @@ async def recall_memories(
     
     # Override user_id with authenticated user
     body.user_id = current_user.user_id
+    body.project_id = resolve_project_access(current_user, body.project_id) or "default"
     
     try:
         result = await memory_service.recall(body)
@@ -478,6 +529,10 @@ async def get_memory(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Memory {memory_id} not found",  # Don't reveal it exists
         )
+
+    project_id = result.get("project_id")
+    if project_id:
+        resolve_project_access(current_user, project_id)
     
     return result
 
@@ -522,6 +577,15 @@ async def update_memory(
             detail="Permission denied: memory:store required",
         )
     
+    existing = await memory_service.get(memory_id)
+    if not existing or existing.get("user_id") != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Memory {memory_id} not found",
+        )
+    if existing.get("project_id"):
+        resolve_project_access(current_user, existing["project_id"])
+
     try:
         result = await memory_service.update(
             memory_id=memory_id,
@@ -592,8 +656,10 @@ async def cleanup_expired(
         )
     
     try:
+        project_id = resolve_project_access(current_user, None)
         deleted = await memory_service.cleanup_expired(
             user_id=current_user.user_id,
+            project_id=project_id,
         )
         
         await audit_logger.log_memory_forget(
@@ -658,6 +724,22 @@ async def forget_memories(
     # SECURITY FIX: ALWAYS pass user_id to prevent IDOR (cross-user deletion)
     # This ensures users can only delete their own memories
     user_id = current_user.user_id
+
+    if current_user.project_ids and (entity or all_memories):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project-scoped API keys must delete by memory_id until project-scoped bulk delete is implemented.",
+        )
+
+    if memory_id:
+        memory = await memory_service.get(memory_id)
+        if not memory or memory.get("user_id") != current_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Memory {memory_id} not found",
+            )
+        if memory.get("project_id"):
+            resolve_project_access(current_user, memory["project_id"])
 
     try:
         result = await memory_service.forget(

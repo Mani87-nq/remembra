@@ -226,6 +226,22 @@ class RecallResponse(BaseModel):
     )
 
 
+class MemorySummary(BaseModel):
+    """Browsable memory shape used by dashboard list/detail surfaces."""
+
+    id: str
+    user_id: str
+    project_id: str = "default"
+    content: str
+    created_at: str
+    updated_at: str | None = None
+    accessed_at: str | None = None
+    access_count: int = 0
+    memory_type: str | None = None
+    entities: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class UpdateRequest(BaseModel):
     content: str
     metadata: dict[str, Any] | None = None

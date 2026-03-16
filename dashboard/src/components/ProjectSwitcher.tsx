@@ -14,6 +14,12 @@ interface ProjectSwitcherProps {
   onProjectChange?: (projectId: string) => void;
 }
 
+interface SpaceSummary {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
@@ -28,9 +34,16 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
     }
     const apiKey = api.getApiKey();
     if (apiKey) {
-      return { 'X-Api-Key': apiKey };
+      return { 'X-API-Key': apiKey };
     }
     return {};
+  };
+
+  const emitProjectChange = (projectId: string) => {
+    window.dispatchEvent(new CustomEvent('remembra:project-changed', {
+      detail: { projectId },
+    }));
+    onProjectChange?.(projectId);
   };
 
   // Fetch projects and set current
@@ -61,7 +74,11 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
 
       if (response.ok) {
         const data = await response.json();
-        const projectList = data.spaces || [];
+        const projectList: Project[] = (Array.isArray(data) ? data : data.spaces || []).map((space: SpaceSummary) => ({
+          id: space.id,
+          name: space.name,
+          description: space.description,
+        }));
         setProjects(projectList);
 
         // Determine current project
@@ -75,6 +92,7 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
         if (current) {
           setCurrentProject(current);
           api.setProjectId(current.id);
+          emitProjectChange(current.id);
         } else {
           // Fallback: create a default project representation
           const defaultProject = {
@@ -82,6 +100,8 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
             name: savedProjectId || 'Default Project',
           };
           setCurrentProject(defaultProject);
+          api.setProjectId(defaultProject.id);
+          emitProjectChange(defaultProject.id);
         }
       } else {
         // Spaces API not available, show current project ID only
@@ -90,6 +110,7 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
           id: projectId,
           name: projectId === 'default' ? 'Default Project' : projectId,
         });
+        emitProjectChange(projectId);
       }
     } catch (error) {
       console.error('Failed to fetch projects:', error);
@@ -99,6 +120,7 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
         id: projectId,
         name: projectId === 'default' ? 'Default Project' : projectId,
       });
+      emitProjectChange(projectId);
     } finally {
       setLoading(false);
     }
@@ -108,9 +130,7 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
     setCurrentProject(project);
     api.setProjectId(project.id);
     setIsOpen(false);
-    onProjectChange?.(project.id);
-    // Reload page to refresh all data with new project
-    window.location.reload();
+    emitProjectChange(project.id);
   };
 
   if (loading) {

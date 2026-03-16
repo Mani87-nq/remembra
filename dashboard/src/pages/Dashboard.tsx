@@ -34,11 +34,32 @@ interface DashboardProps {
 }
 
 export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryProp, onCloseNewMemory }: DashboardProps) {
-  const { memories, loading, error, hasMore, refresh, loadMore } = useMemories();
-  const { results, loading: searchLoading, error: searchError, search, clear } = useSearch();
+  const [currentProjectId, setCurrentProjectId] = useState(() => api.getProjectId() || 'default');
+  const { memories, loading, error, hasMore, refresh, loadMore } = useMemories(20, currentProjectId);
+  const { results, loading: searchLoading, error: searchError, search, clear } = useSearch(currentProjectId);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showNewMemory, setShowNewMemory] = useState(false);
+
+  useEffect(() => {
+    const syncProject = () => {
+      setCurrentProjectId(api.getProjectId() || 'default');
+    };
+
+    const handleProjectChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ projectId?: string }>;
+      setCurrentProjectId(customEvent.detail?.projectId || api.getProjectId() || 'default');
+    };
+
+    syncProject();
+    window.addEventListener('storage', syncProject);
+    window.addEventListener('remembra:project-changed', handleProjectChanged as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', syncProject);
+      window.removeEventListener('remembra:project-changed', handleProjectChanged as EventListener);
+    };
+  }, []);
 
   // Sync with parent's showNewMemory prop
   useEffect(() => {
@@ -60,7 +81,7 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
   const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true);
-      const analytics = await api.getAnalytics();
+      const analytics = await api.getAnalytics(currentProjectId);
       
       // Estimate storage based on memory count (avg ~2KB per memory)
       const estimatedKB = analytics.total_memories * 2;
@@ -90,12 +111,18 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
     } finally {
       setStatsLoading(false);
     }
-  }, [memories, hasMore]);
+  }, [currentProjectId, memories, hasMore]);
 
   // Fetch stats on mount and when memories refresh
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  useEffect(() => {
+    setSelectedMemory(null);
+    setIsSearching(false);
+    clear();
+  }, [currentProjectId, clear]);
 
   const handleSearch = (query: string) => {
     setIsSearching(true);
@@ -132,6 +159,7 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
   // New memory modal — rendered as overlay, not page replacement
   const newMemoryModal = showNewMemory ? (
     <StoreMemory
+      projectId={currentProjectId}
       startOpen={true}
       onStored={() => {
         setShowNewMemory(false);
@@ -287,22 +315,22 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
         );
 
       case 'entities':
-        return <EntityList />;
+        return <EntityList projectId={currentProjectId} />;
 
       case 'graph':
-        return <EntityGraph />;
+        return <EntityGraph projectId={currentProjectId} />;
 
       case 'decay':
-        return <DecayReport />;
+        return <DecayReport projectId={currentProjectId} />;
 
       case 'debugger':
-        return <QueryDebugger />;
+        return <QueryDebugger projectId={currentProjectId} />;
 
       case 'analytics':
-        return <UsageAnalytics />;
+        return <UsageAnalytics projectId={currentProjectId} />;
 
       case 'timeline':
-        return <MemoryTimeline />;
+        return <MemoryTimeline projectId={currentProjectId} />;
 
       case 'projects':
         return <Projects />;

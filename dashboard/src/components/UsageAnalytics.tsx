@@ -4,20 +4,53 @@ import type { AnalyticsResponse } from '../lib/api';
 import { Database, Users, GitBranch, Activity, Heart, AlertTriangle, XCircle, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 
-export function UsageAnalytics() {
+interface UsageAnalyticsProps {
+  projectId?: string;
+}
+
+const statCardStyles = {
+  blue: {
+    card: 'bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800',
+    icon: 'text-blue-600 dark:text-blue-400',
+    label: 'text-blue-600 dark:text-blue-400',
+    value: 'text-blue-800 dark:text-blue-300',
+  },
+  purple: {
+    card: 'bg-purple-50 dark:bg-purple-900/20 border-purple-100 dark:border-purple-800',
+    icon: 'text-purple-600 dark:text-purple-400',
+    label: 'text-purple-600 dark:text-purple-400',
+    value: 'text-purple-800 dark:text-purple-300',
+  },
+  green: {
+    card: 'bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800',
+    icon: 'text-green-600 dark:text-green-400',
+    label: 'text-green-600 dark:text-green-400',
+    value: 'text-green-800 dark:text-green-300',
+  },
+  amber: {
+    card: 'bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800',
+    icon: 'text-amber-600 dark:text-amber-400',
+    label: 'text-amber-600 dark:text-amber-400',
+    value: 'text-amber-800 dark:text-amber-300',
+  },
+} as const;
+
+type StatTone = keyof typeof statCardStyles;
+
+export function UsageAnalytics({ projectId }: UsageAnalyticsProps) {
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadAnalytics();
-  }, []);
+  }, [projectId]);
 
   const loadAnalytics = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getAnalytics();
+      const data = await api.getAnalytics(projectId);
       setAnalytics(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load analytics');
@@ -44,7 +77,7 @@ export function UsageAnalytics() {
 
   if (!analytics) return null;
 
-  const statCards = [
+  const statCards: Array<{ label: string; value: string; icon: typeof Database; color: StatTone }> = [
     { label: 'Memories', value: analytics.total_memories.toLocaleString(), icon: Database, color: 'blue' },
     { label: 'Entities', value: analytics.total_entities.toLocaleString(), icon: Users, color: 'purple' },
     { label: 'Relationships', value: analytics.total_relationships.toLocaleString(), icon: GitBranch, color: 'green' },
@@ -71,14 +104,14 @@ export function UsageAnalytics() {
             key={label}
             className={clsx(
               'p-4 rounded-lg border',
-              `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-100 dark:border-${color}-800`
+              statCardStyles[color].card
             )}
           >
             <div className="flex items-center gap-2 mb-1">
-              <Icon className={`w-4 h-4 text-${color}-600 dark:text-${color}-400`} />
-              <span className={`text-xs font-medium text-${color}-600 dark:text-${color}-400`}>{label}</span>
+              <Icon className={clsx('w-4 h-4', statCardStyles[color].icon)} />
+              <span className={clsx('text-xs font-medium', statCardStyles[color].label)}>{label}</span>
             </div>
-            <div className={`text-2xl font-bold text-${color}-800 dark:text-${color}-300`}>{value}</div>
+            <div className={clsx('text-2xl font-bold', statCardStyles[color].value)}>{value}</div>
           </div>
         ))}
       </div>

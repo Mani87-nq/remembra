@@ -52,6 +52,7 @@ class APIKeyInfo:
     last_used_at: str | None
     active: bool
     rate_limit_tier: str
+    project_ids: list[str] | None = None
 
 
 class APIKeyManager:
@@ -169,7 +170,7 @@ class APIKeyManager:
         # Join with api_key_roles to get the role
         cursor = await self.db.conn.execute(
             """
-            SELECT k.*, COALESCE(r.role, 'editor') as role, r.scopes
+            SELECT k.*, COALESCE(r.role, 'editor') as role, r.scopes, r.project_ids
             FROM api_keys k
             LEFT JOIN api_key_roles r ON k.id = r.api_key_id
             WHERE k.active = TRUE
@@ -188,6 +189,13 @@ class APIKeyManager:
                     key_data["scopes"] = [s for s in key_data["scopes"].split(",") if s]
                 else:
                     key_data["scopes"] = None
+
+                if key_data.get("project_ids"):
+                    key_data["project_ids"] = [
+                        project_id for project_id in key_data["project_ids"].split(",") if project_id
+                    ]
+                else:
+                    key_data["project_ids"] = None
                 
                 # Cache the result (limit cache size)
                 if len(_key_cache) >= _KEY_CACHE_MAX_SIZE:
@@ -272,6 +280,7 @@ class APIKeyManager:
             last_used_at=key["last_used_at"],
             active=key["active"],
             rate_limit_tier=key["rate_limit_tier"],
+            project_ids=None,
         )
     
     async def update_key_name(self, key_id: str, name: str) -> bool:

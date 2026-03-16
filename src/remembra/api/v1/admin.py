@@ -5,8 +5,6 @@ All endpoints require admin role or equivalent permissions.
 Superadmin endpoints require owner_emails access.
 """
 
-from __future__ import annotations
-
 import csv
 import io
 import json

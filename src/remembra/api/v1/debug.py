@@ -8,16 +8,14 @@ Provides deep observability into the recall pipeline:
 These endpoints are gated behind cloud plan checks (has_observability).
 """
 
-from __future__ import annotations
-
 import time
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
-from remembra.auth.middleware import CurrentUser
+from remembra.auth.middleware import CurrentUser, resolve_project_access
 from remembra.config import Settings, get_settings
 from remembra.core.limiter import limiter
 from remembra.models.memory import RecallRequest
@@ -160,6 +158,7 @@ async def debug_recall(
     recency/entity/keyword boosts, and final weighted scores.
     """
     body.user_id = current_user.user_id
+    body.project_id = resolve_project_access(current_user, body.project_id) or "default"
 
     start = time.monotonic()
 
@@ -272,40 +271,57 @@ async def get_analytics(
     request: Request,
     memory_service: MemoryServiceDep,
     current_user: CurrentUser,
+    project_id: str | None = Query(default=None, description="Filter analytics to one project"),
 ) -> AnalyticsResponse:
     """Get aggregate analytics: memory counts, entity stats, decay health."""
+    project_id = resolve_project_access(current_user, project_id)
     db = memory_service.db
+
+    memory_where = "WHERE user_id = ?"
+    memory_params: list[Any] = [current_user.user_id]
+    entity_where = "WHERE user_id = ?"
+    entity_params: list[Any] = [current_user.user_id]
+    relationship_where = "WHERE e.user_id = ?"
+    relationship_params: list[Any] = [current_user.user_id]
+
+    if project_id:
+        memory_where += " AND project_id = ?"
+        memory_params.append(project_id)
+        entity_where += " AND project_id = ?"
+        entity_params.append(project_id)
+        relationship_where += " AND e.project_id = ?"
+        relationship_params.append(project_id)
 
     # Total memories
     cursor = await db.conn.execute(
-        "SELECT COUNT(*) FROM memories WHERE user_id = ?",
-        (current_user.user_id,),
+        f"SELECT COUNT(*) FROM memories {memory_where}",
+        memory_params,
     )
     row = await cursor.fetchone()
     total_memories = row[0] if row else 0
 
     # Total entities
     cursor = await db.conn.execute(
-        "SELECT COUNT(*) FROM entities WHERE user_id = ?",
-        (current_user.user_id,),
+        f"SELECT COUNT(*) FROM entities {entity_where}",
+        entity_params,
     )
     row = await cursor.fetchone()
     total_entities = row[0] if row else 0
 
     # Total relationships
     cursor = await db.conn.execute(
-        """SELECT COUNT(*) FROM relationships r
+        f"""SELECT COUNT(*) FROM relationships r
            JOIN entities e ON r.from_entity_id = e.id
-           WHERE e.user_id = ?""",
-        (current_user.user_id,),
+           {relationship_where}""",
+        relationship_params,
     )
     row = await cursor.fetchone()
     total_relationships = row[0] if row else 0
 
     # Entities by type
     cursor = await db.conn.execute(
-        "SELECT type, COUNT(*) FROM entities WHERE user_id = ? GROUP BY type",
-        (current_user.user_id,),
+        f"SELECT type, COUNT(*) FROM entities {entity_where} GROUP BY type",
+        entity_params,
     )
     rows = await cursor.fetchall()
     entities_by_type = {row[0]: row[1] for row in rows}
@@ -320,13 +336,13 @@ async def get_analytics(
     # Note: these are CUMULATIVE counts for better UX
     # "This Week" includes today, "This Month" includes this week
     cursor = await db.conn.execute(
-        """SELECT
+        f"""SELECT
              SUM(CASE WHEN created_at >= date('now') THEN 1 ELSE 0 END) as today,
              SUM(CASE WHEN created_at >= date('now', '-7 days') THEN 1 ELSE 0 END) as this_week,
              SUM(CASE WHEN created_at >= date('now', '-30 days') THEN 1 ELSE 0 END) as this_month,
              SUM(CASE WHEN created_at < date('now', '-30 days') THEN 1 ELSE 0 END) as older
-           FROM memories WHERE user_id = ?""",
-        (current_user.user_id,),
+           FROM memories {memory_where}""",
+        memory_params,
     )
     row = await cursor.fetchone()
     if row:
@@ -343,6 +359,7 @@ async def get_analytics(
     try:
         decay_memories = await memory_service.get_memories_with_decay(
             user_id=current_user.user_id,
+            project_id=project_id,
             min_decay_score=0.0,
             limit=1000,
         )
@@ -404,29 +421,31 @@ async def get_entity_graph(
     request: Request,
     memory_service: MemoryServiceDep,
     current_user: CurrentUser,
-    project_id: str = "default",
+    project_id: str | None = Query(default=None, description="Filter graph to one project"),
 ) -> EntityGraphResponse:
     """Get entity graph data in nodes + edges format for D3/vis-network."""
+    project_id = resolve_project_access(current_user, project_id)
     db = memory_service.db
 
-    # Get all entities
-    cursor = await db.conn.execute(
-        """SELECT id, canonical_name, type, confidence
-           FROM entities WHERE user_id = ?
-           ORDER BY confidence DESC""",
-        (current_user.user_id,),
-    )
-    entity_rows = await cursor.fetchall()
+    entity_query = """
+        SELECT e.id, e.canonical_name, e.type, e.confidence,
+               COUNT(DISTINCT me.memory_id) AS memory_count
+        FROM entities e
+        LEFT JOIN memory_entities me ON me.entity_id = e.id
+        LEFT JOIN memories m ON m.id = me.memory_id
+        WHERE e.user_id = ?
+    """
+    entity_params: list[Any] = [current_user.user_id]
+    if project_id:
+        entity_query += " AND e.project_id = ?"
+        entity_params.append(project_id)
+    entity_query += """
+        GROUP BY e.id, e.canonical_name, e.type, e.confidence
+        ORDER BY e.confidence DESC
+    """
 
-    # Get memory counts per entity
-    entity_memory_counts: dict[str, int] = {}
-    for row in entity_rows:
-        cursor2 = await db.conn.execute(
-            "SELECT COUNT(*) FROM memory_entities WHERE entity_id = ?",
-            (row[0],),
-        )
-        count_row = await cursor2.fetchone()
-        entity_memory_counts[row[0]] = count_row[0] if count_row else 0
+    cursor = await db.conn.execute(entity_query, entity_params)
+    entity_rows = await cursor.fetchall()
 
     nodes = []
     for row in entity_rows:
@@ -435,17 +454,22 @@ async def get_entity_graph(
             "label": row[1],
             "type": row[2],
             "confidence": row[3],
-            "memory_count": entity_memory_counts.get(row[0], 0),
+            "memory_count": row[4] or 0,
         })
 
-    # Get all relationships
-    cursor = await db.conn.execute(
-        """SELECT r.id, r.from_entity_id, r.to_entity_id, r.type, r.confidence
-           FROM relationships r
-           JOIN entities e ON r.from_entity_id = e.id
-           WHERE e.user_id = ?""",
-        (current_user.user_id,),
-    )
+    relationship_query = """
+        SELECT r.id, r.from_entity_id, r.to_entity_id, r.type, r.confidence
+        FROM relationships r
+        JOIN entities e_from ON r.from_entity_id = e_from.id
+        JOIN entities e_to ON r.to_entity_id = e_to.id
+        WHERE e_from.user_id = ?
+    """
+    relationship_params: list[Any] = [current_user.user_id]
+    if project_id:
+        relationship_query += " AND e_from.project_id = ? AND e_to.project_id = ?"
+        relationship_params.extend([project_id, project_id])
+
+    cursor = await db.conn.execute(relationship_query, relationship_params)
     rel_rows = await cursor.fetchall()
 
     edges = []
@@ -491,27 +515,35 @@ async def get_memory_timeline(
     current_user: CurrentUser,
     page: int = 1,
     page_size: int = 50,
-    project_id: str = "default",
+    project_id: str | None = Query(default=None, description="Filter timeline to one project"),
 ) -> MemoryTimelineResponse:
     """Get a chronological view of all stored memories with entity tags."""
+    project_id = resolve_project_access(current_user, project_id)
     db = memory_service.db
     offset = (page - 1) * page_size
+    memory_where = "WHERE user_id = ?"
+    memory_params: list[Any] = [current_user.user_id]
+
+    if project_id:
+        memory_where += " AND project_id = ?"
+        memory_params.append(project_id)
 
     # Total count
     cursor = await db.conn.execute(
-        "SELECT COUNT(*) FROM memories WHERE user_id = ?",
-        (current_user.user_id,),
+        f"SELECT COUNT(*) FROM memories {memory_where}",
+        memory_params,
     )
     row = await cursor.fetchone()
     total = row[0] if row else 0
 
     # Paginated memories
+    page_params = [*memory_params, page_size, offset]
     cursor = await db.conn.execute(
-        """SELECT id, content, created_at, project_id, access_count, last_accessed
-           FROM memories WHERE user_id = ?
+        f"""SELECT id, content, created_at, project_id, access_count, last_accessed
+           FROM memories {memory_where}
            ORDER BY created_at DESC
            LIMIT ? OFFSET ?""",
-        (current_user.user_id, page_size, offset),
+        page_params,
     )
     mem_rows = await cursor.fetchall()
 

@@ -1,7 +1,5 @@
 """Conflict management endpoints – /api/v1/conflicts."""
 
-from __future__ import annotations
-
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status

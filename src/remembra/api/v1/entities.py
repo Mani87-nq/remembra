@@ -5,7 +5,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 
-from remembra.auth.middleware import CurrentUser
+from remembra.auth.middleware import CurrentUser, resolve_project_access
 from remembra.core.limiter import limiter
 from remembra.storage.database import Database
 
@@ -93,6 +93,8 @@ async def list_entities(
     - Locations/Places (location, place)
     - Concepts (concept)
     """
+    project_id = resolve_project_access(current_user, project_id)
+
     # Get entities from database
     if entity_type:
         entities = await db.get_entities_by_type(
@@ -115,7 +117,11 @@ async def list_entities(
     
     for entity in entities:
         # Count linked memories
-        memory_ids = await db.get_memories_by_entity(entity.id)
+        memory_ids = await db.get_memories_by_entity(
+            entity.id,
+            user_id=current_user.user_id,
+            project_id=project_id,
+        )
         
         entity_responses.append(EntityResponse(
             id=entity.id,
@@ -149,9 +155,11 @@ async def get_entity(
     entity_id: str,
     db: DatabaseDep,
     current_user: CurrentUser,
+    project_id: str | None = Query(default=None, description="Filter to one project for restricted keys"),
 ) -> EntityResponse:
     """Get a specific entity by ID."""
-    entity = await db.get_entity(entity_id)
+    project_id = resolve_project_access(current_user, project_id)
+    entity = await db.get_entity(entity_id, user_id=current_user.user_id, project_id=project_id)
     
     if not entity:
         raise HTTPException(
@@ -160,7 +168,11 @@ async def get_entity(
         )
     
     # Get linked memories
-    memory_ids = await db.get_memories_by_entity(entity_id)
+    memory_ids = await db.get_memories_by_entity(
+        entity_id,
+        user_id=current_user.user_id,
+        project_id=project_id,
+    )
     
     return EntityResponse(
         id=entity.id,
@@ -184,6 +196,7 @@ async def get_entity_relationships(
     entity_id: str,
     db: DatabaseDep,
     current_user: CurrentUser,
+    project_id: str | None = Query(default=None, description="Filter to one project for restricted keys"),
     as_of: str | None = Query(
         default=None,
         description="Point-in-time query (ISO format, e.g., '2022-01-15'). Returns relationships valid at this time.",
@@ -203,8 +216,10 @@ async def get_entity_relationships(
     """
     from datetime import datetime
     
+    project_id = resolve_project_access(current_user, project_id)
+
     # Verify entity exists
-    entity = await db.get_entity(entity_id)
+    entity = await db.get_entity(entity_id, user_id=current_user.user_id, project_id=project_id)
     if not entity:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -269,7 +284,7 @@ async def search_relationships_by_name(
     relationship_type: str | None = Query(default=None, description="Filter by type (WORKS_AT, SPOUSE_OF, etc)"),
     as_of: str | None = Query(default=None, description="Point-in-time query (ISO format)"),
     include_history: bool = Query(default=False, description="Include superseded relationships"),
-    project_id: str = Query(default="default"),
+    project_id: str | None = Query(default=None),
 ) -> RelationshipsListResponse:
     """
     Search relationships by entity name with temporal filtering.
@@ -283,6 +298,8 @@ async def search_relationships_by_name(
     """
     from datetime import datetime
     
+    project_id = resolve_project_access(current_user, project_id) or "default"
+
     # Parse as_of date if provided
     as_of_dt = None
     if as_of:
@@ -352,11 +369,13 @@ async def get_entity_memories(
     entity_id: str,
     db: DatabaseDep,
     current_user: CurrentUser,
+    project_id: str | None = Query(default=None, description="Filter to one project for restricted keys"),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> dict[str, Any]:
     """Get all memories that mention or are linked to a specific entity."""
+    project_id = resolve_project_access(current_user, project_id)
     # Verify entity exists
-    entity = await db.get_entity(entity_id)
+    entity = await db.get_entity(entity_id, user_id=current_user.user_id, project_id=project_id)
     if not entity:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -364,7 +383,11 @@ async def get_entity_memories(
         )
     
     # Get linked memory IDs
-    memory_ids = await db.get_memories_by_entity(entity_id)
+    memory_ids = await db.get_memories_by_entity(
+        entity_id,
+        user_id=current_user.user_id,
+        project_id=project_id,
+    )
     
     # Get memory details
     memories = []

@@ -13,7 +13,11 @@ const entityColors: Record<string, string> = {
   concept: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };
 
-export function MemoryTimeline() {
+interface MemoryTimelineProps {
+  projectId?: string;
+}
+
+export function MemoryTimeline({ projectId }: MemoryTimelineProps) {
   const [memories, setMemories] = useState<TimelineMemory[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -36,14 +40,20 @@ export function MemoryTimeline() {
 
   useEffect(() => {
     loadTimeline(page === 1);
-  }, [page]);
+  }, [page, projectId]);
+
+  useEffect(() => {
+    setPage(1);
+    setMemories([]);
+    setTotal(0);
+  }, [projectId]);
 
   const loadTimeline = async (isInitial = false) => {
     if (isInitial) setLoading(true);
     else setLoadingMore(true);
     setError(null);
     try {
-      const result = await api.getMemoryTimeline(page, 20);
+      const result = await api.getMemoryTimeline(page, 20, projectId);
       if (isInitial) {
         setMemories(result.memories);
       } else {

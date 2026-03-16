@@ -35,6 +35,15 @@ interface SpaceMember {
   granted_at: string;
 }
 
+function slugifyProjectId(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64) || 'default';
+}
+
 export function Projects() {
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
@@ -50,10 +59,21 @@ export function Projects() {
   // Form states
   const [newSpaceName, setNewSpaceName] = useState('');
   const [newSpaceDescription, setNewSpaceDescription] = useState('');
+  const [newSpaceProjectId, setNewSpaceProjectId] = useState('default');
+  const [projectIdTouched, setProjectIdTouched] = useState(false);
   const [grantAgentId, setGrantAgentId] = useState('');
   const [grantPermission, setGrantPermission] = useState<'read' | 'write' | 'admin'>('read');
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const closeCreateSpaceModal = () => {
+    setShowCreateSpace(false);
+    setFormError(null);
+    setNewSpaceName('');
+    setNewSpaceDescription('');
+    setNewSpaceProjectId('default');
+    setProjectIdTouched(false);
+  };
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('remembra_jwt_token');
@@ -62,7 +82,7 @@ export function Projects() {
     }
     const apiKey = localStorage.getItem('remembra_api_key');
     if (apiKey) {
-      return { 'X-Api-Key': apiKey };
+      return { 'X-API-Key': apiKey };
     }
     return {};
   };
@@ -82,6 +102,7 @@ export function Projects() {
   const fetchSpaces = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch(`${API_V1}/spaces`, {
         headers: getAuthHeaders(),
       });
@@ -97,11 +118,33 @@ export function Projects() {
       }
       
       const data = await response.json();
-      setSpaces(data.spaces || []);
+      const rawSpaces: Space[] = Array.isArray(data) ? data : data.spaces || [];
+      const detailedSpaces = await Promise.all(rawSpaces.map(async (space) => {
+        try {
+          const detailResponse = await fetch(`${API_V1}/spaces/${space.id}`, {
+            headers: getAuthHeaders(),
+          });
+
+          if (!detailResponse.ok) {
+            return { ...space, members: space.members ?? 1 };
+          }
+
+          const detail = await detailResponse.json();
+          return {
+            ...space,
+            members: detail.members ?? space.members ?? 1,
+            memory_count: detail.memory_count ?? space.memory_count,
+          };
+        } catch {
+          return { ...space, members: space.members ?? 1 };
+        }
+      }));
+
+      setSpaces(detailedSpaces);
       
       // Auto-select first space if available
-      if (data.spaces?.length > 0 && !selectedSpace) {
-        setSelectedSpace(data.spaces[0]);
+      if (detailedSpaces.length > 0 && !selectedSpace) {
+        setSelectedSpace(detailedSpaces[0]);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load projects');
@@ -112,7 +155,7 @@ export function Projects() {
 
   const fetchMembers = async (spaceId: string) => {
     try {
-      const response = await fetch(`${API_V1}/spaces/${spaceId}/access`, {
+      const response = await fetch(`${API_V1}/spaces/${spaceId}/members`, {
         headers: getAuthHeaders(),
       });
       
@@ -121,7 +164,7 @@ export function Projects() {
       }
       
       const data = await response.json();
-      setMembers(data.access || []);
+      setMembers(Array.isArray(data) ? data : data.members || []);
     } catch (err) {
       console.error('Failed to fetch members:', err);
     }
@@ -142,6 +185,7 @@ export function Projects() {
         body: JSON.stringify({
           name: newSpaceName,
           description: newSpaceDescription,
+          project_id: newSpaceProjectId.trim(),
         }),
       });
 
@@ -151,11 +195,10 @@ export function Projects() {
       }
 
       const newSpace = await response.json();
-      setSpaces([...spaces, newSpace]);
-      setSelectedSpace(newSpace);
-      setShowCreateSpace(false);
-      setNewSpaceName('');
-      setNewSpaceDescription('');
+      const normalizedSpace = { ...newSpace, members: newSpace.members ?? 1 };
+      setSpaces((prev) => [...prev, normalizedSpace]);
+      setSelectedSpace(normalizedSpace);
+      closeCreateSpaceModal();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to create project');
     } finally {
@@ -178,9 +221,10 @@ export function Projects() {
         throw new Error('Failed to delete project');
       }
 
-      setSpaces(spaces.filter(s => s.id !== spaceId));
+      const remainingSpaces = spaces.filter(s => s.id !== spaceId);
+      setSpaces(remainingSpaces);
       if (selectedSpace?.id === spaceId) {
-        setSelectedSpace(spaces.length > 1 ? spaces[0] : null);
+        setSelectedSpace(remainingSpaces[0] || null);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete project');
@@ -383,7 +427,7 @@ export function Projects() {
                 {selectedSpace.name}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Project ID: {selectedSpace.id}
+                Space ID: {selectedSpace.id} · Namespace: {selectedSpace.project_id}
               </p>
             </div>
             <button
@@ -447,7 +491,7 @@ export function Projects() {
                 New Project
               </h2>
               <button
-                onClick={() => setShowCreateSpace(false)}
+                onClick={closeCreateSpaceModal}
                 className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -468,11 +512,37 @@ export function Projects() {
                 <input
                   type="text"
                   value={newSpaceName}
-                  onChange={(e) => setNewSpaceName(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setNewSpaceName(value);
+                    if (!projectIdTouched) {
+                      setNewSpaceProjectId(slugifyProjectId(value));
+                    }
+                  }}
                   placeholder="e.g., Product Research"
                   required
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Project Namespace
+                </label>
+                <input
+                  type="text"
+                  value={newSpaceProjectId}
+                  onChange={(e) => {
+                    setProjectIdTouched(true);
+                    setNewSpaceProjectId(slugifyProjectId(e.target.value));
+                  }}
+                  placeholder="e.g., product-research"
+                  required
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  This becomes the isolated `project_id` used by memories, recall, analytics, and API clients.
+                </p>
               </div>
 
               <div>
@@ -491,14 +561,14 @@ export function Projects() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowCreateSpace(false)}
+                  onClick={closeCreateSpaceModal}
                   className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={formLoading || !newSpaceName.trim()}
+                  disabled={formLoading || !newSpaceName.trim() || !newSpaceProjectId.trim()}
                   className="flex-1 px-4 py-2 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {formLoading ? (

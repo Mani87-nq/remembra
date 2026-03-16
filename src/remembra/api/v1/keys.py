@@ -33,6 +33,10 @@ class CreateKeyRequest(BaseModel):
     rate_limit_tier: str = Field("standard", description="Rate limit tier: standard or premium")
     role: str = Field("editor", description="Role: admin, editor, or viewer")
     permission: str | None = Field(None, description="Alias for role (dashboard compatibility)")
+    project_ids: list[str] | None = Field(
+        None,
+        description="Optional list of project IDs this key may access. Omit for all projects.",
+    )
 
 
 class CreateKeyResponse(BaseModel):
@@ -44,6 +48,10 @@ class CreateKeyResponse(BaseModel):
     name: str | None
     rate_limit_tier: str
     role: str = Field(..., description="Assigned role: admin, editor, or viewer")
+    project_ids: list[str] = Field(
+        default_factory=list,
+        description="Project restrictions applied to the key. Empty means all projects.",
+    )
     message: str = Field(
         default="Store this key securely. It cannot be retrieved again.",
         description="Important security notice"
@@ -62,6 +70,10 @@ class KeyInfo(BaseModel):
     active: bool
     rate_limit_tier: str
     role: str = Field("editor", description="Key role: admin, editor, or viewer")
+    project_ids: list[str] = Field(
+        default_factory=list,
+        description="Project restrictions for this key. Empty means all projects.",
+    )
     # Alias for frontend compatibility
     permission: str = Field("editor", description="Alias for role (frontend compatibility)")
 
@@ -85,6 +97,10 @@ class UpdateKeyRequest(BaseModel):
     
     name: str | None = Field(None, description="New name for the key")
     role: str | None = Field(None, description="New role: admin, editor, or viewer")
+    project_ids: list[str] | None = Field(
+        None,
+        description="Replace the key's allowed projects. Use an empty list to remove restrictions.",
+    )
 
 
 class UpdateKeyResponse(BaseModel):
@@ -173,6 +189,7 @@ async def get_key_with_role(
         active=key_info.active,
         rate_limit_tier=key_info.rate_limit_tier,
         role=role_value,
+        project_ids=key_role.project_ids,
         permission=role_value,  # Alias for frontend compatibility
     )
 
@@ -250,6 +267,7 @@ async def create_api_key(
         await role_manager.assign_role(
             api_key_id=api_key.id,
             role=role,
+            project_ids=body.project_ids,
         )
         
         # Audit log
@@ -266,6 +284,7 @@ async def create_api_key(
             name=api_key.name,
             rate_limit_tier=api_key.rate_limit_tier,
             role=role.value,
+            project_ids=body.project_ids or [],
         )
         
     except Exception as e:
@@ -330,6 +349,7 @@ async def list_api_keys(
                 active=k.active,
                 rate_limit_tier=k.rate_limit_tier,
                 role=role_value,
+                project_ids=key_role.project_ids,
                 permission=role_value,  # Alias for frontend compatibility
             )
         )
@@ -451,9 +471,16 @@ async def update_api_key(
         await key_manager.update_key_name(key_id, body.name)
     
     # Update role if provided
-    if body.role is not None:
-        role = validate_role(body.role)
-        await role_manager.assign_role(api_key_id=key_id, role=role)
+    if body.role is not None or body.project_ids is not None:
+        current_role = await role_manager.get_role(key_id)
+        role = validate_role(body.role) if body.role is not None else current_role.role
+        project_ids = body.project_ids if body.project_ids is not None else current_role.project_ids
+        await role_manager.assign_role(
+            api_key_id=key_id,
+            role=role,
+            scopes=current_role.scopes,
+            project_ids=project_ids,
+        )
     
     # Get updated key info
     updated_key = await get_key_with_role(key_manager, role_manager, key_id)
@@ -467,6 +494,7 @@ async def update_api_key(
         details={
             "name_updated": body.name is not None,
             "role_updated": body.role is not None,
+            "project_ids_updated": body.project_ids is not None,
         },
     )
     

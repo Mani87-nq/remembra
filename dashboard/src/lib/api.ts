@@ -4,6 +4,7 @@
 const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api/v1`
   : '/api/v1';
+const API_ROOT = API_BASE.replace(/\/api\/v1$/, '');
 
 export interface Memory {
   id: string;
@@ -77,6 +78,15 @@ export interface CleanupResponse {
   decayed_archived: number;
   duration_ms: number;
   errors: string[];
+}
+
+export interface ConnectionStatus {
+  apiReachable: boolean;
+  authenticated: boolean;
+  authMode: 'jwt' | 'api_key' | 'none';
+  apiUrl: string;
+  detail: string;
+  serverVersion: string | null;
 }
 
 class ApiClient {
@@ -170,6 +180,96 @@ class ApiClient {
     localStorage.removeItem('remembra_user');
   }
 
+  getApiBaseUrl(): string {
+    if (API_ROOT) {
+      return API_ROOT;
+    }
+
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+
+    return '';
+  }
+
+  getAuthMode(): 'jwt' | 'api_key' | 'none' {
+    if (this.getJwtToken()) {
+      return 'jwt';
+    }
+
+    if (this.getApiKey()) {
+      return 'api_key';
+    }
+
+    return 'none';
+  }
+
+  async getConnectionStatus(): Promise<ConnectionStatus> {
+    const apiUrl = this.getApiBaseUrl();
+    const authMode = this.getAuthMode();
+
+    try {
+      const healthResponse = await fetch(`${API_ROOT || ''}/health`, {
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!healthResponse.ok) {
+        return {
+          apiReachable: false,
+          authenticated: false,
+          authMode,
+          apiUrl,
+          detail: `Health check failed (${healthResponse.status})`,
+          serverVersion: null,
+        };
+      }
+
+      const healthData = await healthResponse.json().catch(() => null);
+      const serverVersion = typeof healthData?.version === 'string' ? healthData.version : null;
+
+      if (authMode === 'none') {
+        return {
+          apiReachable: true,
+          authenticated: false,
+          authMode,
+          apiUrl,
+          detail: 'API reachable. Sign in to manage projects and workspace settings.',
+          serverVersion,
+        };
+      }
+
+      try {
+        await this.listMemories({ limit: 1, offset: 0, project_id: this.getProjectId() || 'default' });
+        return {
+          apiReachable: true,
+          authenticated: true,
+          authMode,
+          apiUrl,
+          detail: authMode === 'jwt' ? 'Connected via JWT session.' : 'Connected via API key.',
+          serverVersion,
+        };
+      } catch (error) {
+        return {
+          apiReachable: true,
+          authenticated: false,
+          authMode,
+          apiUrl,
+          detail: error instanceof Error ? error.message : 'API reachable, but authentication failed.',
+          serverVersion,
+        };
+      }
+    } catch {
+      return {
+        apiReachable: false,
+        authenticated: false,
+        authMode,
+        apiUrl,
+        detail: 'Cannot reach API server.',
+        serverVersion: null,
+      };
+    }
+  }
+
   private getAuthHeaders(): Record<string, string> {
     // Prefer JWT token over API key
     const jwtToken = this.getJwtToken();
@@ -226,17 +326,16 @@ class ApiClient {
   }
 
   async listMemories(params: ListMemoriesParams = {}): Promise<Memory[]> {
-    // No GET /memories endpoint - use recall with broad query
-    const result = await this.fetchApi<{ memories: Memory[]; context: string }>('/memories/recall', {
-      method: 'POST',
-      body: JSON.stringify({
-        query: 'all memories',  // Broad semantic query
-        limit: params.limit || 20,
-        threshold: 0.0,  // Low threshold to include all
-        project_id: params.project_id || this.getProjectId() || 'default',
-      }),
-    });
-    return result.memories || [];
+    const query = new URLSearchParams();
+    query.set('limit', String(params.limit || 20));
+    query.set('offset', String(params.offset || 0));
+
+    const projectId = params.project_id ?? this.getProjectId();
+    if (projectId) {
+      query.set('project_id', projectId);
+    }
+
+    return this.fetchApi<Memory[]>(`/memories?${query.toString()}`);
   }
 
   async recallMemories(params: RecallParams): Promise<RecallResult> {
@@ -360,28 +459,53 @@ class ApiClient {
   }
 
   // Debug / Analytics methods
-  async debugRecall(query: string, limit: number = 10, threshold: number = 0.3): Promise<DebugRecallResponse> {
+  async debugRecall(
+    query: string,
+    limit: number = 10,
+    threshold: number = 0.3,
+    projectId?: string
+  ): Promise<DebugRecallResponse> {
     return this.fetchApi<DebugRecallResponse>('/debug/recall', {
       method: 'POST',
       body: JSON.stringify({
         query,
         limit,
         threshold,
-        project_id: this.getProjectId() || 'default',
+        project_id: projectId || this.getProjectId() || 'default',
       }),
     });
   }
 
-  async getAnalytics(): Promise<AnalyticsResponse> {
-    return this.fetchApi<AnalyticsResponse>('/debug/analytics');
+  async getAnalytics(projectId?: string): Promise<AnalyticsResponse> {
+    const query = new URLSearchParams();
+    const resolvedProjectId = projectId ?? this.getProjectId();
+    if (resolvedProjectId) {
+      query.set('project_id', resolvedProjectId);
+    }
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    return this.fetchApi<AnalyticsResponse>(`/debug/analytics${suffix}`);
   }
 
-  async getEntityGraph(projectId: string = 'default'): Promise<EntityGraphDataResponse> {
-    return this.fetchApi<EntityGraphDataResponse>(`/debug/entities/graph?project_id=${projectId}`);
+  async getEntityGraph(projectId?: string): Promise<EntityGraphDataResponse> {
+    const resolvedProjectId = projectId ?? this.getProjectId();
+    const suffix = resolvedProjectId ? `?project_id=${encodeURIComponent(resolvedProjectId)}` : '';
+    return this.fetchApi<EntityGraphDataResponse>(`/debug/entities/graph${suffix}`);
   }
 
-  async getMemoryTimeline(page: number = 1, pageSize: number = 50): Promise<MemoryTimelineResponse> {
-    return this.fetchApi<MemoryTimelineResponse>(`/debug/timeline?page=${page}&page_size=${pageSize}`);
+  async getMemoryTimeline(
+    page: number = 1,
+    pageSize: number = 50,
+    projectId?: string
+  ): Promise<MemoryTimelineResponse> {
+    const query = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+    });
+    const resolvedProjectId = projectId ?? this.getProjectId();
+    if (resolvedProjectId) {
+      query.set('project_id', resolvedProjectId);
+    }
+    return this.fetchApi<MemoryTimelineResponse>(`/debug/timeline?${query.toString()}`);
   }
 
   // Cloud / Usage methods
@@ -420,11 +544,20 @@ class ApiClient {
     return this.fetchApi<ApiKeyListResponse>(`/keys${params}`);
   }
 
-  async createKey(name: string, permission: 'admin' | 'editor' | 'viewer'): Promise<CreateApiKeyResponse> {
+  async createKey(
+    name: string,
+    permission: 'admin' | 'editor' | 'viewer',
+    projectIds: string[] = [],
+  ): Promise<CreateApiKeyResponse> {
     return this.fetchApi<CreateApiKeyResponse>('/keys', {
       method: 'POST',
-      body: JSON.stringify({ name, permission }),
+      body: JSON.stringify({ name, permission, project_ids: projectIds }),
     });
+  }
+
+  async listProjects(): Promise<ProjectScopeOption[]> {
+    const response = await this.fetchApi<ProjectScopeOption[] | { spaces: ProjectScopeOption[] }>('/spaces');
+    return Array.isArray(response) ? response : response.spaces || [];
   }
 
   async revokeKey(id: string, hard: boolean = false): Promise<RevokeApiKeyResponse> {
@@ -666,6 +799,7 @@ export interface ApiKeyInfo {
   rate_limit_tier: string;
   role: 'admin' | 'editor' | 'viewer';
   permission: 'admin' | 'editor' | 'viewer';  // Alias for role (frontend compatibility)
+  project_ids: string[];
 }
 
 export interface ApiKeyListResponse {
@@ -676,6 +810,7 @@ export interface ApiKeyListResponse {
 export interface CreateApiKeyRequest {
   name: string;
   permission: 'admin' | 'editor' | 'viewer';
+  project_ids?: string[];
 }
 
 export interface CreateApiKeyResponse {
@@ -686,7 +821,18 @@ export interface CreateApiKeyResponse {
   rate_limit_tier: string;
   role: 'admin' | 'editor' | 'viewer';
   permission?: 'admin' | 'editor' | 'viewer';  // Alias
+  project_ids: string[];
   message?: string;
+}
+
+export interface ProjectScopeOption {
+  id: string;
+  name: string;
+  description: string;
+  owner_id: string;
+  project_id: string;
+  created_at: string;
+  permission: string;
 }
 
 export interface RevokeApiKeyResponse {

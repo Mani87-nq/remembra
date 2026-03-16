@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -286,7 +286,7 @@ CurrentUser = Annotated[dict, Depends(get_current_user_from_jwt)]
 @limiter.limit("5/minute")  # Prevent account spam
 async def signup(
     request: Request,
-    body: SignupRequest,
+    body: Annotated[SignupRequest, Body(...)],
 ) -> SignupResponse:
     """
     Create a new user account.
@@ -324,7 +324,7 @@ async def signup(
 @limiter.limit("10/minute")  # Prevent brute force
 async def login(
     request: Request,
-    body: LoginRequest,
+    body: Annotated[LoginRequest, Body(...)],
 ) -> LoginResponse:
     """
     Authenticate and get an access token.
@@ -406,7 +406,7 @@ async def logout(
 @limiter.limit("3/minute")  # Prevent abuse
 async def forgot_password(
     request: Request,
-    body: ForgotPasswordRequest,
+    body: Annotated[ForgotPasswordRequest, Body(...)],
 ) -> ForgotPasswordResponse:
     """
     Request a password reset.
@@ -466,7 +466,7 @@ async def forgot_password(
 @limiter.limit("5/minute")  # Prevent brute force token guessing
 async def reset_password(
     request: Request,
-    body: ResetPasswordRequest,
+    body: Annotated[ResetPasswordRequest, Body(...)],
 ) -> ResetPasswordResponse:
     """
     Reset password using a reset token.

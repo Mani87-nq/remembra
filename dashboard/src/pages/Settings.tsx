@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Lock, AlertTriangle, Loader2, Shield, Smartphone, CheckCircle, XCircle } from 'lucide-react';
+import { User, Lock, AlertTriangle, Loader2, Shield, Smartphone, CheckCircle, XCircle, Key, Database, Globe } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
 import { API_V1 } from '../config';
@@ -14,16 +14,25 @@ interface SettingsProps {
 export function Settings({ onLogout }: SettingsProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [user, setUser] = useState<UserResponse | null>(null);
+  const [authMode, setAuthMode] = useState<'jwt' | 'api_key' | 'none'>(() => api.getAuthMode());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setAuthMode(api.getAuthMode());
     loadUserInfo();
   }, []);
 
   const loadUserInfo = async () => {
     setLoading(true);
     setError(null);
+
+    if (api.getAuthMode() !== 'jwt') {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`${API_V1}/auth/me`, {
         headers: {
@@ -56,6 +65,83 @@ export function Settings({ onLogout }: SettingsProps) {
     return (
       <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">
         {error}
+      </div>
+    );
+  }
+
+  if (authMode !== 'jwt') {
+    const projectId = api.getProjectId() || 'default';
+    const userId = api.getUserId();
+    const apiUrl = api.getApiBaseUrl();
+
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Connection and workspace context for this session
+          </p>
+        </div>
+
+        <div className="p-5 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30">
+          <div className="flex items-start gap-3">
+            <Key className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <div>
+              <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                API key session
+              </h2>
+              <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+                Account profile, password, and 2FA settings require a JWT login. This session is authenticated with an API key,
+                so only connection-level settings are available here.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Globe className="w-4 h-4 text-[#8B5CF6]" />
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">API URL</h2>
+            </div>
+            <code className="block text-sm text-gray-700 dark:text-gray-300 break-all">{apiUrl}</code>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Database className="w-4 h-4 text-[#8B5CF6]" />
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Current Project</h2>
+            </div>
+            <code className="block text-sm text-gray-700 dark:text-gray-300">{projectId}</code>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <User className="w-4 h-4 text-[#8B5CF6]" />
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">User ID</h2>
+            </div>
+            <code className="block text-sm text-gray-700 dark:text-gray-300 break-all">{userId}</code>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-4 h-4 text-[#8B5CF6]" />
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Auth Mode</h2>
+            </div>
+            <span className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+              {authMode === 'api_key' ? 'API Key' : 'Disconnected'}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">What to use instead</h2>
+          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <li>Use the API Keys page to create, revoke, and scope machine credentials.</li>
+            <li>Use the project switcher in the header to change active project context.</li>
+            <li>Sign in with email/password if you need profile, password, or 2FA settings.</li>
+          </ul>
+        </div>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 """Memory service - core business logic for store, recall, update, forget."""
 
 import asyncio
+import json
 import math
 from datetime import datetime, timedelta
 from typing import Any
@@ -1301,8 +1302,52 @@ class MemoryService:
     # Get by ID
     # -----------------------------------------------------------------------
 
+    async def _serialize_memory_record(self, memory: dict[str, Any]) -> dict[str, Any]:
+        """Normalize DB memory metadata for dashboard/API consumers."""
+        metadata = memory.get("metadata") or {}
+        if isinstance(metadata, str):
+            try:
+                metadata = json.loads(metadata)
+            except json.JSONDecodeError:
+                metadata = {}
+
+        entities = await self.db.get_memory_entities(memory["id"])
+
+        return {
+            "id": memory["id"],
+            "user_id": memory["user_id"],
+            "project_id": memory.get("project_id", "default"),
+            "content": memory.get("content", ""),
+            "created_at": memory.get("created_at"),
+            "updated_at": memory.get("updated_at"),
+            "accessed_at": memory.get("last_accessed"),
+            "access_count": memory.get("access_count", 0) or 0,
+            "memory_type": metadata.get("memory_type"),
+            "entities": [entity.canonical_name for entity in entities],
+            "metadata": metadata,
+        }
+
+    async def list_memories(
+        self,
+        user_id: str,
+        project_id: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        """List memories for browsing in the dashboard."""
+        rows = await self.db.list_memories(
+            user_id=user_id,
+            project_id=project_id,
+            limit=limit,
+            offset=offset,
+        )
+        return [await self._serialize_memory_record(row) for row in rows]
+
     async def get(self, memory_id: str) -> dict[str, Any] | None:
         """Get a memory by ID."""
+        memory = await self.db.get_memory(memory_id)
+        if memory is not None:
+            return await self._serialize_memory_record(memory)
         return await self.qdrant.get_by_id(memory_id)
 
     # -----------------------------------------------------------------------
@@ -1448,7 +1493,7 @@ class MemoryService:
         # Get expired memory IDs
         expired_ids = await self.db.get_expired_memories(
             user_id=user_id,
-            project_id=project_id or "default",
+            project_id=project_id,
         )
         
         if not expired_ids:
@@ -1473,7 +1518,7 @@ class MemoryService:
     async def get_memories_with_decay(
         self,
         user_id: str,
-        project_id: str = "default",
+        project_id: str | None = None,
         min_decay_score: float = 0.1,
         limit: int = 100,
     ) -> list[dict[str, Any]]:

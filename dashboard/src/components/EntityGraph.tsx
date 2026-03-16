@@ -88,7 +88,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
   const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 960, height: 680 });
+  const [dimensions, setDimensions] = useState({ width: 960, height: 720 });
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<string>>(new Set());
   const [pulsePhase, setPulsePhase] = useState(0);
@@ -113,7 +113,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       setDimensions(prev => {
         const next = {
           width: Math.max(Math.floor(width), 320),
-          height: Math.max(Math.floor(height), 560),
+          height: Math.max(Math.floor(height), 680),
         };
 
         if (prev.width === next.width && prev.height === next.height) {
@@ -217,7 +217,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       return;
     }
 
-    const padding = Math.max(60, Math.min(dimensions.width * 0.08, 120));
+    const padding = Math.max(80, Math.min(dimensions.width * 0.1, 140));
     graphRef.current.zoomToFit(duration, padding);
   }, [dimensions.width, filteredData.nodes.length]);
 
@@ -521,7 +521,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   const handleZoomIn = () => graphRef.current?.zoom(graphRef.current.zoom() * 1.5, 300);
   const handleZoomOut = () => graphRef.current?.zoom(graphRef.current.zoom() / 1.5, 300);
   const handleReset = () => {
-    graphRef.current?.zoomToFit(400, 50);
+    fitGraphToViewport(450);
     setSelectedNode(null);
   };
 
@@ -575,8 +575,8 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   return (
     <div
       ref={containerRef}
-      className="dashboard-surface relative w-full overflow-hidden rounded-[30px]"
-      style={{ height: 'clamp(620px, 72vh, 780px)' }}
+      className="dashboard-surface relative isolate w-full overflow-hidden rounded-[30px]"
+      style={{ height: 'clamp(680px, calc(100vh - 11rem), 860px)' }}
     >
       {/* Depth background with radial glow - circuit board aesthetic */}
       <div className="absolute inset-0 bg-[#0a0a0f]">
@@ -767,7 +767,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
         ref={graphRef}
         graphData={filteredData}
         width={dimensions.width}
-        height={600}
+        height={dimensions.height}
         backgroundColor="transparent"
         nodeCanvasObject={paintNode}
         nodePointerAreaPaint={(node, color, ctx) => {

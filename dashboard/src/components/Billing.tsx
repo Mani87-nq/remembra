@@ -430,7 +430,7 @@ export function Billing() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {hasPaidPlan ? (
-              <div className="p-3 rounded-full bg-gradient-to-r from-#8B5CF6 to-purple-500">
+              <div className="p-3 rounded-full bg-gradient-to-r from-[#8B5CF6] to-purple-500">
                 <Crown className="w-6 h-6 text-white" />
               </div>
             ) : (
@@ -636,7 +636,7 @@ export function Billing() {
                       <span className="text-gray-400">—</span>
                     )
                   ) : (
-                    <span className="font-medium text-#7C3AED dark:text-[#A78BFA]">{feature.pro}</span>
+                    <span className="font-medium text-[#7C3AED] dark:text-[#A78BFA]">{feature.pro}</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-center text-sm bg-purple-50/50 dark:bg-purple-900/10">

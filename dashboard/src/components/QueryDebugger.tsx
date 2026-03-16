@@ -4,7 +4,11 @@ import type { DebugRecallResponse, ScoringBreakdown } from '../lib/api';
 import { Search, Loader2, Zap, Clock, Users, Type, ChevronDown, ChevronRight } from 'lucide-react';
 import clsx from 'clsx';
 
-export function QueryDebugger() {
+interface QueryDebuggerProps {
+  projectId?: string;
+}
+
+export function QueryDebugger({ projectId }: QueryDebuggerProps) {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState<DebugRecallResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -16,7 +20,7 @@ export function QueryDebugger() {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.debugRecall(query, 10, 0.2);
+      const data = await api.debugRecall(query, 10, 0.2, projectId);
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Debug recall failed');
@@ -173,7 +177,7 @@ function ResultCard({
         onClick={onToggle}
         className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50"
       >
-        <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-#7C3AED dark:text-blue-300 text-xs font-bold">
+        <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-[#7C3AED] dark:text-blue-300 text-xs font-bold">
           {rank}
         </span>
         <div className="flex-1 min-w-0">

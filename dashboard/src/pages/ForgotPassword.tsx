@@ -184,7 +184,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 px-4 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-#A78BFA text-white font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-[#A78BFA] text-white font-medium transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -280,7 +280,7 @@ export function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
               <button
                 type="submit"
                 disabled={loading || !isPasswordValid}
-                className="w-full py-3 px-4 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-#A78BFA disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 rounded-lg bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:bg-[#A78BFA] disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>

@@ -6,7 +6,6 @@ import os
 os.environ["REMEMBRA_AUTH_ENABLED"] = "false"
 os.environ["REMEMBRA_RATE_LIMIT_ENABLED"] = "false"
 
-from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -35,6 +34,36 @@ def mock_memory_service():
         memories=[],
         entities=[],
     ))
+
+    service.list_memories = AsyncMock(return_value=[
+        {
+            "id": "test-memory-id",
+            "user_id": "default_user",
+            "project_id": "default",
+            "content": "John is the CTO at Acme Corp.",
+            "created_at": "2026-03-16T00:00:00",
+            "updated_at": "2026-03-16T00:00:00",
+            "accessed_at": None,
+            "access_count": 0,
+            "memory_type": None,
+            "entities": ["John", "Acme Corp"],
+            "metadata": {},
+        }
+    ])
+
+    service.get = AsyncMock(return_value={
+        "id": "test-memory-id",
+        "user_id": "default_user",
+        "project_id": "default",
+        "content": "John is the CTO at Acme Corp.",
+        "created_at": "2026-03-16T00:00:00",
+        "updated_at": "2026-03-16T00:00:00",
+        "accessed_at": None,
+        "access_count": 0,
+        "memory_type": None,
+        "entities": ["John", "Acme Corp"],
+        "metadata": {},
+    })
     
     # Mock forget
     from remembra.models.memory import ForgetResponse
@@ -124,6 +153,17 @@ async def test_store_memory_returns_201(client: AsyncClient, mock_memory_service
     
     # Verify the service was called
     mock_memory_service.store.assert_called_once()
+
+
+async def test_list_memories_returns_200(client: AsyncClient, mock_memory_service) -> None:
+    r = await client.get("/api/v1/memories?limit=10&offset=0&project_id=default")
+    assert r.status_code == 200
+    data = r.json()
+    assert isinstance(data, list)
+    assert data[0]["id"] == "test-memory-id"
+    assert data[0]["entities"] == ["John", "Acme Corp"]
+
+    mock_memory_service.list_memories.assert_called_once()
 
 
 async def test_recall_memories(client: AsyncClient, mock_memory_service) -> None:

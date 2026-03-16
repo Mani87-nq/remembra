@@ -12,66 +12,85 @@ import {
   LogOut,
   Globe
 } from 'lucide-react';
-import clsx from 'clsx';
-import { api } from '../lib/api';
-import { API_V1 } from '../config';
+import { api, type ConnectionStatus } from '../lib/api';
 
 interface SettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
+  onOpenApiKeys?: () => void;
 }
 
-export function SettingsPanel({ isOpen, onClose, onLogout }: SettingsPanelProps) {
+export function SettingsPanel({ isOpen, onClose, onLogout, onOpenApiKeys }: SettingsPanelProps) {
   const [apiUrl, setApiUrl] = useState('');
   const [projectId, setProjectId] = useState('');
   const [userId, setUserId] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
+  const [connection, setConnection] = useState<ConnectionStatus | null>(null);
   const [apiKey, setApiKey] = useState('');
   const [apiKeyPreview, setApiKeyPreview] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [checkingConnection, setCheckingConnection] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       loadSettings();
-      checkConnection();
+      void refreshConnection();
     }
   }, [isOpen]);
 
-  const loadSettings = async () => {
-    // Get API URL
-    const baseUrl = API_V1.replace('/api/v1', '');
-    setApiUrl(baseUrl);
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
 
-    // Get Project ID
-    const project = api.getProjectId() || 'default';
-    setProjectId(project);
+    const syncProject = () => {
+      setProjectId(api.getProjectId() || 'default');
+    };
 
-    // Get User ID
-    const user = api.getUserId();
-    setUserId(user);
+    const handleProjectChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ projectId?: string }>;
+      setProjectId(customEvent.detail?.projectId || api.getProjectId() || 'default');
+    };
 
-    // Get API Key preview
+    window.addEventListener('storage', syncProject);
+    window.addEventListener('remembra:project-changed', handleProjectChanged as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', syncProject);
+      window.removeEventListener('remembra:project-changed', handleProjectChanged as EventListener);
+    };
+  }, [isOpen]);
+
+  const loadSettings = () => {
+    setApiUrl(api.getApiBaseUrl());
+
+    setProjectId(api.getProjectId() || 'default');
+    setUserId(api.getUserId());
+
     const key = api.getApiKey();
     if (key) {
       setApiKeyPreview(`${key.substring(0, 8)}...${key.substring(key.length - 4)}`);
       setApiKey(key);
     } else {
-      // Check for JWT token
       const token = api.getJwtToken();
       if (token) {
         setApiKeyPreview('JWT Token (via login)');
+        setApiKey('');
+      } else {
+        setApiKeyPreview('');
+        setApiKey('');
       }
     }
   };
 
-  const checkConnection = async () => {
+  const refreshConnection = async () => {
+    setCheckingConnection(true);
     try {
-      const response = await fetch(`${API_V1}/health`);
-      setIsConnected(response.ok);
-    } catch {
-      setIsConnected(false);
+      const status = await api.getConnectionStatus();
+      setConnection(status);
+    } finally {
+      setCheckingConnection(false);
     }
   };
 
@@ -90,8 +109,7 @@ export function SettingsPanel({ isOpen, onClose, onLogout }: SettingsPanelProps)
       api.setApiKey(apiKey.trim());
       setApiKeyPreview(`${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`);
       setShowApiKey(false);
-      // Reload to apply new key
-      window.location.reload();
+      void refreshConnection();
     }
   };
 
@@ -104,11 +122,19 @@ export function SettingsPanel({ isOpen, onClose, onLogout }: SettingsPanelProps)
 
   if (!isOpen) return null;
 
+  const statusTone = checkingConnection
+    ? 'checking'
+    : !connection || !connection.apiReachable
+      ? 'critical'
+      : connection.authenticated
+        ? 'healthy'
+        : 'warning';
+
   return (
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        className="modal-backdrop fixed inset-0 z-50"
         onClick={onClose}
       />
 
@@ -147,10 +173,20 @@ export function SettingsPanel({ isOpen, onClose, onLogout }: SettingsPanelProps)
               <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">
                 Connection Status
               </h3>
-              {isConnected ? (
+              {statusTone === 'checking' ? (
+                <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
+                  <span className="h-2 w-2 rounded-full bg-[hsl(var(--muted-foreground))] animate-pulse" />
+                  Checking
+                </div>
+              ) : statusTone === 'healthy' ? (
                 <div className="flex items-center gap-2 text-xs text-emerald-400">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                   Connected
+                </div>
+              ) : statusTone === 'warning' ? (
+                <div className="flex items-center gap-2 text-xs text-amber-500">
+                  <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  Auth Required
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-xs text-red-400">
@@ -160,19 +196,35 @@ export function SettingsPanel({ isOpen, onClose, onLogout }: SettingsPanelProps)
               )}
             </div>
             <div className="flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
-              {isConnected ? (
+              {statusTone === 'checking' ? (
+                <>
+                  <Wifi className="w-3.5 h-3.5" />
+                  Verifying server and credentials
+                </>
+              ) : statusTone === 'healthy' ? (
                 <>
                   <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-                  API responding normally
+                  {connection?.detail || 'API responding normally'}
+                </>
+              ) : statusTone === 'warning' ? (
+                <>
+                  <Wifi className="w-3.5 h-3.5 text-amber-500" />
+                  {connection?.detail || 'API online, but authentication is incomplete'}
                 </>
               ) : (
                 <>
                   <WifiOff className="w-3.5 h-3.5" />
-                  Cannot reach API server
+                  {connection?.detail || 'Cannot reach API server'}
                 </>
               )}
             </div>
           </div>
+
+          {connection?.serverVersion && (
+            <p className="text-xs text-[hsl(var(--muted-foreground))]">
+              Server version: <span className="font-mono text-[hsl(var(--foreground))]">{connection.serverVersion}</span>
+            </p>
+          )}
 
           {/* API URL */}
           <div>
@@ -281,7 +333,11 @@ export function SettingsPanel({ isOpen, onClose, onLogout }: SettingsPanelProps)
                   </button>
                 </div>
                 <p className="text-xs text-[hsl(var(--muted-foreground))]">
-                  {api.getJwtToken() ? 'Authenticated via JWT token' : 'Authenticated via API key'}
+                  {connection?.authMode === 'jwt'
+                    ? 'Authenticated via JWT token'
+                    : connection?.authMode === 'api_key'
+                      ? 'Authenticated via API key'
+                      : 'No credentials loaded'}
                 </p>
               </div>
             ) : (
@@ -335,7 +391,7 @@ export function SettingsPanel({ isOpen, onClose, onLogout }: SettingsPanelProps)
               <button
                 onClick={() => {
                   onClose();
-                  // Navigate to keys tab - implement via callback if needed
+                  onOpenApiKeys?.();
                 }}
                 className="text-[hsl(var(--primary))] hover:underline"
               >
