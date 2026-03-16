@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import type { ForceGraphMethods, NodeObject, LinkObject } from 'react-force-graph-2d';
 import { api } from '../lib/api';
-import { RefreshCw, ZoomIn, ZoomOut, Maximize2, Search, Filter, Sparkles } from 'lucide-react';
+import { RefreshCw, ZoomIn, ZoomOut, Maximize2, Search, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 
 interface EntityGraphProps {
@@ -86,8 +86,9 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
   const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+  const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 960, height: 680 });
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<string>>(new Set());
   const [pulsePhase, setPulsePhase] = useState(0);
@@ -95,22 +96,49 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   // Pulse animation for high-memory nodes
   useEffect(() => {
     const interval = setInterval(() => {
-      setPulsePhase(p => (p + 0.05) % (2 * Math.PI));
-    }, 50);
+      setPulsePhase(p => (p + 0.04) % (2 * Math.PI));
+    }, 80);
     return () => clearInterval(interval);
   }, []);
 
-  // Get container dimensions
+  // Observe the actual graph frame instead of only window resize so tab/layout changes re-center correctly.
   useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        setDimensions({ width: rect.width || 900, height: 600 });
-      }
+    const element = containerRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    const updateDimensions = (width: number, height: number) => {
+      setDimensions(prev => {
+        const next = {
+          width: Math.max(Math.floor(width), 320),
+          height: Math.max(Math.floor(height), 560),
+        };
+
+        if (prev.width === next.width && prev.height === next.height) {
+          return prev;
+        }
+
+        return next;
+      });
     };
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) {
+        return;
+      }
+
+      updateDimensions(entry.contentRect.width, entry.contentRect.height);
+    });
+
+    resizeObserver.observe(element);
+
+    const rect = element.getBoundingClientRect();
+    updateDimensions(rect.width, rect.height);
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   const fetchGraphData = async () => {
@@ -139,6 +167,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
         }));
       
       setGraphData({ nodes, links });
+      setSelectedNode(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load graph');
     } finally {
@@ -183,9 +212,40 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
     return Array.from(types).sort();
   }, [graphData.nodes]);
 
+  const fitGraphToViewport = useCallback((duration = 700) => {
+    if (!graphRef.current || filteredData.nodes.length === 0) {
+      return;
+    }
+
+    const padding = Math.max(60, Math.min(dimensions.width * 0.08, 120));
+    graphRef.current.zoomToFit(duration, padding);
+  }, [dimensions.width, filteredData.nodes.length]);
+
+  const updateHoveredPosition = useCallback((node: GraphNode | null) => {
+    if (
+      !node ||
+      !graphRef.current ||
+      node.x === undefined ||
+      node.y === undefined ||
+      !isFinite(node.x) ||
+      !isFinite(node.y)
+    ) {
+      setHoveredPosition(null);
+      return;
+    }
+
+    const { x, y } = graphRef.current.graph2ScreenCoords(node.x, node.y);
+
+    setHoveredPosition({
+      x: Math.max(16, Math.min(x + 18, dimensions.width - 220)),
+      y: Math.max(16, Math.min(y + 18, dimensions.height - 110)),
+    });
+  }, [dimensions.height, dimensions.width]);
+
   // Handle node hover - highlight connected nodes
   const handleNodeHover = useCallback((node: GraphNode | null) => {
     setHoveredNode(node);
+    updateHoveredPosition(node);
     
     if (node) {
       const connectedNodes = new Set<string>();
@@ -212,7 +272,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       setHighlightNodes(new Set());
       setHighlightLinks(new Set());
     }
-  }, [graphData.links]);
+  }, [graphData.links, updateHoveredPosition]);
 
   // Handle node click - select and zoom
   const handleNodeClick = useCallback((node: GraphNode) => {
@@ -223,6 +283,82 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       graphRef.current.zoom(2, 500);
     }
   }, []);
+
+  useEffect(() => {
+    if (!hoveredNode) {
+      setHoveredPosition(null);
+      return;
+    }
+
+    const interval = window.setInterval(() => updateHoveredPosition(hoveredNode), 50);
+    return () => window.clearInterval(interval);
+  }, [hoveredNode, updateHoveredPosition]);
+
+  useEffect(() => {
+    const graph = graphRef.current;
+
+    if (!graph || filteredData.nodes.length === 0) {
+      return;
+    }
+
+    const nodeLookup = new Map(filteredData.nodes.map(node => [node.id, node]));
+    const chargeForce = graph.d3Force('charge') as
+      | {
+          strength?: (value: number) => unknown;
+          distanceMax?: (value: number) => unknown;
+        }
+      | undefined;
+    const linkForce = graph.d3Force('link') as
+      | {
+          distance?: (distance: ((link: GraphLink) => number) | number) => unknown;
+          strength?: (strength: ((link: GraphLink) => number) | number) => unknown;
+          iterations?: (count: number) => unknown;
+        }
+      | undefined;
+
+    chargeForce?.strength?.(filteredData.nodes.length > 180 ? -42 : -58);
+    chargeForce?.distanceMax?.(Math.max(dimensions.width * 0.42, 320));
+    linkForce?.distance?.((link: GraphLink) => {
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+      const source = nodeLookup.get(sourceId as string);
+      const target = nodeLookup.get(targetId as string);
+      const density = (source?.memoryCount || 1) + (target?.memoryCount || 1);
+
+      return Math.max(36, 72 - Math.min(density * 1.8, 28));
+    });
+    linkForce?.strength?.((link: GraphLink) => {
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+      const source = nodeLookup.get(sourceId as string);
+      const target = nodeLookup.get(targetId as string);
+      const density = (source?.memoryCount || 1) + (target?.memoryCount || 1);
+
+      return Math.min(0.28, 0.08 + density * 0.01);
+    });
+    linkForce?.iterations?.(2);
+
+    graph.d3ReheatSimulation();
+
+    const timeout = window.setTimeout(() => fitGraphToViewport(), 360);
+    return () => window.clearTimeout(timeout);
+  }, [dimensions.height, dimensions.width, filteredData.links, filteredData.nodes, fitGraphToViewport]);
+
+  useEffect(() => {
+    if (filteredData.nodes.length === 0) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      if (document.hidden) {
+        return;
+      }
+
+      graphRef.current?.d3ReheatSimulation();
+    }, 6500);
+
+    return () => window.clearInterval(interval);
+  }, [filteredData.nodes.length]);
 
   // Custom node rendering
   const paintNode = useCallback((node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
@@ -344,15 +480,16 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       ctx.strokeStyle = 'rgba(168, 85, 247, 0.9)';
       ctx.lineWidth = 3 / globalScale;
     } else {
-      // Gradient stroke for circuit-trace effect
+      // Gradient stroke with a living shimmer so the graph feels active rather than frozen.
+      const shimmer = 0.12 + ((Math.sin(pulsePhase + source.memoryCount * 0.35) + 1) / 2) * 0.14;
       const gradient = ctx.createLinearGradient(source.x, source.y, target.x, target.y);
-      gradient.addColorStop(0, `${source.color || '#a855f7'}60`);
-      gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.4)');
-      gradient.addColorStop(1, `${target.color || '#a855f7'}60`);
+      gradient.addColorStop(0, `rgba(${hexToRgb(source.color || '#a855f7')}, ${shimmer})`);
+      gradient.addColorStop(0.5, `rgba(168, 85, 247, ${Math.min(shimmer + 0.06, 0.34)})`);
+      gradient.addColorStop(1, `rgba(${hexToRgb(target.color || '#a855f7')}, ${shimmer})`);
       
       ctx.shadowBlur = 0;
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 2 / globalScale;
+      ctx.lineWidth = 1.6 / globalScale;
     }
     
     ctx.stroke();
@@ -378,7 +515,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.fillText(link.type, midX, midY);
     }
-  }, [highlightLinks]);
+  }, [highlightLinks, pulsePhase]);
 
   // Zoom controls
   const handleZoomIn = () => graphRef.current?.zoom(graphRef.current.zoom() * 1.5, 300);
@@ -436,17 +573,31 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
   }
 
   return (
-    <div ref={containerRef} className="relative rounded-lg overflow-hidden">
+    <div
+      ref={containerRef}
+      className="dashboard-surface relative w-full overflow-hidden rounded-[30px]"
+      style={{ height: 'clamp(620px, 72vh, 780px)' }}
+    >
       {/* Depth background with radial glow - circuit board aesthetic */}
       <div className="absolute inset-0 bg-[#0a0a0f]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(168,85,247,0.15)_0%,_transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(59,130,246,0.1)_0%,_transparent_50%)]" />
-        <div className="absolute inset-0 opacity-30" style={{
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(168,85,247,0.18)_0%,_transparent_68%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(59,130,246,0.12)_0%,_transparent_52%)]" />
+        <div className="absolute inset-0 opacity-35" style={{
           backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(168,85,247,0.1) 0%, transparent 50%)',
         }} />
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '84px 84px',
+          }}
+        />
       </div>
       {/* Top Controls Bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/60 to-transparent">
+      <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/70 via-black/20 to-transparent">
         <div className="flex items-center justify-between gap-4">
           {/* Search */}
           <div className="relative flex-1 max-w-xs">
@@ -456,7 +607,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
               placeholder="Search entities..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-black/40 border border-white/10 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:border-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 bg-black/45 border border-white/10 rounded-xl text-white placeholder-gray-400 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-400/20"
             />
           </div>
           
@@ -524,7 +675,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
       </div>
 
       {/* Stats Bar */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 p-3 bg-gradient-to-t from-black/60 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/80 via-black/28 to-transparent">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-4 text-gray-300">
             <span><strong className="text-white">{filteredData.nodes.length}</strong> entities</span>
@@ -593,8 +744,8 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
         <div 
           className="absolute z-20 px-4 py-3 bg-black/70 backdrop-blur-md rounded-xl text-sm pointer-events-none border border-white/10 shadow-xl transition-all duration-150"
           style={{
-            left: Math.min((hoveredNode.x || 0) + 20, dimensions.width - 200),
-            top: (hoveredNode.y || 0) + 20,
+            left: hoveredPosition?.x ?? 20,
+            top: hoveredPosition?.y ?? 20,
           }}
         >
           <div className="font-semibold text-white tracking-tight">{hoveredNode.name}</div>
@@ -627,8 +778,8 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
         }}
         linkCanvasObject={paintLink}
         linkDirectionalParticles={l => highlightLinks.has(`${(l.source as any).id}-${(l.target as any).id}`) ? 4 : 1}
-        linkDirectionalParticleWidth={1.5}
-        linkDirectionalParticleSpeed={0.005}
+        linkDirectionalParticleWidth={(link) => highlightLinks.has(`${((link as GraphLink).source as any).id}-${((link as GraphLink).target as any).id}`) ? 2.4 : 1.2}
+        linkDirectionalParticleSpeed={(link) => highlightLinks.has(`${((link as GraphLink).source as any).id}-${((link as GraphLink).target as any).id}`) ? 0.013 : 0.0045}
         linkDirectionalParticleColor={(link) => {
           const source = (link as GraphLink).source as GraphNode;
           return source.color || 'rgba(168, 85, 247, 0.8)';
@@ -640,7 +791,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
         d3VelocityDecay={0.2}
         warmupTicks={100}
         d3AlphaMin={0.001}
-        onEngineStop={() => graphRef.current?.zoomToFit(400, 50)}
+        autoPauseRedraw={false}
         enableNodeDrag={true}
         enableZoomInteraction={true}
         enablePanInteraction={true}

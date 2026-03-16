@@ -35,32 +35,28 @@ interface StatCardProps {
 function StatCard({ label, value, subtext, icon: Icon, trend, color = 'purple', delay = 0 }: StatCardProps) {
   const colorStyles = {
     purple: {
-      iconBg: 'bg-purple-500/10 border border-purple-500/20',
-      iconColor: 'text-purple-400',
-      trendPositive: 'text-green-400',
-      trendNegative: 'text-red-400',
-      glow: 'from-purple-500/10 via-purple-500/5 to-transparent'
+      accent: '#8B5CF6',
+      iconBg: 'rgba(139, 92, 246, 0.12)',
+      iconBorder: 'rgba(139, 92, 246, 0.22)',
+      glow: 'rgba(139, 92, 246, 0.16)',
     },
     blue: {
-      iconBg: 'bg-blue-500/10 border border-blue-500/20',
-      iconColor: 'text-blue-400',
-      trendPositive: 'text-green-400',
-      trendNegative: 'text-red-400',
-      glow: 'from-blue-500/10 via-blue-500/5 to-transparent'
+      accent: '#60A5FA',
+      iconBg: 'rgba(96, 165, 250, 0.12)',
+      iconBorder: 'rgba(96, 165, 250, 0.22)',
+      glow: 'rgba(96, 165, 250, 0.16)',
     },
     green: {
-      iconBg: 'bg-emerald-500/10 border border-emerald-500/20',
-      iconColor: 'text-emerald-400',
-      trendPositive: 'text-green-400',
-      trendNegative: 'text-red-400',
-      glow: 'from-emerald-500/10 via-emerald-500/5 to-transparent'
+      accent: '#34D399',
+      iconBg: 'rgba(52, 211, 153, 0.12)',
+      iconBorder: 'rgba(52, 211, 153, 0.22)',
+      glow: 'rgba(52, 211, 153, 0.16)',
     },
     amber: {
-      iconBg: 'bg-amber-500/10 border border-amber-500/20',
-      iconColor: 'text-amber-400',
-      trendPositive: 'text-green-400',
-      trendNegative: 'text-red-400',
-      glow: 'from-amber-500/10 via-amber-500/5 to-transparent'
+      accent: '#F59E0B',
+      iconBg: 'rgba(245, 158, 11, 0.12)',
+      iconBorder: 'rgba(245, 158, 11, 0.22)',
+      glow: 'rgba(245, 158, 11, 0.16)',
     },
   };
 
@@ -72,45 +68,62 @@ function StatCard({ label, value, subtext, icon: Icon, trend, color = 'purple', 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay, ease: "easeOut" }}
       className={clsx(
-        'group relative p-6 rounded-2xl overflow-hidden',
-        'bg-white/[0.02] backdrop-blur-md border border-white/5',
-        'hover:bg-white/[0.04] hover:shadow-xl hover:shadow-black/50 hover:border-white/10',
+        'group dashboard-surface relative overflow-hidden rounded-[24px] p-6',
+        'hover:-translate-y-0.5',
         'transition-all duration-300'
       )}
+      style={{
+        boxShadow: `0 24px 60px hsl(0 0% 0% / 0.14), inset 0 1px 0 hsl(0 0% 100% / 0.05), 0 0 0 1px ${styles.glow}`,
+      }}
     >
       {/* Subtle glowing animated background gradient */}
-      <div className={clsx(
-        'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-        styles.glow
-      )} />
+      <div
+        className="absolute inset-0 opacity-80 transition-opacity duration-500 group-hover:opacity-100"
+        style={{
+          background: `radial-gradient(circle at 100% 0%, ${styles.glow} 0%, transparent 45%)`,
+        }}
+      />
       
       <div className="relative flex items-start justify-between z-10">
         <div>
-          <p className="text-[13px] font-medium text-gray-400 tracking-wide mb-1.5 uppercase">{label}</p>
-          <p className="text-3xl font-bold text-white tracking-tight">
+          <p className="mb-1.5 text-[12px] font-semibold uppercase tracking-[0.24em] text-[hsl(var(--muted-foreground))]">{label}</p>
+          <p className="text-3xl font-bold tracking-tight text-[hsl(var(--foreground))]">
             <AnimatedNumber value={value} />
           </p>
           {subtext && (
-            <p className="text-[13px] text-gray-500 font-medium mt-1">{subtext}</p>
+            <p className="mt-1 text-[13px] font-medium text-[hsl(var(--muted-foreground))]">{subtext}</p>
           )}
           {trend && (
-            <div className={clsx(
-              'flex items-center gap-1.5 mt-3 text-xs font-semibold px-2 py-1 rounded-md bg-black/40 w-fit',
-              trend.value >= 0 ? styles.trendPositive : styles.trendNegative
-            )}>
+            <div
+              className={clsx(
+                'mt-3 flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold',
+                trend.value >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+              )}
+              style={{
+                backgroundColor: 'hsl(var(--muted) / 0.7)',
+                border: '1px solid hsl(var(--border) / 0.72)',
+              }}
+            >
               {trend.value >= 0 ? (
                 <TrendingUp className="w-3.5 h-3.5" />
               ) : (
                 <TrendingDown className="w-3.5 h-3.5" />
               )}
               <span>{trend.value >= 0 ? '+' : ''}{trend.value}%</span>
-              <span className="text-gray-500 font-medium ml-0.5">{trend.label}</span>
+              <span className="ml-0.5 font-medium text-[hsl(var(--muted-foreground))]">{trend.label}</span>
             </div>
           )}
         </div>
         
-        <div className={clsx('p-3 rounded-xl shadow-inner', styles.iconBg)}>
-          <Icon className={clsx('w-6 h-6', styles.iconColor)} />
+        <div
+          className="rounded-2xl p-3 shadow-inner"
+          style={{
+            backgroundColor: styles.iconBg,
+            border: `1px solid ${styles.iconBorder}`,
+            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 24px ${styles.glow}`,
+          }}
+        >
+          <Icon className="w-6 h-6" style={{ color: styles.accent }} />
         </div>
       </div>
     </motion.div>
@@ -138,11 +151,11 @@ export function StatsOverview({
         {[...Array(4)].map((_, i) => (
           <div 
             key={i}
-            className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse h-36"
+            className="dashboard-surface h-36 animate-pulse rounded-[24px] p-6"
           >
-            <div className="h-4 bg-white/5 rounded w-24 mb-4" />
-            <div className="h-8 bg-white/10 rounded w-28 mb-3" />
-            <div className="h-3 bg-white/5 rounded w-16" />
+            <div className="mb-4 h-4 w-24 rounded bg-[hsl(var(--muted))]" />
+            <div className="mb-3 h-8 w-28 rounded bg-[hsl(var(--muted))]" />
+            <div className="h-3 w-16 rounded bg-[hsl(var(--muted))]" />
           </div>
         ))}
       </div>
