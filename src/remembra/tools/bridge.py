@@ -18,10 +18,18 @@ from typing import cast
 
 import httpx
 
+try:
+    from remembra import __version__ as REMEMBRA_VERSION
+except Exception:  # pragma: no cover - fallback for partial installs
+    REMEMBRA_VERSION = "dev"
+
 DEFAULT_BRIDGE_HOST = "127.0.0.1"
 DEFAULT_BRIDGE_PORT = 8765
 DEFAULT_BRIDGE_UPSTREAM = "https://api.remembra.dev"
 DEFAULT_PID_FILE = Path.home() / ".remembra" / "bridge.pid"
+DEFAULT_BRIDGE_AGENT_NAME = "codex"
+FORWARDED_AGENT_HEADER = "X-Remembra-Agent"
+FORWARDED_BRIDGE_HEADER = "X-Remembra-Bridge"
 HOP_BY_HOP_HEADERS = {
     "connection",
     "content-length",
@@ -162,6 +170,7 @@ class BridgeConfig:
     port: int = DEFAULT_BRIDGE_PORT
     api_key: str | None = None
     timeout: float = 30.0
+    agent_name: str = DEFAULT_BRIDGE_AGENT_NAME
 
     @property
     def base_url(self) -> str:
@@ -216,6 +225,7 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
                 headers=self.headers,
                 body=body,
                 api_key=server.config.api_key,
+                agent_name=server.config.agent_name,
             )
         except httpx.HTTPError as exc:
             self._write_json_error(502, str(exc))
@@ -265,7 +275,17 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
         """Keep the bridge quiet by default."""
 
 
-def build_forward_headers(headers: HTTPMessage, *, api_key: str | None) -> dict[str, str]:
+def build_bridge_user_agent(agent_name: str) -> str:
+    """Build a deterministic user agent for Cloudflare allow rules."""
+    return f"Remembra-Bridge/{REMEMBRA_VERSION} ({agent_name}; +https://remembra.dev)"
+
+
+def build_forward_headers(
+    headers: HTTPMessage,
+    *,
+    api_key: str | None,
+    agent_name: str,
+) -> dict[str, str]:
     """Prepare upstream headers while stripping hop-by-hop ones."""
     forwarded: dict[str, str] = {}
     for header, value in headers.items():
@@ -275,6 +295,9 @@ def build_forward_headers(headers: HTTPMessage, *, api_key: str | None) -> dict[
 
     if api_key:
         forwarded["X-API-Key"] = api_key
+    forwarded["User-Agent"] = build_bridge_user_agent(agent_name)
+    forwarded[FORWARDED_AGENT_HEADER] = agent_name
+    forwarded[FORWARDED_BRIDGE_HEADER] = "true"
     return forwarded
 
 
@@ -286,9 +309,14 @@ def forward_upstream_request(
     headers: HTTPMessage,
     body: bytes | None,
     api_key: str | None,
+    agent_name: str = DEFAULT_BRIDGE_AGENT_NAME,
 ) -> httpx.Response:
     """Forward a request to the upstream Remembra API."""
-    forwarded_headers = build_forward_headers(headers, api_key=api_key)
+    forwarded_headers = build_forward_headers(
+        headers,
+        api_key=api_key,
+        agent_name=agent_name,
+    )
     return client.request(
         method=method,
         url=path,
@@ -326,6 +354,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=30.0,
         help="Upstream request timeout in seconds",
+    )
+    parser.add_argument(
+        "--agent-name",
+        default=os.environ.get("REMEMBRA_AGENT_NAME", DEFAULT_BRIDGE_AGENT_NAME),
+        help="Agent name to stamp on forwarded requests",
     )
     parser.add_argument(
         "--stop",
@@ -396,6 +429,7 @@ def main() -> None:
         port=args.port,
         api_key=args.api_key,
         timeout=args.timeout,
+        agent_name=args.agent_name,
     )
 
     # Write PID file

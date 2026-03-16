@@ -4,7 +4,7 @@ import json
 import time
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -374,6 +374,7 @@ async def ingest_conversation(
 @router.post(
     "/conversation/stream",
     summary="Ingest conversation with real-time SSE progress",
+    response_class=StreamingResponse,
 )
 @limiter.limit("20/minute")
 async def ingest_conversation_stream(
@@ -384,7 +385,7 @@ async def ingest_conversation_stream(
     sanitizer: SanitizerDep,
     current_user: CurrentUser,
     settings: SettingsDep,
-) -> StreamingResponse:
+) -> Response:
     """
     Stream extraction progress as Server-Sent Events.
     

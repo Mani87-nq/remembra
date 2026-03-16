@@ -12,7 +12,10 @@ import pytest
 
 from remembra.tools.bridge import (
     BridgePortInUseError,
+    FORWARDED_AGENT_HEADER,
+    FORWARDED_BRIDGE_HEADER,
     build_forward_headers,
+    build_bridge_user_agent,
     check_port_available,
     forward_upstream_request,
     is_process_running,
@@ -30,6 +33,9 @@ def test_forward_upstream_request_injects_api_key_and_forwards_json() -> None:
         seen["path"] = request.url.path
         seen["query"] = request.url.query.decode()
         seen["api_key"] = request.headers["X-API-Key"]
+        seen["user_agent"] = request.headers["User-Agent"]
+        seen["agent_name"] = request.headers[FORWARDED_AGENT_HEADER]
+        seen["bridge"] = request.headers[FORWARDED_BRIDGE_HEADER]
         body = json.loads(request.content.decode())
         return httpx.Response(200, json={"echo": body, "status": "ok"})
 
@@ -48,6 +54,7 @@ def test_forward_upstream_request_injects_api_key_and_forwards_json() -> None:
             headers=headers,
             body=body,
             api_key="rem_test",
+            agent_name="codex",
         )
 
     assert response.status_code == 200
@@ -56,6 +63,9 @@ def test_forward_upstream_request_injects_api_key_and_forwards_json() -> None:
         "path": "/api/v1/memories/recall",
         "query": "source=test",
         "api_key": "rem_test",
+        "user_agent": build_bridge_user_agent("codex"),
+        "agent_name": "codex",
+        "bridge": "true",
     }
 
 
@@ -63,11 +73,15 @@ def test_build_forward_headers_preserves_client_api_key_when_not_configured() ->
     headers = Message()
     headers["X-API-Key"] = "from-client"
     headers["Content-Type"] = "application/json"
+    headers["User-Agent"] = "Python-urllib/3.13"
 
-    forwarded = build_forward_headers(headers, api_key=None)
+    forwarded = build_forward_headers(headers, api_key=None, agent_name="codex")
 
     assert forwarded["X-API-Key"] == "from-client"
     assert forwarded["Content-Type"] == "application/json"
+    assert forwarded["User-Agent"] == build_bridge_user_agent("codex")
+    assert forwarded[FORWARDED_AGENT_HEADER] == "codex"
+    assert forwarded[FORWARDED_BRIDGE_HEADER] == "true"
 
 
 def test_check_port_available_raises_on_port_in_use() -> None:

@@ -2,7 +2,7 @@
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -70,6 +70,7 @@ class ImportResponse(BaseModel):
 @router.get(
     "/export",
     summary="Export memories",
+    response_class=StreamingResponse,
 )
 @limiter.limit("5/minute")
 async def export_memories(
@@ -80,7 +81,7 @@ async def export_memories(
     project_id: str = Query("default", description="Project to export"),
     include_metadata: bool = Query(True, description="Include metadata in export"),
     limit: int = Query(10000, ge=1, le=100000),
-) -> StreamingResponse:
+) -> Response:
     """Export all memories as JSON, JSONL, or CSV.
 
     Streaming download for large datasets.

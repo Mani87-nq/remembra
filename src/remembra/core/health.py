@@ -29,10 +29,17 @@ async def check_qdrant(qdrant_url: str) -> dict[str, Any]:
 def build_health_response(
     version: str,
     qdrant: dict[str, Any],
+    encryption_enabled: bool = False,
 ) -> dict[str, Any]:
     overall = "ok" if qdrant["status"] == "ok" else "degraded"
-    return {
+    
+    response = {
         "status": overall,
         "version": version,
         "dependencies": {"qdrant": qdrant},
     }
+    
+    if encryption_enabled:
+        response["encryption"] = "AES-256-GCM"
+        
+    return response

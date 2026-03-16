@@ -392,6 +392,7 @@ def create_app() -> FastAPI:
         body: dict[str, Any] = build_health_response(
             version=__version__,
             qdrant=qdrant_status,
+            encryption_enabled=bool(cfg.encryption_key),
         )
         status_code = 200 if body["status"] == "ok" else 503
         return JSONResponse(content=body, status_code=status_code)

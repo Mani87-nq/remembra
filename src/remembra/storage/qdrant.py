@@ -44,6 +44,7 @@ class QdrantStore:
             self._client = AsyncQdrantClient(
                 url=self.settings.qdrant_url,
                 api_key=self.settings.qdrant_api_key,
+                timeout=30.0,
             )
         return self._client
 

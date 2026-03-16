@@ -14,7 +14,7 @@ import secrets
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -209,6 +209,7 @@ async def list_audit_events(
 @router.get(
     "/audit/export/json",
     summary="Export audit log as JSON",
+    response_class=StreamingResponse,
 )
 @limiter.limit("5/minute")
 async def export_audit_json(
@@ -219,7 +220,7 @@ async def export_audit_json(
     user_id: str | None = Query(None),
     action: str | None = Query(None),
     limit: int = Query(1000, ge=1, le=10000),
-) -> StreamingResponse:
+) -> Response:
     """Export audit events as JSON. Requires admin:export permission."""
     events = await audit_logger.get_recent_events(
         user_id=user_id,
@@ -240,6 +241,7 @@ async def export_audit_json(
 @router.get(
     "/audit/export/csv",
     summary="Export audit log as CSV",
+    response_class=StreamingResponse,
 )
 @limiter.limit("5/minute")
 async def export_audit_csv(
@@ -250,7 +252,7 @@ async def export_audit_csv(
     user_id: str | None = Query(None),
     action: str | None = Query(None),
     limit: int = Query(1000, ge=1, le=10000),
-) -> StreamingResponse:
+) -> Response:
     """Export audit events as CSV. Requires admin:export permission."""
     events = await audit_logger.get_recent_events(
         user_id=user_id,
