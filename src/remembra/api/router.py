@@ -19,6 +19,7 @@ from remembra.api.v1 import (
     temporal,
     transfer,
     webhooks,
+    websocket,
 )
 
 api_router = APIRouter(prefix="/api")

@@ -437,6 +437,12 @@ def create_app() -> FastAPI:
     app.include_router(api_router)
 
     # -----------------------------------------------------------------------
+    # WebSocket routes (at root level for easy access)
+    # -----------------------------------------------------------------------
+    from remembra.api.v1.websocket import router as ws_router
+    app.include_router(ws_router)
+
+    # -----------------------------------------------------------------------
     # Static files (Dashboard UI)
     # -----------------------------------------------------------------------
     static_dir = settings.static_dir

@@ -83,6 +83,24 @@ async def _dispatch_webhook(request: Request, event: WebhookEvent) -> None:
         _webhook_log.warning("Webhook dispatch failed: %s", exc)
 
 
+async def _broadcast_websocket(
+    event_type: str,
+    data: dict,
+    project_id: str = "default",
+) -> None:
+    """Fire-and-forget WebSocket broadcast for real-time updates."""
+    try:
+        from remembra.api.v1.websocket import connection_manager
+        await connection_manager.broadcast(
+            event_type=event_type,
+            data=data,
+            namespace=project_id,
+            project_id=project_id,
+        )
+    except Exception as exc:
+        _webhook_log.warning("WebSocket broadcast failed: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # List
 # ---------------------------------------------------------------------------
@@ -207,6 +225,18 @@ async def store_memory(
                 entities=getattr(result, "entities", None),
                 project_id=body.project_id or "default",
             ),
+        )
+
+        # Broadcast to WebSocket clients for real-time updates
+        await _broadcast_websocket(
+            event_type="memory.created",
+            data={
+                "memory_id": result.id,
+                "user_id": current_user.user_id,
+                "facts": result.extracted_facts or [],
+                "entities": [e.model_dump() if hasattr(e, 'model_dump') else e for e in (result.entities or [])],
+            },
+            project_id=body.project_id or "default",
         )
 
         # Attach usage warning if set by cloud limit enforcement
@@ -599,6 +629,18 @@ async def update_memory(
             resource_id=memory_id,
             success=True,
         )
+
+        # Broadcast to WebSocket clients for real-time updates
+        await _broadcast_websocket(
+            event_type="memory.updated",
+            data={
+                "memory_id": memory_id,
+                "user_id": current_user.user_id,
+                "new_content": body.content[:100] if body.content else None,  # Truncate for privacy
+            },
+            project_id=existing.get("project_id") or "default",
+        )
+
         return result
     except ValueError:
         raise HTTPException(
@@ -768,6 +810,18 @@ async def forget_memories(
                 memory_id=memory_id,
                 deleted_count=result.deleted_count if hasattr(result, "deleted_count") else 1,
             ),
+        )
+
+        # Broadcast to WebSocket clients for real-time updates
+        await _broadcast_websocket(
+            event_type="memory.deleted",
+            data={
+                "memory_id": memory_id,
+                "user_id": current_user.user_id,
+                "deleted_count": result.deleted_count if hasattr(result, "deleted_count") else 1,
+                "entity": entity,
+            },
+            project_id="default",
         )
 
         return result

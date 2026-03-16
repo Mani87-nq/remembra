@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../lib/api';
 import type { Memory, RecallResult } from '../lib/api';
+import { useWebSocket, type WebSocketEvent } from './useWebSocket';
 
 export function useMemories(limit = 20, projectId?: string) {
   const [memories, setMemories] = useState<Memory[]>([]);
@@ -8,6 +9,8 @@ export function useMemories(limit = 20, projectId?: string) {
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [wsConnected, setWsConnected] = useState(false);
+  const lastRefreshRef = useRef<number>(0);
 
   const fetchMemories = useCallback(async (pageOffset: number, reset = false) => {
     try {
@@ -24,6 +27,7 @@ export function useMemories(limit = 20, projectId?: string) {
       }
       
       setHasMore(result.length === limit);
+      lastRefreshRef.current = Date.now();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch memories');
     } finally {
@@ -44,6 +48,32 @@ export function useMemories(limit = 20, projectId?: string) {
     }
   }, [fetchMemories, hasMore, loading, offset]);
 
+  // Handle WebSocket events for real-time updates
+  const handleMemoryEvent = useCallback((event: WebSocketEvent) => {
+    // Debounce rapid events - don't refresh more than once per second
+    const now = Date.now();
+    if (now - lastRefreshRef.current < 1000) {
+      return;
+    }
+
+    console.log('[WebSocket] Memory event received:', event.type, event.data);
+    
+    // Refresh the list on any memory change
+    if (event.type === 'memory.created' || event.type === 'memory.updated' || event.type === 'memory.deleted') {
+      refresh();
+    }
+  }, [refresh]);
+
+  // WebSocket connection for real-time updates
+  const { connected } = useWebSocket({
+    namespace: projectId || 'default',
+    projectId,
+    apiKey: api.getApiKey() || undefined,
+    onMemoryEvent: handleMemoryEvent,
+    onConnectionChange: setWsConnected,
+    autoReconnect: true,
+  });
+
   useEffect(() => {
     if (api.isAuthenticated()) {
       setMemories([]);
@@ -53,7 +83,7 @@ export function useMemories(limit = 20, projectId?: string) {
     }
   }, [fetchMemories]);
 
-  return { memories, loading, error, hasMore, refresh, loadMore };
+  return { memories, loading, error, hasMore, refresh, loadMore, wsConnected: connected };
 }
 
 export function useSearch(projectId?: string) {

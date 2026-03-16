@@ -75,7 +75,7 @@ function SectionLoading({ label = 'Loading workspace surface...' }: { label?: st
 
 export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryProp, onCloseNewMemory }: DashboardProps) {
   const [currentProjectId, setCurrentProjectId] = useState(() => api.getProjectId() || 'default');
-  const { memories, loading, error, hasMore, refresh, loadMore } = useMemories(20, currentProjectId);
+  const { memories, loading, error, hasMore, refresh, loadMore, wsConnected } = useMemories(20, currentProjectId);
   const { results, loading: searchLoading, error: searchError, search, clear } = useSearch(currentProjectId);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -269,6 +269,23 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
                 >
                   <RefreshCw className={clsx('w-5 h-5', loading && 'animate-spin')} />
                 </button>
+                
+                {/* WebSocket live status indicator */}
+                <div
+                  className={clsx(
+                    'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
+                    wsConnected 
+                      ? 'bg-green-500/10 text-green-500' 
+                      : 'bg-yellow-500/10 text-yellow-500'
+                  )}
+                  title={wsConnected ? 'Live updates active' : 'Reconnecting...'}
+                >
+                  <span className={clsx(
+                    'w-2 h-2 rounded-full',
+                    wsConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'
+                  )} />
+                  {wsConnected ? 'Live' : 'Offline'}
+                </div>
               </div>
             </div>
 
