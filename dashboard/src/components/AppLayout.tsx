@@ -172,7 +172,7 @@ export function AppLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header Bar */}
-        <header className="dashboard-surface mx-3 mt-3 h-20 rounded-[26px] flex items-center justify-between px-4 md:px-6">
+        <header className="dashboard-surface relative z-40 mx-3 mt-3 h-20 rounded-[26px] flex items-center justify-between px-4 md:px-6">
           {/* Left: Mobile menu button + Page Title */}
           <div className="flex items-center gap-3 min-w-0">
             {/* Mobile hamburger menu */}
@@ -296,7 +296,7 @@ export function AppLayout({
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="relative z-0 flex-1 overflow-auto">
           <div key={activeTab} className={contentShellClass}>
             {children}
           </div>

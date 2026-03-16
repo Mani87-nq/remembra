@@ -149,7 +149,7 @@ export function ProjectSwitcher({ onProjectChange }: ProjectSwitcherProps) {
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative z-50" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
