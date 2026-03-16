@@ -224,6 +224,7 @@ class MemoryService:
         # Step 2 & 3: Process each fact with consolidation
         stored_facts: list[str] = []
         memory_id = None  # Track primary memory ID
+        matched_existing_id = None  # Track matched existing memory for NOOPs
         
         for fact in extracted_facts:
             fact_result = await self._store_single_fact(
@@ -241,15 +242,22 @@ class MemoryService:
                 team_id=request.team_id,
             )
             if fact_result:
-                stored_facts.append(fact_result["content"])
-                if memory_id is None:
-                    memory_id = fact_result["id"]
+                # Track matched existing memory ID (for NOOP cases)
+                if fact_result.get("matched_id") and matched_existing_id is None:
+                    matched_existing_id = fact_result["matched_id"]
+                # Only track stored facts (not NOOPs)
+                if fact_result.get("content") and fact_result.get("id"):
+                    stored_facts.append(fact_result["content"])
+                    if memory_id is None:
+                        memory_id = fact_result["id"]
         
-        # If nothing stored (all NOOPs), return minimal response
+        # If nothing stored (all NOOPs), return the matched existing memory ID
         if not memory_id:
-            log.info("all_facts_skipped", user_id=request.user_id)
+            # Use matched existing memory ID if available, otherwise generate a placeholder
+            response_id = matched_existing_id or ""
+            log.info("all_facts_skipped", user_id=request.user_id, matched_id=response_id)
             return StoreResponse(
-                id="",
+                id=response_id,
                 extracted_facts=extracted_facts,
                 entities=[],
             )
@@ -323,8 +331,10 @@ class MemoryService:
         result = await self.consolidator.consolidate(fact, existing_memories)
 
         if result.action == ConsolidationAction.NOOP:
-            log.debug("fact_skipped_noop", fact=fact[:50])
-            return None
+            # Return matched existing memory ID so caller can reference it
+            matched_id = existing_memories[0].id if existing_memories else None
+            log.debug("fact_skipped_noop", fact=fact[:50], matched_id=matched_id)
+            return {"id": None, "content": None, "matched_id": matched_id}
 
         # ── Conflict detection ───────────────────────────────────────────
         # When the consolidator detects a contradiction (DELETE) or update,

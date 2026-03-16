@@ -448,6 +448,16 @@ async def get_memory(
     
     Note: Can only access memories belonging to the authenticated user.
     """
+    # Validate memory_id is a valid UUID format
+    import uuid
+    try:
+        uuid.UUID(memory_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Memory {memory_id} not found",
+        )
+    
     # RBAC: Check permission
     if not has_permission(current_user, "memory:recall"):
         raise HTTPException(
