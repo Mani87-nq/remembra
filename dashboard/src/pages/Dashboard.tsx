@@ -1,28 +1,57 @@
-import { useState, useEffect, useCallback } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMemories, useSearch } from '../hooks/useMemories';
 import { SearchBar } from '../components/SearchBar';
 import { MemoryList } from '../components/MemoryList';
-import { MemoryDetail } from './MemoryDetail';
-import { DecayReport } from '../components/DecayReport';
-import { StoreMemory } from '../components/StoreMemory';
-import { EntityList } from '../components/EntityList';
-import { EntityGraph } from '../components/EntityGraph';
-import { QueryDebugger } from '../components/QueryDebugger';
-import { UsageAnalytics } from '../components/UsageAnalytics';
-import { MemoryTimeline } from '../components/MemoryTimeline';
-import { ApiKeyManager } from '../components/ApiKeyManager';
-import { Billing } from '../components/Billing';
-import { Teams } from '../components/Teams';
-import { Projects } from '../components/Projects';
-import { Settings } from './Settings';
-import { Admin } from './Admin';
 import { StatsOverview } from '../components/StatsOverview';
 import { EmptyState } from '../components/EmptyState';
 import { type Memory, api } from '../lib/api';
 import { RefreshCw, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import { pageTransition } from '../lib/motion';
+
+const MemoryDetail = lazy(() =>
+  import('./MemoryDetail').then((module) => ({ default: module.MemoryDetail })),
+);
+const DecayReport = lazy(() =>
+  import('../components/DecayReport').then((module) => ({ default: module.DecayReport })),
+);
+const StoreMemory = lazy(() =>
+  import('../components/StoreMemory').then((module) => ({ default: module.StoreMemory })),
+);
+const EntityList = lazy(() =>
+  import('../components/EntityList').then((module) => ({ default: module.EntityList })),
+);
+const EntityGraph = lazy(() =>
+  import('../components/EntityGraph').then((module) => ({ default: module.EntityGraph })),
+);
+const QueryDebugger = lazy(() =>
+  import('../components/QueryDebugger').then((module) => ({ default: module.QueryDebugger })),
+);
+const UsageAnalytics = lazy(() =>
+  import('../components/UsageAnalytics').then((module) => ({ default: module.UsageAnalytics })),
+);
+const MemoryTimeline = lazy(() =>
+  import('../components/MemoryTimeline').then((module) => ({ default: module.MemoryTimeline })),
+);
+const ApiKeyManager = lazy(() =>
+  import('../components/ApiKeyManager').then((module) => ({ default: module.ApiKeyManager })),
+);
+const Billing = lazy(() =>
+  import('../components/Billing').then((module) => ({ default: module.Billing })),
+);
+const Teams = lazy(() =>
+  import('../components/Teams').then((module) => ({ default: module.Teams })),
+);
+const Projects = lazy(() =>
+  import('../components/Projects').then((module) => ({ default: module.Projects })),
+);
+const Settings = lazy(() =>
+  import('./Settings').then((module) => ({ default: module.Settings })),
+);
+const Admin = lazy(() =>
+  import('./Admin').then((module) => ({ default: module.Admin })),
+);
 
 export type TabType = 'memories' | 'entities' | 'graph' | 'decay' | 'debugger' | 'analytics' | 'timeline' | 'projects' | 'keys' | 'billing' | 'settings' | 'teams' | 'admin';
 
@@ -31,6 +60,17 @@ interface DashboardProps {
   onLogout?: () => void;
   showNewMemory?: boolean;
   onCloseNewMemory?: () => void;
+}
+
+function SectionLoading({ label = 'Loading workspace surface...' }: { label?: string }) {
+  return (
+    <div className="flex min-h-[320px] items-center justify-center rounded-2xl dashboard-surface">
+      <div className="text-center">
+        <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-2 border-[hsl(var(--border))] border-t-[hsl(var(--primary))]" />
+        <p className="text-sm text-[hsl(var(--muted-foreground))]">{label}</p>
+      </div>
+    </div>
+  );
 }
 
 export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryProp, onCloseNewMemory }: DashboardProps) {
@@ -145,28 +185,32 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
   // If a memory is selected, show the detail view
   if (selectedMemory) {
     return (
-      <MemoryDetail
-        memory={selectedMemory}
-        onClose={handleCloseDetail}
-        onDelete={() => {
-          handleCloseDetail();
-          refresh();
-        }}
-      />
+      <Suspense fallback={<SectionLoading label="Loading memory detail..." />}>
+        <MemoryDetail
+          memory={selectedMemory}
+          onClose={handleCloseDetail}
+          onDelete={() => {
+            handleCloseDetail();
+            refresh();
+          }}
+        />
+      </Suspense>
     );
   }
 
   // New memory modal — rendered as overlay, not page replacement
   const newMemoryModal = showNewMemory ? (
-    <StoreMemory
-      projectId={currentProjectId}
-      startOpen={true}
-      onStored={() => {
-        setShowNewMemory(false);
-        onCloseNewMemory?.();
-        refresh();
-      }}
-    />
+    <Suspense fallback={null}>
+      <StoreMemory
+        projectId={currentProjectId}
+        startOpen={true}
+        onStored={() => {
+          setShowNewMemory(false);
+          onCloseNewMemory?.();
+          refresh();
+        }}
+      />
+    </Suspense>
   ) : null;
 
   const displayMemories = isSearching && results ? results.memories : memories;
@@ -315,40 +359,88 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
         );
 
       case 'entities':
-        return <EntityList projectId={currentProjectId} />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading entity atlas..." />}>
+            <EntityList projectId={currentProjectId} />
+          </Suspense>
+        );
 
       case 'graph':
-        return <EntityGraph projectId={currentProjectId} />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading knowledge graph..." />}>
+            <EntityGraph projectId={currentProjectId} />
+          </Suspense>
+        );
 
       case 'decay':
-        return <DecayReport projectId={currentProjectId} />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading decay report..." />}>
+            <DecayReport projectId={currentProjectId} />
+          </Suspense>
+        );
 
       case 'debugger':
-        return <QueryDebugger projectId={currentProjectId} />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading debugger..." />}>
+            <QueryDebugger projectId={currentProjectId} />
+          </Suspense>
+        );
 
       case 'analytics':
-        return <UsageAnalytics projectId={currentProjectId} />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading analytics..." />}>
+            <UsageAnalytics projectId={currentProjectId} />
+          </Suspense>
+        );
 
       case 'timeline':
-        return <MemoryTimeline projectId={currentProjectId} />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading timeline..." />}>
+            <MemoryTimeline projectId={currentProjectId} />
+          </Suspense>
+        );
 
       case 'projects':
-        return <Projects />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading projects..." />}>
+            <Projects />
+          </Suspense>
+        );
 
       case 'keys':
-        return <ApiKeyManager />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading API keys..." />}>
+            <ApiKeyManager />
+          </Suspense>
+        );
 
       case 'billing':
-        return <Billing />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading billing..." />}>
+            <Billing />
+          </Suspense>
+        );
 
       case 'teams':
-        return <Teams />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading teams..." />}>
+            <Teams />
+          </Suspense>
+        );
 
       case 'settings':
-        return <Settings onLogout={onLogout || (() => {})} />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading settings..." />}>
+            <Settings onLogout={onLogout || (() => {})} />
+          </Suspense>
+        );
 
       case 'admin':
-        return <Admin />;
+        return (
+          <Suspense fallback={<SectionLoading label="Loading admin..." />}>
+            <Admin />
+          </Suspense>
+        );
 
       default:
         return null;
