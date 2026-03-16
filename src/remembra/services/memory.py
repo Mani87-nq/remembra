@@ -1,5 +1,6 @@
 """Memory service - core business logic for store, recall, update, forget."""
 
+import asyncio
 import math
 from datetime import datetime, timedelta
 from typing import Any
@@ -451,18 +452,27 @@ class MemoryService:
             except Exception as e:
                 log.warning("fts_indexing_failed", error=str(e), memory_id=memory.id)
         
-        # Extract and link entities (Week 5)
+        # Extract and link entities (Week 5) — runs in background to avoid
+        # blocking the store response.  The memory is already persisted in
+        # Qdrant + SQLite + FTS by this point, so it's safe to return early.
         if self.settings.enable_entity_resolution:
-            try:
-                await self._process_entities_for_memory(
-                    memory_id=memory.id,
-                    content=content,
-                    user_id=user_id,
-                    project_id=project_id,
-                )
-            except Exception as e:
-                # Don't fail the whole store if entity extraction fails
-                log.warning("entity_extraction_failed", error=str(e), memory_id=memory.id)
+            async def _bg_entity_extraction() -> None:
+                try:
+                    await self._process_entities_for_memory(
+                        memory_id=memory.id,
+                        content=content,
+                        user_id=user_id,
+                        project_id=project_id,
+                    )
+                    log.info(
+                        "bg_entity_extraction_done",
+                        memory_id=memory.id,
+                    )
+                except Exception as e:
+                    # Don't fail the whole store if entity extraction fails
+                    log.warning("entity_extraction_failed", error=str(e), memory_id=memory.id)
+
+            asyncio.ensure_future(_bg_entity_extraction())
         
         # Clean up old memory AFTER new one is fully created (fixes FK constraint bug)
         if old_memory_id:
@@ -1177,20 +1187,24 @@ class MemoryService:
             metadata=merged_metadata,
         )
         
-        # 6. Update entities (delete old links, create new ones)
+        # 6. Update entities (delete old links, create new ones) — background
         await self.db.delete_memory_entities(memory_id)
-        
+
         entity_refs: list[EntityRef] = []
         if self.settings.enable_entity_resolution:
-            try:
-                entity_refs = await self._process_entities_for_memory(
-                    memory_id=memory_id,
-                    content=new_content,
-                    user_id=user_id,
-                    project_id=project_id,
-                )
-            except Exception as e:
-                log.warning("entity_update_failed", error=str(e), memory_id=memory_id)
+            async def _bg_entity_update() -> None:
+                try:
+                    await self._process_entities_for_memory(
+                        memory_id=memory_id,
+                        content=new_content,
+                        user_id=user_id,
+                        project_id=project_id,
+                    )
+                    log.info("bg_entity_update_done", memory_id=memory_id)
+                except Exception as e:
+                    log.warning("entity_update_failed", error=str(e), memory_id=memory_id)
+
+            asyncio.ensure_future(_bg_entity_update())
         
         # 7. Handle conflict detection if enabled
         if self.conflict_manager:
