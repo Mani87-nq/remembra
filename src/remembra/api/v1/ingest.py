@@ -18,6 +18,7 @@ from remembra.models.memory import (
     StoreRequest,
 )
 from remembra.security.audit import AuditLogger
+from remembra.security.pii_detector import PIIDetector
 from remembra.security.sanitizer import ContentSanitizer
 from remembra.services.conversation_ingest import ConversationIngestService
 from remembra.services.memory import MemoryService
@@ -45,10 +46,16 @@ def get_sanitizer(request: Request) -> ContentSanitizer:
     return request.app.state.sanitizer
 
 
+def get_pii_detector(request: Request) -> PIIDetector | None:
+    """Dependency to get the PII detector from app state."""
+    return getattr(request.app.state, "pii_detector", None)
+
+
 MemoryServiceDep = Annotated[MemoryService, Depends(get_memory_service)]
 AuditLoggerDep = Annotated[AuditLogger, Depends(get_audit_logger)]
 ConversationIngestDep = Annotated[ConversationIngestService, Depends(get_conversation_ingest)]
 SanitizerDep = Annotated[ContentSanitizer, Depends(get_sanitizer)]
+PIIDetectorDep = Annotated[PIIDetector | None, Depends(get_pii_detector)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
@@ -114,6 +121,7 @@ async def ingest_changelog(
     body: ChangelogIngestRequest,
     memory_service: MemoryServiceDep,
     audit_logger: AuditLoggerDep,
+    pii_detector: PIIDetectorDep,
     current_user: CurrentUser,
     settings: SettingsDep,
 ) -> ChangelogIngestResponse:

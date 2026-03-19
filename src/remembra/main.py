@@ -24,6 +24,8 @@ from remembra.core.logging import configure_logging
 from remembra.extraction.conflicts import ConflictManager, ConflictStrategy
 from remembra.plugins.manager import PluginManager
 from remembra.security.audit import AuditLogger
+from remembra.security.anomaly_detector import AnomalyDetector
+from remembra.security.pii_detector import PIIDetector
 from remembra.security.sanitizer import ContentSanitizer
 from remembra.services.memory import MemoryService
 from remembra.spaces.manager import SpaceManager
@@ -61,6 +63,8 @@ class AppState:
     api_key_manager: APIKeyManager
     audit_logger: AuditLogger
     sanitizer: ContentSanitizer
+    pii_detector: PIIDetector | None
+    anomaly_detector: AnomalyDetector | None
     usage_meter: UsageMeter | None
     webhook_manager: WebhookManager | None
     conflict_manager: ConflictManager | None
@@ -134,6 +138,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         trust_threshold=settings.trust_score_threshold,
         log_suspicious=True,
     )
+
+    # PII Detection (OWASP ASI06 - Memory Poisoning)
+    if settings.pii_detection_enabled:
+        app.state.pii_detector = PIIDetector(
+            enabled=True,
+            mode=settings.pii_mode,
+            exclusions=settings.pii_exclusions,
+        )
+        log.info("pii_detection_enabled", mode=settings.pii_mode)
+    else:
+        app.state.pii_detector = None
+
+    # Anomaly Detection (OWASP ASI06 - Memory Poisoning)
+    if settings.anomaly_detection_enabled:
+        app.state.anomaly_detector = AnomalyDetector(
+            db=app.state.db,
+            enabled=True,
+            rate_threshold=settings.anomaly_rate_threshold,
+        )
+        log.info("anomaly_detection_enabled", rate_threshold=settings.anomaly_rate_threshold)
+    else:
+        app.state.anomaly_detector = None
 
     # RBAC role manager
     app.state.role_manager = RoleManager(app.state.db)

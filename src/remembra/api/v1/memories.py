@@ -36,6 +36,7 @@ from remembra.models.memory import (
     UpdateResponse,
 )
 from remembra.security.audit import AuditLogger
+from remembra.security.pii_detector import PIIDetector
 from remembra.security.sanitizer import ContentSanitizer
 from remembra.services.memory import MemoryService
 from remembra.webhooks.events import (
@@ -67,9 +68,15 @@ def get_sanitizer(request: Request) -> ContentSanitizer:
     return request.app.state.sanitizer
 
 
+def get_pii_detector(request: Request) -> PIIDetector | None:
+    """Dependency to get the PII detector from app state."""
+    return getattr(request.app.state, "pii_detector", None)
+
+
 MemoryServiceDep = Annotated[MemoryService, Depends(get_memory_service)]
 AuditLoggerDep = Annotated[AuditLogger, Depends(get_audit_logger)]
 SanitizerDep = Annotated[ContentSanitizer, Depends(get_sanitizer)]
+PIIDetectorDep = Annotated[PIIDetector | None, Depends(get_pii_detector)]
 
 
 async def _dispatch_webhook(request: Request, event: WebhookEvent) -> None:
@@ -164,6 +171,7 @@ async def store_memory(
     memory_service: MemoryServiceDep,
     audit_logger: AuditLoggerDep,
     sanitizer: SanitizerDep,
+    pii_detector: PIIDetectorDep,
     current_user: CurrentUser,
     settings: SettingsDep,
     _limit: EnforceStoreLimit = None,
@@ -189,6 +197,25 @@ async def store_memory(
     # Override user_id with authenticated user (security: prevent user spoofing)
     body.user_id = current_user.user_id
     body.project_id = resolve_project_access(current_user, body.project_id) or "default"
+    
+    # PII Detection (OWASP ASI06)
+    pii_result = None
+    if pii_detector:
+        pii_result = pii_detector.scan(body.content, source="user_input")
+        if pii_result.has_pii:
+            if pii_result.blocked:
+                # Block mode: reject content containing PII
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "error": "PII_DETECTED",
+                        "message": "Content contains sensitive information that cannot be stored",
+                        "types": [m.type for m in pii_result.matches],
+                    },
+                )
+            elif pii_result.redacted_content:
+                # Redact mode: replace PII with placeholders
+                body.content = pii_result.redacted_content
     
     # Sanitize content and compute trust score
     sanitization = None
@@ -289,6 +316,7 @@ async def batch_store(
     memory_service: MemoryServiceDep,
     audit_logger: AuditLoggerDep,
     sanitizer: SanitizerDep,
+    pii_detector: PIIDetectorDep,
     current_user: CurrentUser,
 ) -> BatchStoreResponse:
     """
@@ -332,6 +360,20 @@ async def batch_store(
             # Enforce authenticated user
             item.user_id = current_user.user_id
             item.project_id = resolve_project_access(current_user, item.project_id) or "default"
+            
+            # PII Detection for batch items
+            if pii_detector:
+                pii_result = pii_detector.scan(item.content, source="batch_input")
+                if pii_result.has_pii:
+                    if pii_result.blocked:
+                        results.append(BatchStoreResult(
+                            index=i, 
+                            success=False, 
+                            error=f"PII_DETECTED: {[m.type for m in pii_result.matches]}"
+                        ))
+                        continue
+                    elif pii_result.redacted_content:
+                        item.content = pii_result.redacted_content
             
             resp = await memory_service.store(item)
             results.append(BatchStoreResult(index=i, success=True, response=resp))
