@@ -9,7 +9,6 @@ import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from starlette.websockets import WebSocketState
 
-from remembra.auth.dependencies import get_optional_api_key
 from remembra.config import get_settings
 
 log = structlog.get_logger(__name__)
