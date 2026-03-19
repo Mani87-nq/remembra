@@ -305,8 +305,16 @@ class SleepTimeWorker:
         Examples:
         - "my wife" in one session = "Suzan" in another
         - "John" = "John Smith" = "Mr. Smith"
+        
+        Operation Circuit Breaker fix (March 19, 2026):
+        - Added max merge attempts per pass (circuit breaker)
+        - Added error counting and early termination
+        - Track failed merges to avoid infinite retries
         """
         resolved_count = 0
+        error_count = 0
+        max_errors_per_pass = 5  # Circuit breaker: stop after 5 errors
+        max_merges_per_pass = 100  # Limit work per pass
         
         try:
             # Get all entities for this user
@@ -334,6 +342,25 @@ class SleepTimeWorker:
             
             # Find potential matches using EntityMatcher
             for i, entity1 in enumerate(entities):
+                # Circuit breaker: stop if too many errors
+                if error_count >= max_errors_per_pass:
+                    log.warning(
+                        "entity_resolution_circuit_breaker",
+                        user_id=user_id,
+                        errors=error_count,
+                        resolved=resolved_count,
+                    )
+                    break
+                
+                # Limit total merges per pass
+                if resolved_count >= max_merges_per_pass:
+                    log.info(
+                        "entity_resolution_max_reached",
+                        user_id=user_id,
+                        resolved=resolved_count,
+                    )
+                    break
+                
                 for entity2 in entities[i+1:]:
                     # Only match same type
                     if entity1["type"] != entity2["type"]:
@@ -341,11 +368,28 @@ class SleepTimeWorker:
                     
                     # Check if names are similar
                     if await self._entities_match(entity1, entity2):
-                        await self._merge_entities(entity1["id"], entity2["id"])
-                        resolved_count += 1
+                        try:
+                            await self._merge_entities(entity1["id"], entity2["id"])
+                            resolved_count += 1
+                        except Exception as merge_error:
+                            error_count += 1
+                            log.warning(
+                                "entity_merge_skipped",
+                                entity1=entity1["id"],
+                                entity2=entity2["id"],
+                                error=str(merge_error),
+                            )
+                            # Continue to next pair, don't fail the whole pass
+                            continue
             
         except Exception as e:
-            log.debug("entity_resolution_failed", user_id=user_id, error=str(e))
+            log.error(
+                "entity_resolution_failed",
+                user_id=user_id,
+                error=str(e),
+                resolved=resolved_count,
+                errors=error_count,
+            )
         
         return resolved_count
     
@@ -488,16 +532,30 @@ class SleepTimeWorker:
             log.error("merge_memories_failed", keep=keep_id, delete=delete_id, error=str(e))
     
     async def _merge_entities(self, keep_id: str, delete_id: str) -> None:
-        """Merge two entities, keeping one and deleting the other."""
+        """
+        Merge two entities, keeping one and deleting the other.
+        
+        CRITICAL: Must update ALL foreign key references before delete:
+        1. memory_entities.entity_id
+        2. relationships.from_entity_id  
+        3. relationships.to_entity_id
+        
+        Operation Circuit Breaker fix (March 19, 2026):
+        - Added relationship table updates to prevent FK constraint failures
+        - Added transaction rollback on failure
+        - Added duplicate relationship cleanup after merge
+        """
         try:
-            # Transfer aliases from deleted to kept
+            # Start transaction
+            await self.db.conn.execute("BEGIN TRANSACTION")
+            
+            # 1. Transfer aliases from deleted to kept
             cursor = await self.db.conn.execute(
                 "SELECT aliases FROM entities WHERE id = ?",
                 (delete_id,),
             )
             row = await cursor.fetchone()
             if row and row[0]:
-                # Add aliases to kept entity
                 await self.db.conn.execute(
                     """
                     UPDATE entities 
@@ -507,7 +565,7 @@ class SleepTimeWorker:
                     (row[0], keep_id),
                 )
             
-            # Update memory references
+            # 2. Update memory_entities references
             await self.db.conn.execute(
                 """
                 UPDATE memory_entities 
@@ -517,7 +575,48 @@ class SleepTimeWorker:
                 (keep_id, delete_id),
             )
             
-            # Delete the duplicate entity
+            # 3. Update relationships where deleted entity is the SOURCE
+            await self.db.conn.execute(
+                """
+                UPDATE relationships 
+                SET from_entity_id = ? 
+                WHERE from_entity_id = ?
+                """,
+                (keep_id, delete_id),
+            )
+            
+            # 4. Update relationships where deleted entity is the TARGET
+            await self.db.conn.execute(
+                """
+                UPDATE relationships 
+                SET to_entity_id = ? 
+                WHERE to_entity_id = ?
+                """,
+                (keep_id, delete_id),
+            )
+            
+            # 5. Clean up duplicate relationships that may have been created
+            # (same from/to/type after merge - keep the newest one)
+            await self.db.conn.execute(
+                """
+                DELETE FROM relationships 
+                WHERE id NOT IN (
+                    SELECT MAX(id) 
+                    FROM relationships 
+                    GROUP BY from_entity_id, to_entity_id, type
+                )
+                """
+            )
+            
+            # 6. Remove self-referential relationships (entity pointing to itself)
+            await self.db.conn.execute(
+                """
+                DELETE FROM relationships 
+                WHERE from_entity_id = to_entity_id
+                """
+            )
+            
+            # 7. Now safe to delete the duplicate entity
             await self.db.conn.execute(
                 "DELETE FROM entities WHERE id = ?",
                 (delete_id,),
@@ -525,8 +624,22 @@ class SleepTimeWorker:
             
             await self.db.conn.commit()
             
+            log.info(
+                "entities_merged",
+                keep=keep_id,
+                delete=delete_id,
+            )
+            
         except Exception as e:
-            log.error("merge_entities_failed", keep=keep_id, delete=delete_id, error=str(e))
+            # Rollback on any failure
+            await self.db.conn.rollback()
+            log.error(
+                "merge_entities_failed",
+                keep=keep_id,
+                delete=delete_id,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
     
     async def _delete_memory(self, memory_id: str) -> None:
         """Delete a memory from SQLite and Qdrant."""
