@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, Response
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from starlette.types import RequestResponseEndpoint
+from starlette.middleware.base import RequestResponseEndpoint
 
 from remembra import __version__
 from remembra.api.router import api_router
