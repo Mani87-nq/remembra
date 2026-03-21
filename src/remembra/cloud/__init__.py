@@ -6,4 +6,9 @@ Provides:
   - Plan-based limits (memory count, recall rate, API keys)
   - Usage tracking and enforcement
   - Tenant provisioning (signup → API key → ready)
+  - Promotional codes (trials, discounts)
 """
+
+from remembra.cloud.promocodes import PromoCodeManager, PromoCode, PromoType
+
+__all__ = ["PromoCodeManager", "PromoCode", "PromoType"]

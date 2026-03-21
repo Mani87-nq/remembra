@@ -757,3 +757,143 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
         )
 
     return {"status": "ok", "action": result.action}
+
+
+# ---------------------------------------------------------------------------
+# Promo Codes
+# ---------------------------------------------------------------------------
+
+
+class PromoValidateRequest(BaseModel):
+    code: str = Field(description="Promo code to validate")
+
+
+class PromoRedeemRequest(BaseModel):
+    code: str = Field(description="Promo code to redeem")
+
+
+class PromoResponse(BaseModel):
+    success: bool
+    error: str | None = None
+    plan: str | None = None
+    duration_days: int | None = None
+    expires_at: str | None = None
+    message: str | None = None
+
+
+class PromoListResponse(BaseModel):
+    codes: list[dict]
+
+
+@router.post(
+    "/promo/validate",
+    response_model=PromoResponse,
+    summary="Validate a promo code",
+    description="Check if a promo code is valid and see what benefits it provides.",
+)
+@limiter.limit("10/minute")
+async def validate_promo_code(
+    request: Request,
+    body: PromoValidateRequest,
+    user: CurrentUser,
+) -> PromoResponse:
+    """Validate a promo code without redeeming it."""
+    from remembra.cloud.promocodes import PromoCodeManager
+    
+    manager = PromoCodeManager()
+    result = await manager.validate(body.code, user.user_id)
+    
+    return PromoResponse(
+        success=result.success,
+        error=result.error,
+        plan=result.plan_tier.value if result.plan_tier else None,
+        duration_days=result.duration_days if result.success else None,
+        expires_at=result.expires_at.isoformat() if result.expires_at else None,
+        message=result.message,
+    )
+
+
+@router.post(
+    "/promo/redeem",
+    response_model=PromoResponse,
+    summary="Redeem a promo code",
+    description="Apply a promo code to get free access or a discount.",
+)
+@limiter.limit("5/minute")
+async def redeem_promo_code(
+    request: Request,
+    body: PromoRedeemRequest,
+    user: CurrentUser,
+    meter: UsageMeterDep,
+) -> PromoResponse:
+    """Redeem a promo code for the current user."""
+    from remembra.cloud.promocodes import PromoCodeManager
+    
+    manager = PromoCodeManager()
+    
+    # Get user's Stripe customer ID if they have one
+    tenant_info = await meter.get_tenant(user.user_id)
+    stripe_customer_id = tenant_info.get("stripe_customer_id") if tenant_info else None
+    
+    result = await manager.redeem(
+        code=body.code,
+        user_id=user.user_id,
+        email=user.email,
+        stripe_customer_id=stripe_customer_id,
+    )
+    
+    if result.success and result.plan_tier:
+        # Update user's plan in the metering system
+        await meter.update_plan(
+            user_id=user.user_id,
+            plan=result.plan_tier,
+            promo_expires_at=result.expires_at,
+        )
+    
+    return PromoResponse(
+        success=result.success,
+        error=result.error,
+        plan=result.plan_tier.value if result.plan_tier else None,
+        duration_days=result.duration_days if result.success else None,
+        expires_at=result.expires_at.isoformat() if result.expires_at else None,
+        message=result.message,
+    )
+
+
+@router.get(
+    "/promo/list",
+    response_model=PromoListResponse,
+    summary="List active promo codes",
+    description="Admin endpoint: List all active promotional codes with stats.",
+    dependencies=[Depends(RequireMasterKey)],
+)
+async def list_promo_codes(request: Request) -> PromoListResponse:
+    """List all active promo codes (admin only)."""
+    from remembra.cloud.promocodes import PromoCodeManager
+    
+    manager = PromoCodeManager()
+    codes = manager.list_active_codes()
+    
+    return PromoListResponse(codes=codes)
+
+
+@router.get(
+    "/promo/{code}/stats",
+    summary="Get promo code stats",
+    description="Admin endpoint: Get redemption stats for a specific promo code.",
+    dependencies=[Depends(RequireMasterKey)],
+)
+async def get_promo_stats(request: Request, code: str) -> dict:
+    """Get stats for a specific promo code (admin only)."""
+    from remembra.cloud.promocodes import PromoCodeManager
+    
+    manager = PromoCodeManager()
+    stats = manager.get_stats(code)
+    
+    if not stats:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Promo code '{code}' not found",
+        )
+    
+    return stats

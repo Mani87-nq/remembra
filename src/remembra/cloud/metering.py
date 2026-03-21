@@ -171,17 +171,29 @@ class UsageMeter:
         user_id: str,
         plan: PlanTier,
         stripe_subscription_id: str | None = None,
+        promo_expires_at: datetime | None = None,
     ) -> None:
-        """Update a tenant's plan (e.g., after Stripe webhook)."""
+        """Update a tenant's plan (e.g., after Stripe webhook or promo code).
+        
+        Args:
+            user_id: The tenant's user ID
+            plan: The new plan tier
+            stripe_subscription_id: Optional Stripe subscription ID
+            promo_expires_at: Optional promo trial expiration (for promo codes)
+        """
         now = datetime.now(UTC).isoformat()
+        promo_expires_str = promo_expires_at.isoformat() if promo_expires_at else None
+        
         await self._db.conn.execute(
             """
             UPDATE cloud_tenants
-            SET plan = ?, stripe_subscription_id = COALESCE(?, stripe_subscription_id),
+            SET plan = ?, 
+                stripe_subscription_id = COALESCE(?, stripe_subscription_id),
+                promo_expires_at = COALESCE(?, promo_expires_at),
                 updated_at = ?
             WHERE user_id = ?
             """,
-            (plan.value, stripe_subscription_id, now, user_id),
+            (plan.value, stripe_subscription_id, promo_expires_str, now, user_id),
         )
         await self._db.conn.commit()
 
