@@ -6,8 +6,6 @@ header injection requires a Response parameter on endpoints, which
 our API doesn't use (we return Pydantic models directly).
 """
 
-import pytest
-from fastapi.testclient import TestClient
 
 
 def test_rate_limit_middleware_configured():

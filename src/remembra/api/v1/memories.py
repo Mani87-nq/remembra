@@ -6,9 +6,6 @@ from typing import Annotated
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
-# Security: Logger for internal error details (never exposed to users)
-_internal_log = structlog.get_logger("remembra.api.errors")
-
 from remembra.auth.middleware import (
     CurrentUser,
     get_client_ip,
@@ -50,6 +47,8 @@ from remembra.webhooks.events import (
     memory_stored_event,
 )
 
+# Security: Logger for internal error details (never exposed to users)
+_internal_log = structlog.get_logger("remembra.api.errors")
 _webhook_log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/memories", tags=["memories"])

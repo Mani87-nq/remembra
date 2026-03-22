@@ -47,7 +47,10 @@ SENSITIVE_PATTERNS = [
 ]
 
 # Compiled patterns for performance
-_COMPILED_PATTERNS = [(re.compile(pattern, re.IGNORECASE | re.DOTALL), replacement) for pattern, replacement in SENSITIVE_PATTERNS]
+_COMPILED_PATTERNS = [
+    (re.compile(pattern, re.IGNORECASE | re.DOTALL), replacement)
+    for pattern, replacement in SENSITIVE_PATTERNS
+]
 
 # Known safe error messages (can be passed through)
 # NOTE: These are EXACT safe messages, not prefixes that might contain sensitive data
