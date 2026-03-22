@@ -326,7 +326,7 @@ async def assign_role(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid role: {body.role}. Valid roles: admin, editor, viewer",
-        )
+        ) from None
 
     result = await role_manager.assign_role(
         api_key_id=body.api_key_id,
@@ -408,7 +408,7 @@ async def list_permissions(request: Request) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def get_sleep_worker(request: Request):
+def get_sleep_worker(request: Request) -> Any:
     """Get sleep-time worker from app state."""
     return getattr(request.app.state, "sleep_worker", None)
 
@@ -465,7 +465,7 @@ async def trigger_consolidation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Consolidation failed: {str(e)}",
-        )
+        ) from e
 
 
 @router.get(
@@ -704,7 +704,7 @@ async def update_user_tier(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid plan: {body.plan}. Valid plans: free, pro, team, enterprise",
-        )
+        ) from None
     
     if usage_meter is None:
         raise HTTPException(
@@ -767,13 +767,25 @@ async def delete_user(
     
     # Delete in order to handle foreign keys
     # 1. Delete memories and related data
-    await db.conn.execute("DELETE FROM memory_entities WHERE memory_id IN (SELECT id FROM memories WHERE user_id = ?)", (user_id,))
+    await db.conn.execute(
+        "DELETE FROM memory_entities WHERE memory_id IN "
+        "(SELECT id FROM memories WHERE user_id = ?)",
+        (user_id,),
+    )
     await db.conn.execute("DELETE FROM memories_fts WHERE user_id = ?", (user_id,))
     await db.conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
     
     # 2. Delete entities and relationships
-    await db.conn.execute("DELETE FROM relationships WHERE from_entity_id IN (SELECT id FROM entities WHERE user_id = ?)", (user_id,))
-    await db.conn.execute("DELETE FROM relationships WHERE to_entity_id IN (SELECT id FROM entities WHERE user_id = ?)", (user_id,))
+    await db.conn.execute(
+        "DELETE FROM relationships WHERE from_entity_id IN "
+        "(SELECT id FROM entities WHERE user_id = ?)",
+        (user_id,),
+    )
+    await db.conn.execute(
+        "DELETE FROM relationships WHERE to_entity_id IN "
+        "(SELECT id FROM entities WHERE user_id = ?)",
+        (user_id,),
+    )
     await db.conn.execute("DELETE FROM entities WHERE user_id = ?", (user_id,))
     
     # 3. Delete API keys

@@ -42,6 +42,9 @@ HOP_BY_HOP_HEADERS = {
     "transfer-encoding",
     "upgrade",
 }
+RESPONSE_HEADERS_TO_STRIP = {
+    "content-encoding",
+}
 
 
 class BridgePortInUseError(Exception):
@@ -234,7 +237,7 @@ class BridgeRequestHandler(BaseHTTPRequestHandler):
         payload = response.content
         self.send_response(response.status_code)
         for header, value in response.headers.items():
-            if header.lower() in HOP_BY_HOP_HEADERS:
+            if header.lower() in HOP_BY_HOP_HEADERS | RESPONSE_HEADERS_TO_STRIP:
                 continue
             self.send_header(header, value)
         self.send_header("Content-Length", str(len(payload)))

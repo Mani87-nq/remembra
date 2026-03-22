@@ -5,6 +5,7 @@ from __future__ import annotations
 from email.message import Message
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -14,6 +15,9 @@ from remembra.tools.bridge import (
     BridgePortInUseError,
     FORWARDED_AGENT_HEADER,
     FORWARDED_BRIDGE_HEADER,
+    BridgeConfig,
+    BridgeRequestHandler,
+    RemembraBridgeServer,
     build_forward_headers,
     build_bridge_user_agent,
     check_port_available,
@@ -138,3 +142,37 @@ def test_stop_bridge_cleans_up_stale_pid_file(tmp_path: Path) -> None:
 def test_is_process_running_returns_false_for_invalid_pid() -> None:
     """Test is_process_running returns False for non-existent process."""
     assert is_process_running(999999999) is False
+
+
+def test_bridge_strips_content_encoding_when_relaying_decompressed_payload() -> None:
+    handler = BridgeRequestHandler.__new__(BridgeRequestHandler)
+    handler.server = SimpleNamespace(
+        client=MagicMock(),
+        config=BridgeConfig(upstream="https://api.remembra.dev"),
+    )
+    handler.command = "GET"
+    handler.path = "/health"
+    handler.headers = Message()
+    handler.rfile = MagicMock()
+    handler.wfile = MagicMock()
+    sent_headers: list[tuple[str, str]] = []
+
+    handler.send_response = MagicMock()
+    handler.send_header = MagicMock(side_effect=lambda k, v: sent_headers.append((k, v)))
+    handler.end_headers = MagicMock()
+
+    fake_response = MagicMock()
+    fake_response.status_code = 200
+    fake_response.content = b'{"status":"ok"}'
+    fake_response.headers.items.return_value = [
+        ("Content-Type", "application/json"),
+        ("Content-Encoding", "gzip"),
+        ("X-Test", "1"),
+    ]
+
+    with patch("remembra.tools.bridge.forward_upstream_request", return_value=fake_response):
+        handler._forward()
+
+    assert ("Content-Encoding", "gzip") not in sent_headers
+    assert ("Content-Type", "application/json") in sent_headers
+    assert ("X-Test", "1") in sent_headers
