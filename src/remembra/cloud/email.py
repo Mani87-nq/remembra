@@ -456,6 +456,35 @@ class EmailService:
             dashboard_url="https://app.remembra.dev",
         )
 
+    async def send_payment_failed_email(
+        self,
+        to: str,
+        amount: str,
+        plan: str,
+        retry_date: str,
+        update_payment_url: str = "https://app.remembra.dev/billing",
+    ) -> EmailResult:
+        """Send payment failed email.
+        
+        Args:
+            to: User's email address
+            amount: Failed payment amount (e.g., "$49.00")
+            plan: Plan tier name
+            retry_date: When Stripe will retry the payment
+            update_payment_url: URL to update payment method
+        """
+        return await self.send_email(
+            to=to,
+            subject="Remembra: Payment failed - Action required",
+            template_name="payment_failed",
+            amount=amount,
+            plan=plan,
+            retry_date=retry_date,
+            update_payment_url=update_payment_url,
+            dashboard_url="https://app.remembra.dev",
+            support_email="support@remembra.dev",
+        )
+
     async def send_subscription_cancelled_email(
         self,
         to: str,

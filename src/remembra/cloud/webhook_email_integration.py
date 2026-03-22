@@ -84,19 +84,38 @@ class StripeWebhookEmailHandler:
         )
 
     async def _handle_payment_failed(self, invoice: dict[str, Any]) -> None:
-        """Handle failed payment (optional - not yet implemented)."""
-        # TODO: Create a payment_failed.html template
-        # For now, we can log it
+        """Send payment failed email when payment fails."""
         customer_email = invoice.get("customer_email")
-        logger.warning("Payment failed for customer: %s", customer_email)
+        if not customer_email:
+            # Try to get from customer object
+            customer_id = invoice.get("customer")
+            customer_email = await self._get_customer_email(customer_id)
         
-        # You could send a custom email here:
-        # await self.email_service.send_email(
-        #     to=customer_email,
-        #     subject="Payment Failed - Action Required",
-        #     template_name="payment_failed",
-        #     ...
-        # )
+        if not customer_email:
+            logger.warning("No customer email for payment failed notification")
+            return
+        
+        amount_due = invoice.get("amount_due", 0) / 100  # Convert cents to dollars
+        
+        # Get next retry date (Stripe retries 3-4 times over ~3 weeks)
+        next_attempt = invoice.get("next_payment_attempt")
+        retry_date = self._format_timestamp(next_attempt) if next_attempt else "soon"
+        
+        # Determine plan from invoice lines
+        plan = "Pro"  # Default
+        lines = invoice.get("lines", {}).get("data", [])
+        if lines:
+            description = lines[0].get("description", "")
+            if "team" in description.lower():
+                plan = "Team"
+        
+        await self.email_service.send_payment_failed_email(
+            to=customer_email,
+            amount=f"${amount_due:.2f}",
+            plan=plan,
+            retry_date=retry_date,
+        )
+        logger.info("Payment failed email sent to: %s", customer_email)
 
     async def _handle_subscription_deleted(self, subscription: dict[str, Any]) -> None:
         """Send cancellation email when subscription is cancelled."""

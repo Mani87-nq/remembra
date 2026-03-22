@@ -15,6 +15,7 @@ Usage in routes:
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Annotated
 
@@ -29,6 +30,65 @@ from remembra.cloud.metering import UsageMeter
 from remembra.cloud.plans import get_plan
 
 logger = logging.getLogger(__name__)
+
+# Track which users have received warning emails (reset on app restart)
+# In production, this should be stored in database
+_warned_users_80: set[str] = set()
+_warned_users_limit: set[str] = set()
+
+
+async def _send_usage_warning_email(
+    user_id: str, 
+    user_email: str,
+    usage_percent: float,
+    current_usage: int,
+    limit: int,
+    plan: str,
+) -> None:
+    """Send usage warning email (80% threshold) - fire and forget."""
+    if user_id in _warned_users_80:
+        return  # Already warned this session
+    
+    try:
+        from remembra.cloud.email import EmailService
+        email_service = EmailService()
+        await email_service.send_usage_warning_email(
+            to=user_email,
+            usage_percent=int(usage_percent),
+            current_usage=current_usage,
+            limit=limit,
+            plan=plan,
+        )
+        _warned_users_80.add(user_id)
+        logger.info("usage_warning_email_sent", user_id=user_id, percent=usage_percent)
+    except Exception as e:
+        logger.warning("usage_warning_email_failed", user_id=user_id, error=str(e))
+
+
+async def _send_limit_exceeded_email(
+    user_id: str,
+    user_email: str,
+    current_usage: int,
+    limit: int,
+    plan: str,
+) -> None:
+    """Send limit exceeded email - fire and forget."""
+    if user_id in _warned_users_limit:
+        return  # Already notified this session
+    
+    try:
+        from remembra.cloud.email import EmailService
+        email_service = EmailService()
+        await email_service.send_limit_exceeded_email(
+            to=user_email,
+            current_usage=current_usage,
+            limit=limit,
+            plan=plan,
+        )
+        _warned_users_limit.add(user_id)
+        logger.info("limit_exceeded_email_sent", user_id=user_id)
+    except Exception as e:
+        logger.warning("limit_exceeded_email_failed", user_id=user_id, error=str(e))
 
 
 def get_usage_warning(usage_percent: float, plan: str) -> dict | None:
@@ -102,6 +162,27 @@ async def enforce_store_limit(
     warning = get_usage_warning(usage_percent, snapshot.plan.value)
     request.state.usage_warning = warning
 
+    # Send usage warning email at 80%+ (fire-and-forget, don't block request)
+    if usage_percent >= 80 and current_user.user_id not in _warned_users_80:
+        try:
+            # Get user email from database
+            db = getattr(request.app.state, "db", None)
+            if db:
+                user_data = await db.get_user_by_id(current_user.user_id)
+                if user_data and user_data.get("email"):
+                    asyncio.create_task(
+                        _send_usage_warning_email(
+                            user_id=current_user.user_id,
+                            user_email=user_data["email"],
+                            usage_percent=usage_percent,
+                            current_usage=snapshot.memories_stored,
+                            limit=plan_limits.max_memories,
+                            plan=snapshot.plan.value,
+                        )
+                    )
+        except Exception as e:
+            logger.warning("failed_to_queue_warning_email", error=str(e))
+
     if not check.allowed:
         logger.warning(
             "store_limit_exceeded user=%s plan=%s reason=%s",
@@ -109,6 +190,26 @@ async def enforce_store_limit(
             snapshot.plan.value,
             check.reason,
         )
+        
+        # Send limit exceeded email (fire-and-forget)
+        if current_user.user_id not in _warned_users_limit:
+            try:
+                db = getattr(request.app.state, "db", None)
+                if db:
+                    user_data = await db.get_user_by_id(current_user.user_id)
+                    if user_data and user_data.get("email"):
+                        asyncio.create_task(
+                            _send_limit_exceeded_email(
+                                user_id=current_user.user_id,
+                                user_email=user_data["email"],
+                                current_usage=snapshot.memories_stored,
+                                limit=plan_limits.max_memories,
+                                plan=snapshot.plan.value,
+                            )
+                        )
+            except Exception as e:
+                logger.warning("failed_to_queue_limit_email", error=str(e))
+        
         detail = check.reason or "Store limit exceeded"
         if check.upgrade_hint:
             detail += f" — {check.upgrade_hint}"
