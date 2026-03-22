@@ -72,6 +72,8 @@ export function Sidebar({
   onSearch,
   isAdmin = false 
 }: SidebarProps) {
+  // Debug logging
+  console.log('[Sidebar] isAdmin prop:', isAdmin, 'strict check:', isAdmin === true);
   const activeItem = navItems.find((item) => item.id === activeTab);
 
   const renderNavSection = (section: string, title: string) => {
@@ -205,7 +207,7 @@ export function Sidebar({
         {renderNavSection('explore', 'Explore')}
         {renderNavSection('tools', 'Dev Tools')}
         {renderNavSection('account', 'Account')}
-        {isAdmin && renderNavSection('admin', 'Admin')}
+        {isAdmin === true && renderNavSection('admin', 'Admin')}
       </div>
 
       {/* Collapse Toggle */}

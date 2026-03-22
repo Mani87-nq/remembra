@@ -79,6 +79,7 @@ function App() {
           handleLogout();
         } else {
           const user = await response.json();
+          console.log('[Auth] /auth/me response:', { email: user.email, is_admin: user.is_admin });
           setCurrentUser({ id: user.id, email: user.email, name: user.name, is_admin: user.is_admin });
           localStorage.setItem('remembra_user', JSON.stringify(user));
           // Set user ID in API client for API calls
