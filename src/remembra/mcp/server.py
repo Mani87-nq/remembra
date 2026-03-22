@@ -503,7 +503,8 @@ def search_entities(
         if query:
             query_lower = query.lower()
             entities = [
-                e for e in entities
+                e
+                for e in entities
                 if query_lower in e.get("canonical_name", "").lower()
                 or any(query_lower in alias.lower() for alias in e.get("aliases", []))
             ]
@@ -558,7 +559,7 @@ def list_memories(
     """
     try:
         client = _get_client()
-        
+
         # Use recall with broad query and zero threshold to get recent memories
         result = client.recall(
             query="recent memories",
@@ -614,14 +615,14 @@ def share_memory(
     """
     try:
         client = _get_client()
-        
+
         # Call the spaces API to add memory
         client._request(
             "POST",
             f"/api/v1/spaces/{space_id}/memories",
             json={"memory_id": memory_id},
         )
-        
+
         return json.dumps(
             {
                 "status": "shared",
@@ -668,7 +669,7 @@ def timeline(
     """
     try:
         client = _get_client()
-        
+
         # Build query based on entity and date range
         query_parts = []
         if entity_name:
@@ -677,14 +678,14 @@ def timeline(
             query_parts.append(f"after {start_date}")
         if end_date:
             query_parts.append(f"before {end_date}")
-        
+
         query = " ".join(query_parts) if query_parts else "timeline recent"
-        
+
         result = client.recall(query=query, limit=limit, threshold=0.0)
-        
+
         # Sort by created_at for chronological order
         memories = sorted(result.memories, key=lambda m: m.created_at)
-        
+
         return json.dumps(
             {
                 "status": "ok",
@@ -734,7 +735,7 @@ def relationships_at(
 
     Args:
         entity_name: Name of the entity to query relationships for.
-        as_of: Point in time (ISO format, e.g., "2022-01-15"). 
+        as_of: Point in time (ISO format, e.g., "2022-01-15").
                If omitted, returns current relationships.
         relationship_type: Filter by type (WORKS_AT, SPOUSE_OF, ROLE, etc).
         include_history: If true, includes superseded relationships.
@@ -744,7 +745,7 @@ def relationships_at(
     """
     try:
         client = _get_client()
-        
+
         # Build the API request for temporal relationship query
         params = {
             "entity_name": entity_name,
@@ -754,16 +755,16 @@ def relationships_at(
             params["as_of"] = as_of
         if relationship_type:
             params["relationship_type"] = relationship_type
-        
+
         # Call the relationships endpoint
         result = client._request(
             "GET",
             "/api/v1/entities/relationships",
             params=params,
         )
-        
+
         relationships = result.get("relationships", [])
-        
+
         return json.dumps(
             {
                 "status": "ok",

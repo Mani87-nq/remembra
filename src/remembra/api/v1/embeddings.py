@@ -178,7 +178,7 @@ async def switch_provider(
     to re-embed all memories with the new model.  Without re-indexing,
     recall quality will degrade because old vectors are incompatible
     with the new model.
-    
+
     Set ``force=true`` to switch even if dimensions differ (dangerous).
     """
     old_provider = embedding_service.provider
@@ -196,14 +196,14 @@ async def switch_provider(
     # Check dimensions compatibility before switching
     new_model_key = f"{body.provider}:{body.model}" if body.model else body.provider
     new_dims = MODEL_DIMENSIONS.get(body.model) or MODEL_DIMENSIONS.get(new_model_key)
-    
+
     if new_dims and old_dims and new_dims != old_dims:
-        if not getattr(body, 'force', False):
+        if not getattr(body, "force", False):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Dimension mismatch: current model uses {old_dims}D, new model uses {new_dims}D. "
-                       f"Switching will require reindexing all memories. If reindex fails, your account "
-                       f"will be unable to store new memories until fixed. Add 'force: true' to proceed.",
+                f"Switching will require reindexing all memories. If reindex fails, your account "
+                f"will be unable to store new memories until fixed. Add 'force: true' to proceed.",
             )
 
     # Switch the provider
@@ -226,13 +226,13 @@ async def switch_provider(
         )
 
     # Double-check actual dimensions match expectations
-    if old_dims and actual_dims != old_dims and not getattr(body, 'force', False):
+    if old_dims and actual_dims != old_dims and not getattr(body, "force", False):
         # Roll back - actual dimensions differ
         embedding_service.switch_provider(provider=old_provider, model=old_model)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Actual embedding dimensions ({actual_dims}D) differ from current ({old_dims}D). "
-                   f"This would break existing memories. Add 'force: true' to proceed anyway.",
+            f"This would break existing memories. Add 'force: true' to proceed anyway.",
         )
 
     reindex_job_id = None
@@ -249,7 +249,7 @@ async def switch_provider(
             # Job already running - roll back to prevent broken state
             embedding_service.switch_provider(provider=old_provider, model=old_model)
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, 
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"Reindex job already running. Rolled back provider switch. {str(e)}",
             )
         except Exception as e:

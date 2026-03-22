@@ -144,37 +144,38 @@ DEDUP_DECISION_FUNCTIONS = [
 # Helper Functions
 # ============================================================================
 
+
 def format_messages_for_extraction(
     messages: list[dict],
     extract_from: str = "both",
 ) -> str:
     """
     Format messages into a readable transcript for the LLM.
-    
+
     Args:
         messages: List of message dicts with role, content, name, timestamp
         extract_from: 'user', 'assistant', or 'both'
-    
+
     Returns:
         Formatted string transcript
     """
     lines = []
-    
+
     for i, msg in enumerate(messages):
         role = msg.get("role", "unknown")
         content = msg.get("content", "")
         name = msg.get("name")
         timestamp = msg.get("timestamp")
-        
+
         # Skip based on extract_from filter
         if extract_from == "user" and role != "user":
             continue
         if extract_from == "assistant" and role != "assistant":
             continue
-        
+
         # Build speaker label
         speaker = name or role.capitalize()
-        
+
         # Add timestamp if available
         time_str = ""
         if timestamp:
@@ -182,30 +183,30 @@ def format_messages_for_extraction(
                 time_str = f" [{timestamp}]"
             else:
                 time_str = f" [{timestamp.isoformat()}]"
-        
+
         lines.append(f"[{i}] {speaker}{time_str}: {content}")
-    
+
     return "\n".join(lines)
 
 
 def format_existing_memories(memories: list[dict]) -> str:
     """
     Format existing memories for the dedup decision prompt.
-    
+
     Args:
         memories: List of memory dicts with id, content, score
-    
+
     Returns:
         Formatted string for LLM context
     """
     if not memories:
         return "No similar existing memories found."
-    
+
     lines = []
     for mem in memories:
         mem_id = mem.get("id", "unknown")
         content = mem.get("content", "")
         score = mem.get("score", 0.0)
         lines.append(f"- ID: {mem_id} (similarity: {score:.2f})\n  Content: {content}")
-    
+
     return "\n".join(lines)

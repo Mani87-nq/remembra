@@ -229,9 +229,7 @@ async def list_formats(request: Request) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _parse_import(
-    format: str, data: str, split_mode: str = "paragraph"
-) -> list[ImportedMemory]:
+def _parse_import(format: str, data: str, split_mode: str = "paragraph") -> list[ImportedMemory]:
     """Route to the correct parser based on format."""
     if format == "chatgpt":
         return parse_chatgpt_export(data)
@@ -284,11 +282,13 @@ async def _store_imported_memories(
 
             if result.id:
                 imported += 1
-                details.append({
-                    "index": i,
-                    "status": "imported",
-                    "memory_id": result.id,
-                })
+                details.append(
+                    {
+                        "index": i,
+                        "status": "imported",
+                        "memory_id": result.id,
+                    }
+                )
             else:
                 skipped += 1
                 details.append({"index": i, "status": "skipped", "reason": "duplicate"})
@@ -343,17 +343,19 @@ async def _fetch_all_memories(
         except (TypeError, _json.JSONDecodeError):
             metadata = {}
 
-        memories.append({
-            "id": row[0],
-            "content": row[1],
-            "user_id": row[2],
-            "project_id": row[3],
-            "extracted_facts": facts,
-            "metadata": metadata,
-            "created_at": row[6],
-            "expires_at": row[7],
-            "source": row[8],
-            "trust_score": row[9],
-        })
+        memories.append(
+            {
+                "id": row[0],
+                "content": row[1],
+                "user_id": row[2],
+                "project_id": row[3],
+                "extracted_facts": facts,
+                "metadata": metadata,
+                "created_at": row[6],
+                "expires_at": row[7],
+                "source": row[8],
+                "trust_score": row[9],
+            }
+        )
 
     return memories

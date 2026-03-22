@@ -12,7 +12,7 @@ from .matcher import EntityMatcher, ExistingEntity, MatchResult
 __all__ = [
     # Fact extraction
     "FactExtractor",
-    "ExtractionConfig", 
+    "ExtractionConfig",
     # Memory consolidation
     "MemoryConsolidator",
     "ConsolidationAction",

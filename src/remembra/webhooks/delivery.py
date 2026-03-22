@@ -115,7 +115,8 @@ class WebhookDelivery:
             # Exponential backoff (skip on last attempt)
             if attempt < self._max_retries:
                 import asyncio
-                backoff = BACKOFF_BASE ** attempt
+
+                backoff = BACKOFF_BASE**attempt
                 await asyncio.sleep(backoff)
 
         logger.error(

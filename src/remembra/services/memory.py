@@ -53,7 +53,7 @@ log = structlog.get_logger(__name__)
 def parse_ttl(ttl: str | None) -> timedelta | None:
     """
     Parse TTL string like '30d', '1y', '2w' into timedelta.
-    
+
     Supported formats:
     - Xd = X days
     - Xw = X weeks
@@ -114,7 +114,7 @@ class MemoryService:
         self.embeddings = embeddings
         self.conflict_manager = conflict_manager
         self.space_manager = space_manager  # Injected after init
-        
+
         # Initialize intelligent extraction (Week 4)
         extraction_config = ExtractionConfig(
             enabled=settings.smart_extraction_enabled,
@@ -127,7 +127,7 @@ class MemoryService:
             api_key=settings.openai_api_key,
             similarity_threshold=settings.consolidation_threshold,
         )
-        
+
         # Initialize entity resolution (Week 5)
         self.entity_extractor = create_entity_extractor(settings)
         self.entity_matcher = EntityMatcher(
@@ -135,34 +135,38 @@ class MemoryService:
             api_key=settings.openai_api_key,
             min_confidence=0.6,
         )
-        
+
         # Initialize advanced retrieval (Week 6)
         # Hybrid search with FTS5 BM25 + vector fusion
-        self.hybrid_searcher = HybridSearcher(HybridSearchConfig(
-            alpha=settings.hybrid_alpha,  # Research default: 0.4
-        ))
-        
+        self.hybrid_searcher = HybridSearcher(
+            HybridSearchConfig(
+                alpha=settings.hybrid_alpha,  # Research default: 0.4
+            )
+        )
+
         # Graph-aware retrieval using entity relationships
         self.graph_retriever = GraphRetriever(
             db=db,
             max_depth=settings.graph_max_depth,
         )
-        
+
         # Context window optimization for LLM output
         self.context_optimizer = ContextOptimizer(
             max_tokens=settings.context_max_tokens,
             include_metadata=settings.context_include_metadata,
         )
-        
+
         # Multi-signal relevance ranking
-        self.relevance_ranker = RelevanceRanker(RankingConfig(
-            semantic_weight=settings.ranking_semantic_weight,
-            recency_weight=settings.ranking_recency_weight,
-            entity_weight=settings.ranking_entity_weight,
-            keyword_weight=settings.ranking_keyword_weight,
-            recency_decay_days=settings.ranking_recency_decay_days,
-        ))
-        
+        self.relevance_ranker = RelevanceRanker(
+            RankingConfig(
+                semantic_weight=settings.ranking_semantic_weight,
+                recency_weight=settings.ranking_recency_weight,
+                entity_weight=settings.ranking_entity_weight,
+                keyword_weight=settings.ranking_keyword_weight,
+                recency_decay_days=settings.ranking_recency_decay_days,
+            )
+        )
+
         # CrossEncoder reranking (optional, gracefully degrades)
         self.reranker = CrossEncoderReranker(
             model_name=settings.rerank_model,
@@ -182,13 +186,13 @@ class MemoryService:
     ) -> StoreResponse:
         """
         Store a new memory with intelligent extraction and consolidation.
-        
+
         Steps:
         1. Extract atomic facts from content (LLM-powered)
         2. For each fact, check for similar existing memories
         3. Consolidate: ADD new, UPDATE existing, or skip duplicates
         4. Store in Qdrant (vector) + SQLite (metadata)
-        
+
         Args:
             request: StoreRequest with content, user_id, etc.
             source: Content provenance (user_input, agent_generated, external_api)
@@ -204,7 +208,7 @@ class MemoryService:
         )
 
         now = datetime.utcnow()
-        
+
         # Calculate expiration if TTL provided
         expires_at = None
         if request.ttl:
@@ -216,18 +220,18 @@ class MemoryService:
 
         # Step 1: Extract atomic facts using LLM
         extracted_facts = await self.extractor.extract(request.content)
-        
+
         if not extracted_facts:
             # If no facts extracted, store raw content
             extracted_facts = [request.content.strip()]
-        
+
         log.debug("facts_extracted", count=len(extracted_facts))
-        
+
         # Step 2 & 3: Process each fact with consolidation
         stored_facts: list[str] = []
         memory_id = None  # Track primary memory ID
         matched_existing_id = None  # Track matched existing memory for NOOPs
-        
+
         for fact in extracted_facts:
             fact_result = await self._store_single_fact(
                 fact=fact,
@@ -252,7 +256,7 @@ class MemoryService:
                     stored_facts.append(fact_result["content"])
                     if memory_id is None:
                         memory_id = fact_result["id"]
-        
+
         # If nothing stored (all NOOPs), return the matched existing memory ID
         if not memory_id:
             # Use matched existing memory ID if available, otherwise generate a placeholder
@@ -276,7 +280,7 @@ class MemoryService:
             extracted_facts=stored_facts,
             entities=[],  # TODO: Entity extraction in Week 5
         )
-    
+
     async def _store_single_fact(
         self,
         fact: str,
@@ -294,9 +298,9 @@ class MemoryService:
     ) -> dict[str, Any] | None:
         """
         Store a single fact with consolidation logic.
-        
+
         Returns dict with id and content if stored, None if skipped.
-        
+
         Args:
             fact: The extracted fact to store
             user_id: User ID
@@ -313,7 +317,7 @@ class MemoryService:
         """
         # Generate embedding for this fact
         embedding = await self.embeddings.embed(fact)
-        
+
         # Search for similar existing memories
         similar = await self.qdrant.search(
             query_vector=embedding,
@@ -322,13 +326,12 @@ class MemoryService:
             limit=5,
             score_threshold=0.4,  # Lower threshold to find candidates
         )
-        
+
         # Convert to ExistingMemory objects
         existing_memories = [
-            ExistingMemory(id=str(mid), content=payload.get("content", ""), score=score)
-            for mid, score, payload in similar
+            ExistingMemory(id=str(mid), content=payload.get("content", ""), score=score) for mid, score, payload in similar
         ]
-        
+
         # Consolidate: decide ADD/UPDATE/DELETE/NOOP
         result = await self.consolidator.consolidate(fact, existing_memories)
 
@@ -341,16 +344,18 @@ class MemoryService:
         # ── Conflict detection ───────────────────────────────────────────
         # When the consolidator detects a contradiction (DELETE) or update,
         # record the conflict and apply the configured strategy.
-        is_conflict = result.action in (
-            ConsolidationAction.DELETE,
-            ConsolidationAction.UPDATE,
-        ) and result.target_id is not None
+        is_conflict = (
+            result.action
+            in (
+                ConsolidationAction.DELETE,
+                ConsolidationAction.UPDATE,
+            )
+            and result.target_id is not None
+        )
 
         conflict_target = None  # The existing memory that was contradicted
         if is_conflict:
-            conflict_target = next(
-                (m for m in existing_memories if m.id == result.target_id), None
-            )
+            conflict_target = next((m for m in existing_memories if m.id == result.target_id), None)
 
         strategy = ConflictStrategy.UPDATE  # default: overwrite
         if is_conflict and self.conflict_manager is not None:
@@ -365,11 +370,7 @@ class MemoryService:
                     similarity_score=conflict_target.score if conflict_target else 0.0,
                     reason=result.reason,
                     strategy_applied=strategy,
-                    status=(
-                        ConflictStatus.RESOLVED
-                        if strategy == ConflictStrategy.UPDATE
-                        else ConflictStatus.OPEN
-                    ),
+                    status=(ConflictStatus.RESOLVED if strategy == ConflictStrategy.UPDATE else ConflictStatus.OPEN),
                 )
                 await self.conflict_manager.record(conflict)
             except Exception as exc:
@@ -408,7 +409,7 @@ class MemoryService:
                 log.debug("memory_will_be_updated", old_id=result.target_id)
             else:
                 content = result.content or fact
-        
+
         # Create and store the memory
         memory = Memory(
             user_id=user_id,
@@ -422,7 +423,7 @@ class MemoryService:
             updated_at=now,
             expires_at=expires_at,
         )
-        
+
         await self.qdrant.upsert(memory)
         await self.db.save_memory_metadata(
             memory_id=memory.id,
@@ -440,7 +441,7 @@ class MemoryService:
             space_id=space_id,
             team_id=team_id,
         )
-        
+
         # Index in FTS5 for hybrid search (Week 6)
         if self.settings.enable_hybrid_search:
             try:
@@ -452,11 +453,12 @@ class MemoryService:
                 )
             except Exception as e:
                 log.warning("fts_indexing_failed", error=str(e), memory_id=memory.id)
-        
+
         # Extract and link entities (Week 5) — runs in background to avoid
         # blocking the store response.  The memory is already persisted in
         # Qdrant + SQLite + FTS by this point, so it's safe to return early.
         if self.settings.enable_entity_resolution:
+
             async def _bg_entity_extraction() -> None:
                 try:
                     await self._process_entities_for_memory(
@@ -474,18 +476,18 @@ class MemoryService:
                     log.warning("entity_extraction_failed", error=str(e), memory_id=memory.id)
 
             asyncio.ensure_future(_bg_entity_extraction())
-        
+
         # Clean up old memory AFTER new one is fully created (fixes FK constraint bug)
         if old_memory_id:
             try:
                 # Migrate entity links and relationships to the new memory
                 await self.db.migrate_memory_relationships(old_memory_id, memory.id)
-                
+
                 # Now safe to delete the old memory (relationships migrated)
                 await self.qdrant.delete(old_memory_id)
                 await self.db.delete_memory_fts(old_memory_id)
                 await self.db.delete_memory(old_memory_id)
-                
+
                 log.debug(
                     "old_memory_cleaned_up",
                     old_id=old_memory_id,
@@ -499,9 +501,9 @@ class MemoryService:
                     old_id=old_memory_id,
                     new_id=memory.id,
                 )
-        
+
         return {"id": memory.id, "content": content}
-    
+
     async def _process_entities_for_memory(
         self,
         memory_id: str,
@@ -511,7 +513,7 @@ class MemoryService:
     ) -> list[EntityRef]:
         """
         Extract entities from content and link to memory.
-        
+
         Steps:
         1. Extract entities and relationships
         2. Match each entity against existing ones
@@ -522,35 +524,32 @@ class MemoryService:
         try:
             # Step 1: Extract entities
             extraction = await self.entity_extractor.extract(content)
-            
+
             if not extraction.entities:
                 return []
-            
+
             log.debug(
                 "processing_entities",
                 memory_id=memory_id,
                 entity_count=len(extraction.entities),
             )
-            
+
             entity_refs: list[EntityRef] = []
             entity_id_map: dict[str, str] = {}  # name -> entity_id
-            
+
             # Step 2 & 3: Match or create entities
             for extracted in extraction.entities:
                 # Get existing entities for matching
                 existing = await self._get_existing_entities(user_id, project_id, extracted.type)
-                
+
                 # Try to match
                 match_result = await self.entity_matcher.match(extracted, existing)
-                
+
                 if match_result.match and match_result.matched_entity_id:
                     # Matched existing entity - add alias if suggested
                     entity_id = match_result.matched_entity_id
                     if match_result.suggested_aliases:
-                        await self._add_entity_aliases(
-                            entity_id, 
-                            match_result.suggested_aliases
-                        )
+                        await self._add_entity_aliases(entity_id, match_result.suggested_aliases)
                     log.debug(
                         "entity_matched",
                         name=extracted.name,
@@ -568,20 +567,22 @@ class MemoryService:
                     await self.db.save_entity(entity, user_id, project_id)
                     entity_id = entity.id
                     log.debug("entity_created", name=extracted.name, id=entity_id)
-                
+
                 entity_id_map[extracted.name] = entity_id
-                entity_refs.append(EntityRef(
-                    id=entity_id, 
-                    canonical_name=extracted.name,
-                    type=extracted.type.lower(),
-                    confidence=1.0,
-                ))
-            
+                entity_refs.append(
+                    EntityRef(
+                        id=entity_id,
+                        canonical_name=extracted.name,
+                        type=extracted.type.lower(),
+                        confidence=1.0,
+                    )
+                )
+
             # Step 4: Store relationships (only between valid entities)
             for rel in extraction.relationships:
                 subject_id = entity_id_map.get(rel.subject)
                 object_id = entity_id_map.get(rel.object)
-                
+
                 # Only save relationships where both ends are entities
                 # Skip value relationships like ROLE -> "CEO"
                 if subject_id and object_id:
@@ -597,23 +598,23 @@ class MemoryService:
                         await self.db.save_relationship(relationship)
                     except Exception as e:
                         log.warning("relationship_save_failed", error=str(e))
-            
+
             # Step 5: Link memory to entities
             for entity_id in entity_id_map.values():
                 await self.db.link_memory_to_entity(memory_id, entity_id)
-            
+
             log.info(
                 "entities_processed",
                 memory_id=memory_id,
                 entities_linked=len(entity_id_map),
             )
-            
+
             return entity_refs
-            
+
         except Exception as e:
             log.error("entity_processing_error", error=str(e), memory_id=memory_id)
             return []
-    
+
     async def _get_existing_entities(
         self,
         user_id: str,
@@ -632,7 +633,7 @@ class MemoryService:
             )
             for e in entities
         ]
-    
+
     async def _add_entity_aliases(self, entity_id: str, aliases: list[str]) -> None:
         """Add aliases to an existing entity."""
         entity = await self.db.get_entity(entity_id)
@@ -644,7 +645,7 @@ class MemoryService:
         """
         Simple rule-based fact extraction.
         Splits content into sentences as basic facts.
-        
+
         TODO(Week 4): Replace with LLM-powered extraction.
         """
         # Split by sentence-ending punctuation
@@ -674,17 +675,17 @@ class MemoryService:
     async def recall(self, request: RecallRequest) -> RecallResponse:
         """
         Recall memories relevant to a query using advanced retrieval.
-        
+
         v0.4.0 Features:
         1. Hybrid search (semantic + keyword via FTS5/BM25)
         2. Graph-aware retrieval (entity relationships)
         3. CrossEncoder reranking (optional, reduces hallucinations)
         4. Advanced relevance ranking (recency, entity, keyword boosts)
         5. Context window optimization (smart truncation with tiktoken)
-        
+
         Args:
             request: RecallRequest with query, user_id, project_id, etc.
-            
+
         Returns:
             RecallResponse with context, memories, and entities
         """
@@ -692,7 +693,7 @@ class MemoryService:
         use_hybrid = self.settings.enable_hybrid_search
         use_rerank = self.settings.enable_reranking
         max_tokens = request.max_tokens or self.settings.context_max_tokens
-        
+
         log.info(
             "recalling_memories_v2",
             user_id=request.user_id,
@@ -715,14 +716,14 @@ class MemoryService:
             limit=request.limit * 2,  # Get more for hybrid fusion
             score_threshold=request.threshold,
         )
-        
+
         log.debug("semantic_search_done", count=len(semantic_results))
-        
+
         # Step 3: Graph-aware retrieval (entity relationships)
         graph_memory_ids: set[str] = set()
         matched_entities: list[EntityRef] = []
         related_entities: list[EntityRef] = []
-        
+
         if self.settings.enable_graph_retrieval:
             try:
                 graph_result = await self.graph_retriever.search(
@@ -733,7 +734,7 @@ class MemoryService:
                 graph_memory_ids = graph_result.memory_ids
                 matched_entities = graph_result.matched_entities
                 related_entities = graph_result.related_entities
-                
+
                 log.debug(
                     "graph_retrieval_done",
                     matched_entities=len(matched_entities),
@@ -742,10 +743,10 @@ class MemoryService:
                 )
             except Exception as e:
                 log.warning("graph_retrieval_failed", error=str(e))
-        
+
         # Step 4: Hybrid search (combine semantic + keyword via FTS5)
         hybrid_results: list[dict[str, Any]] = []
-        
+
         if use_hybrid and semantic_results:
             try:
                 # Build payload map from semantic results
@@ -753,17 +754,17 @@ class MemoryService:
                 for memory_id, score, payload in semantic_results:
                     mid = str(memory_id)
                     payload_map[mid] = {**payload, "semantic_score": score}
-                
+
                 # Add graph memories
                 for mem_id in graph_memory_ids:
                     if mem_id not in payload_map:
                         mem_data = await self.db.get_memory(mem_id)
                         if mem_data:
                             payload_map[mem_id] = {
-                                **mem_data, 
+                                **mem_data,
                                 "semantic_score": 0.4,  # Default for graph-only
                             }
-                
+
                 # Try FTS5 search first (persistent, accurate BM25)
                 fts_results: list[tuple[str, float]] = []
                 try:
@@ -776,7 +777,7 @@ class MemoryService:
                     log.debug("fts5_search_done", count=len(fts_results))
                 except Exception as e:
                     log.debug("fts5_search_failed_fallback_bm25", error=str(e))
-                
+
                 # Fall back to in-memory BM25 if FTS5 fails or returns nothing
                 if not fts_results:
                     all_docs = [(mid, p.get("content", "")) for mid, p in payload_map.items()]
@@ -790,49 +791,53 @@ class MemoryService:
                         limit=request.limit * 2,
                     )
                     for result in fused:
-                        hybrid_results.append({
-                            "id": result.id,
-                            "content": result.content,
-                            "semantic_score": result.semantic_score,
-                            "keyword_score": result.keyword_score,
-                            "relevance": result.combined_score,
-                            "created_at": payload_map.get(result.id, {}).get("created_at"),
-                            "matched_keywords": [],  # BM25 fallback doesn't track individual terms
-                            "payload": result.payload or payload_map.get(result.id, {}),
-                        })
+                        hybrid_results.append(
+                            {
+                                "id": result.id,
+                                "content": result.content,
+                                "semantic_score": result.semantic_score,
+                                "keyword_score": result.keyword_score,
+                                "relevance": result.combined_score,
+                                "created_at": payload_map.get(result.id, {}).get("created_at"),
+                                "matched_keywords": [],  # BM25 fallback doesn't track individual terms
+                                "payload": result.payload or payload_map.get(result.id, {}),
+                            }
+                        )
                 else:
                     # Fuse FTS5 results with semantic results
                     # Normalize scores with min-max scaling
                     semantic_scores = {str(mid): score for mid, score, _ in semantic_results}
                     max_semantic = max(semantic_scores.values()) if semantic_scores else 1.0
                     max_keyword = max(s for _, s in fts_results) if fts_results else 1.0
-                    
+
                     keyword_scores = {mid: score for mid, score in fts_results}
                     all_ids = set(semantic_scores.keys()) | set(keyword_scores.keys()) | set(payload_map.keys())
-                    
+
                     alpha = self.settings.hybrid_alpha  # Keyword weight
-                    
+
                     for mid in all_ids:
                         sem = semantic_scores.get(mid, 0.0) / max_semantic if max_semantic > 0 else 0
                         kw = keyword_scores.get(mid, 0.0) / max_keyword if max_keyword > 0 else 0
                         combined = alpha * kw + (1 - alpha) * sem
-                        
+
                         payload = payload_map.get(mid, {})
-                        hybrid_results.append({
-                            "id": mid,
-                            "content": payload.get("content", ""),
-                            "semantic_score": sem,
-                            "keyword_score": kw,
-                            "relevance": combined,
-                            "created_at": payload.get("created_at"),
-                            "payload": payload,
-                        })
-                    
+                        hybrid_results.append(
+                            {
+                                "id": mid,
+                                "content": payload.get("content", ""),
+                                "semantic_score": sem,
+                                "keyword_score": kw,
+                                "relevance": combined,
+                                "created_at": payload.get("created_at"),
+                                "payload": payload,
+                            }
+                        )
+
                     # Sort by combined score
                     hybrid_results.sort(key=lambda x: x["relevance"], reverse=True)
-                
+
                 log.debug("hybrid_search_done", count=len(hybrid_results))
-                
+
             except Exception as e:
                 log.warning("hybrid_search_failed", error=str(e))
                 # Fall back to semantic results
@@ -862,27 +867,29 @@ class MemoryService:
                 }
                 for mid, score, payload in semantic_results
             ]
-        
+
         # Add graph-only memories that weren't in hybrid results
         seen_ids = {r["id"] for r in hybrid_results}
         for mem_id in graph_memory_ids:
             if mem_id not in seen_ids:
                 mem_data = await self.db.get_memory(mem_id)
                 if mem_data:
-                    hybrid_results.append({
-                        "id": mem_id,
-                        "content": mem_data.get("content", ""),
-                        "relevance": 0.5,  # Default for graph-only
-                        "semantic_score": 0.4,
-                        "keyword_score": 0.0,
-                        "created_at": mem_data.get("created_at"),
-                        "payload": mem_data,
-                    })
-        
+                    hybrid_results.append(
+                        {
+                            "id": mem_id,
+                            "content": mem_data.get("content", ""),
+                            "relevance": 0.5,  # Default for graph-only
+                            "semantic_score": 0.4,
+                            "keyword_score": 0.0,
+                            "created_at": mem_data.get("created_at"),
+                            "payload": mem_data,
+                        }
+                    )
+
         if not hybrid_results:
             log.info("recall_no_results", user_id=request.user_id)
             return RecallResponse(context="", memories=[], entities=[])
-        
+
         # Step 5: CrossEncoder reranking (optional, reduces hallucinations)
         if use_rerank and hybrid_results:
             try:
@@ -907,24 +914,24 @@ class MemoryService:
                 log.debug("reranking_done", count=len(hybrid_results))
             except Exception as e:
                 log.warning("reranking_failed", error=str(e))
-        
+
         # Step 6: Advanced relevance ranking (recency, entity, keyword boosts)
         ranked = self.relevance_ranker.rank(
             memories=hybrid_results,
             query=request.query,
             query_entities=matched_entities,
         )
-        
+
         log.debug(
             "ranking_done",
             count=len(ranked),
             top_score=ranked[0].final_score if ranked else 0,
         )
-        
+
         # Step 7: Context window optimization with token budgeting
         # Create optimizer with request-specific token limit
         context_optimizer = ContextOptimizer(max_tokens=max_tokens)
-        
+
         # Prepare memories for context optimizer
         memories_for_context = [
             {
@@ -935,12 +942,12 @@ class MemoryService:
             }
             for r in ranked
         ]
-        
+
         optimized = context_optimizer.optimize(
             memories=memories_for_context,
             sort_by_relevance=False,  # Already sorted by ranker
         )
-        
+
         log.debug(
             "context_optimized",
             total_tokens=optimized.total_tokens,
@@ -948,22 +955,24 @@ class MemoryService:
             truncated=optimized.truncated_count,
             dropped=optimized.dropped_count,
         )
-        
+
         # Step 8: Build final response
         # Use top N from ranked results (respecting limit)
-        final_ranked = ranked[:request.limit]
-        
+        final_ranked = ranked[: request.limit]
+
         memories: list[RecallResult] = []
         for r in final_ranked:
-            memories.append(RecallResult(
-                id=r.id,
-                relevance=r.final_score,
-                content=r.content,
-                created_at=r.created_at or datetime.utcnow(),
-            ))
+            memories.append(
+                RecallResult(
+                    id=r.id,
+                    relevance=r.final_score,
+                    content=r.content,
+                    created_at=r.created_at or datetime.utcnow(),
+                )
+            )
             # Update access tracking
             await self.db.update_access(r.id)
-        
+
         # Combine all entities (matched + related)
         all_entities = list(matched_entities)
         seen_entity_ids = {e.id for e in all_entities}
@@ -971,7 +980,7 @@ class MemoryService:
             if entity.id not in seen_entity_ids:
                 all_entities.append(entity)
                 seen_entity_ids.add(entity.id)
-        
+
         log.info(
             "recall_complete_v2",
             user_id=request.user_id,
@@ -1014,14 +1023,16 @@ class MemoryService:
         """
         if self.space_manager is None:
             # Spaces not enabled — fall back to standard recall
-            return await self.recall(RecallRequest(
-                query=query,
-                user_id=agent_id,
-                project_id=project_id,
-                limit=limit,
-                threshold=threshold,
-                max_tokens=max_tokens,
-            ))
+            return await self.recall(
+                RecallRequest(
+                    query=query,
+                    user_id=agent_id,
+                    project_id=project_id,
+                    limit=limit,
+                    threshold=threshold,
+                    max_tokens=max_tokens,
+                )
+            )
 
         log.info(
             "recall_across_spaces",
@@ -1039,14 +1050,16 @@ class MemoryService:
             space_memory_ids.update(mids)
 
         # 3. Run the agent's own recall first
-        own_result = await self.recall(RecallRequest(
-            query=query,
-            user_id=agent_id,
-            project_id=project_id,
-            limit=limit,
-            threshold=threshold,
-            max_tokens=max_tokens,
-        ))
+        own_result = await self.recall(
+            RecallRequest(
+                query=query,
+                user_id=agent_id,
+                project_id=project_id,
+                limit=limit,
+                threshold=threshold,
+                max_tokens=max_tokens,
+            )
+        )
 
         if not space_memory_ids:
             return own_result
@@ -1070,21 +1083,22 @@ class MemoryService:
                 if stored_vec:
                     from numpy import dot
                     from numpy.linalg import norm
+
                     sim = float(dot(query_vector, stored_vec) / (norm(query_vector) * norm(stored_vec) + 1e-9))
                 else:
                     sim = 0.5  # Default if no embedding stored
                 if sim < threshold:
                     continue
-                space_results.append(RecallResult(
-                    id=mem_id,
-                    content=mem_data.get("content", ""),
-                    relevance=sim,
-                    created_at=(
-                        datetime.fromisoformat(mem_data["created_at"])
-                        if mem_data.get("created_at")
-                        else datetime.utcnow()
-                    ),
-                ))
+                space_results.append(
+                    RecallResult(
+                        id=mem_id,
+                        content=mem_data.get("content", ""),
+                        relevance=sim,
+                        created_at=(
+                            datetime.fromisoformat(mem_data["created_at"]) if mem_data.get("created_at") else datetime.utcnow()
+                        ),
+                    )
+                )
                 seen_ids.add(mem_id)
             except Exception as e:
                 log.debug("space_memory_fetch_failed", mem_id=mem_id, error=str(e))
@@ -1128,44 +1142,45 @@ class MemoryService:
     ) -> UpdateResponse:
         """
         Update memory content, re-extract facts/entities, re-embed.
-        
+
         Steps:
         1. Fetch existing memory and verify ownership
         2. Re-extract facts from new content
-        3. Re-extract entities from new content  
+        3. Re-extract entities from new content
         4. Generate new embedding
         5. Update vector in Qdrant
         6. Update metadata in SQLite
         7. Update entities (delete old links, create new ones)
-        
+
         Args:
             memory_id: ID of memory to update
             user_id: User ID (must match memory owner)
             new_content: New content text
             new_metadata: Optional metadata to merge
-            
+
         Returns:
             UpdateResponse with updated entity refs
         """
         log.info("updating_memory", memory_id=memory_id, user_id=user_id)
-        
+
         # 1. Fetch existing memory from database
         existing = await self.db.get_memory(memory_id)
         if not existing or existing.get("user_id") != user_id:
             raise ValueError(f"Memory {memory_id} not found")
-        
+
         project_id = existing.get("project_id", "default")
-        
+
         # 2. Re-extract facts from new content
         extracted_facts = await self.extractor.extract(new_content)
         if not extracted_facts:
             extracted_facts = [new_content.strip()]
-        
+
         # 3. Generate new embedding
         embedding = await self.embeddings.embed(new_content)
-        
+
         # 4. Update vector in Qdrant
         from remembra.models.memory import Memory
+
         memory = Memory(
             id=memory_id,
             user_id=user_id,
@@ -1177,26 +1192,28 @@ class MemoryService:
             metadata=existing.get("metadata") or {},
         )
         await self.qdrant.upsert(memory)
-        
+
         # 5. Update metadata in SQLite
         existing_meta = {}
         if existing.get("metadata"):
             import json
+
             existing_meta = json.loads(existing["metadata"]) if isinstance(existing["metadata"], str) else existing["metadata"]
         merged_metadata = {**existing_meta, **(new_metadata or {})}
-        
+
         await self.db.update_memory(
             memory_id=memory_id,
             content=new_content,
             extracted_facts=extracted_facts,
             metadata=merged_metadata,
         )
-        
+
         # 6. Update entities (delete old links, create new ones) — background
         await self.db.delete_memory_entities(memory_id)
 
         entity_refs: list[EntityRef] = []
         if self.settings.enable_entity_resolution:
+
             async def _bg_entity_update() -> None:
                 try:
                     await self._process_entities_for_memory(
@@ -1210,11 +1227,12 @@ class MemoryService:
                     log.warning("entity_update_failed", error=str(e), memory_id=memory_id)
 
             asyncio.ensure_future(_bg_entity_update())
-        
+
         # 7. Handle conflict detection if enabled
         if self.conflict_manager:
             try:
                 from remembra.extraction.conflicts import ConflictStatus, MemoryConflict
+
                 conflict = MemoryConflict(
                     user_id=user_id,
                     project_id=project_id,
@@ -1229,14 +1247,14 @@ class MemoryService:
                 await self.conflict_manager.record(conflict)
             except Exception as e:
                 log.warning("conflict_recording_failed", error=str(e))
-        
+
         log.info(
             "memory_updated",
             memory_id=memory_id,
             facts_count=len(extracted_facts),
             entities_count=len(entity_refs),
         )
-        
+
         return UpdateResponse(id=memory_id, updated_entities=entity_refs)
 
     # -----------------------------------------------------------------------
@@ -1251,7 +1269,7 @@ class MemoryService:
     ) -> ForgetResponse:
         """
         GDPR-compliant deletion of memories.
-        
+
         Can delete by:
         - Specific memory ID
         - All memories for a user
@@ -1271,7 +1289,7 @@ class MemoryService:
                 if memory.get("user_id") != user_id:
                     log.warning("forget_memory_unauthorized", memory_id=memory_id, user_id=user_id)
                     return ForgetResponse(deleted_memories=0, deleted_entities=0, deleted_relationships=0)
-            
+
             # Delete specific memory (ownership verified)
             await self.qdrant.delete(memory_id)
             await self.db.delete_memory_fts(memory_id)  # Clean FTS5 index
@@ -1368,38 +1386,38 @@ class MemoryService:
     ) -> float:
         """
         Calculate memory decay score based on age and access patterns.
-        
+
         The decay model combines:
         1. Exponential time decay (older = lower score)
         2. Access frequency boost (more accesses = higher score)
         3. Recency of access (recently accessed = higher score)
-        
+
         Args:
             created_at: When the memory was created
             last_accessed: When the memory was last accessed (can be None)
             access_count: Number of times the memory was accessed
             half_life_days: Days until memory decays to 50% (default: 30)
             access_boost: Boost per access (default: 0.1)
-            
+
         Returns:
             Decay score between 0.0 (fully decayed) and 1.0+ (fresh/boosted)
         """
         now = datetime.utcnow()
-        
+
         # Calculate age-based decay (exponential)
         age_days = (now - created_at).total_seconds() / 86400.0
         decay_factor = math.exp(-math.log(2) * age_days / half_life_days)
-        
+
         # Access count boost (log scale to prevent runaway)
         access_factor = 1.0 + access_boost * math.log(1 + access_count) if access_count > 0 else 1.0
-        
+
         # Recency of access boost
         recency_boost = 0.0
         if last_accessed:
             recency_days = (now - last_accessed).total_seconds() / 86400.0
             # Boost fades with same half-life
             recency_boost = 0.2 * math.exp(-math.log(2) * recency_days / half_life_days)
-        
+
         return decay_factor * access_factor + recency_boost
 
     async def recall_as_of(
@@ -1412,20 +1430,20 @@ class MemoryService:
     ) -> RecallResponse:
         """
         Recall memories as they existed at a specific point in time.
-        
+
         This enables "time travel" queries - seeing what the memory
         state was in the past. Useful for:
         - Auditing what an AI knew at a specific time
         - Debugging memory changes
         - Historical analysis
-        
+
         Args:
             user_id: User ID
             query: Natural language query
             as_of: The point in time to query from
             project_id: Project namespace
             limit: Maximum results
-            
+
         Returns:
             RecallResponse with memories that existed at as_of time
         """
@@ -1435,7 +1453,7 @@ class MemoryService:
             as_of=as_of.isoformat(),
             query=query[:50],
         )
-        
+
         # Get memories that existed at that time
         historical_memories = await self.db.get_memories_as_of(
             user_id=user_id,
@@ -1443,30 +1461,32 @@ class MemoryService:
             as_of=as_of,
             limit=limit * 2,  # Get more for filtering
         )
-        
+
         if not historical_memories:
             return RecallResponse(context="", memories=[], entities=[])
-        
+
         # Embed query and find most relevant among historical
         await self.embeddings.embed(query)
-        
+
         # Re-embed historical memories for comparison
         # (In production, we'd store embeddings - this is for correctness)
         results: list[RecallResult] = []
         for mem in historical_memories[:limit]:
-            results.append(RecallResult(
-                id=mem["id"],
-                content=mem["content"],
-                relevance=0.8,  # Simplified - historical queries don't rank
-                created_at=datetime.fromisoformat(mem["created_at"]),
-            ))
-        
+            results.append(
+                RecallResult(
+                    id=mem["id"],
+                    content=mem["content"],
+                    relevance=0.8,  # Simplified - historical queries don't rank
+                    created_at=datetime.fromisoformat(mem["created_at"]),
+                )
+            )
+
         # Build context string
         context_parts = []
         for r in results:
             context_parts.append(f"[{r.created_at.strftime('%Y-%m-%d')}] {r.content}")
         context = "\n".join(context_parts)
-        
+
         return RecallResponse(
             context=context,
             memories=results,
@@ -1480,14 +1500,14 @@ class MemoryService:
     ) -> int:
         """
         Clean up expired memories (TTL-based expiration).
-        
+
         This should be called periodically (e.g., via cron or heartbeat)
         to remove memories that have exceeded their TTL.
-        
+
         Args:
             user_id: Optional user filter
             project_id: Optional project filter
-            
+
         Returns:
             Number of memories deleted
         """
@@ -1496,12 +1516,12 @@ class MemoryService:
             user_id=user_id,
             project_id=project_id,
         )
-        
+
         if not expired_ids:
             return 0
-        
+
         log.info("cleaning_expired_memories", count=len(expired_ids))
-        
+
         # Delete from Qdrant and SQLite
         deleted = 0
         for memory_id in expired_ids:
@@ -1512,7 +1532,7 @@ class MemoryService:
                     deleted += 1
             except Exception as e:
                 log.warning("expired_memory_cleanup_failed", memory_id=memory_id, error=str(e))
-        
+
         log.info("expired_memories_cleaned", deleted=deleted)
         return deleted
 
@@ -1525,18 +1545,18 @@ class MemoryService:
     ) -> list[dict[str, Any]]:
         """
         Get memories with their decay scores for ranking/filtering.
-        
+
         This is useful for:
         - Prioritizing recent/active memories in recall
         - Finding "stale" memories that might be archived
         - Analytics on memory usage patterns
-        
+
         Args:
             user_id: User ID
             project_id: Project namespace
             min_decay_score: Filter out memories below this decay score
             limit: Maximum memories to return
-            
+
         Returns:
             List of memories with decay_score added
         """
@@ -1545,32 +1565,30 @@ class MemoryService:
             project_id=project_id,
             limit=limit,
         )
-        
+
         results = []
         half_life = self.settings.ranking_recency_decay_days
-        
+
         for mem in memories:
             created_at = datetime.fromisoformat(mem["created_at"])
-            last_accessed = (
-                datetime.fromisoformat(mem["last_accessed"])
-                if mem.get("last_accessed")
-                else None
-            )
+            last_accessed = datetime.fromisoformat(mem["last_accessed"]) if mem.get("last_accessed") else None
             access_count = mem.get("access_count", 0)
-            
+
             decay_score = self.calculate_decay_score(
                 created_at=created_at,
                 last_accessed=last_accessed,
                 access_count=access_count,
                 half_life_days=half_life,
             )
-            
+
             if decay_score >= min_decay_score:
-                results.append({
-                    **mem,
-                    "decay_score": decay_score,
-                })
-        
+                results.append(
+                    {
+                        **mem,
+                        "decay_score": decay_score,
+                    }
+                )
+
         # Sort by decay score (highest first)
         results.sort(key=lambda x: x["decay_score"], reverse=True)
         return results

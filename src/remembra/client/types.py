@@ -7,7 +7,7 @@ from datetime import datetime
 @dataclass
 class EntityItem:
     """Entity reference returned from store/recall operations."""
-    
+
     id: str
     canonical_name: str
     type: str
@@ -17,7 +17,7 @@ class EntityItem:
 @dataclass
 class MemoryItem:
     """Memory item returned from recall operations."""
-    
+
     id: str
     content: str
     relevance: float
@@ -27,7 +27,7 @@ class MemoryItem:
 @dataclass
 class StoreResult:
     """Result from storing a memory."""
-    
+
     id: str
     extracted_facts: list[str]
     entities: list[EntityItem]
@@ -36,7 +36,7 @@ class StoreResult:
 @dataclass
 class RecallResult:
     """Result from recalling memories."""
-    
+
     context: str
     memories: list[MemoryItem]
     entities: list[EntityItem]
@@ -45,7 +45,7 @@ class RecallResult:
 @dataclass
 class ForgetResult:
     """Result from forgetting memories."""
-    
+
     deleted_memories: int
     deleted_entities: int
     deleted_relationships: int
@@ -54,7 +54,7 @@ class ForgetResult:
 @dataclass
 class ChangelogIngestResult:
     """Result from ingesting a changelog."""
-    
+
     releases_parsed: int
     memories_stored: int
     memory_ids: list[str]
@@ -64,7 +64,7 @@ class ChangelogIngestResult:
 @dataclass
 class ExtractedFactItem:
     """Fact extracted from conversation ingestion."""
-    
+
     content: str
     confidence: float
     importance: float
@@ -79,7 +79,7 @@ class ExtractedFactItem:
 @dataclass
 class ExtractedEntityItem:
     """Entity extracted from conversation ingestion."""
-    
+
     name: str
     type: str
     relationship: str | None
@@ -88,7 +88,7 @@ class ExtractedEntityItem:
 @dataclass
 class IngestStatsItem:
     """Statistics from conversation ingestion."""
-    
+
     messages_processed: int
     facts_extracted: int
     facts_stored: int
@@ -102,7 +102,7 @@ class IngestStatsItem:
 @dataclass
 class ConversationIngestResult:
     """Result from ingesting a conversation."""
-    
+
     status: str  # "ok" | "partial" | "error"
     session_id: str | None
     facts: list[ExtractedFactItem]

@@ -74,9 +74,7 @@ def build_json_mcp_config(
         ("windsurf", load_windsurf_target),
     ],
 )
-def test_load_json_agent_target_parses_config(
-    tmp_path: Path, agent: str, loader: callable
-) -> None:
+def test_load_json_agent_target_parses_config(tmp_path: Path, agent: str, loader: callable) -> None:
     config_path = tmp_path / "config.json"
     config_path.write_text(
         build_json_mcp_config(
@@ -129,9 +127,7 @@ def test_load_json_agent_target_missing_server(tmp_path: Path) -> None:
 
 def test_load_json_agent_target_missing_command(tmp_path: Path) -> None:
     config_path = tmp_path / "config.json"
-    config_path.write_text(
-        json.dumps({"mcpServers": {"remembra": {"env": {}}}})
-    )
+    config_path.write_text(json.dumps({"mcpServers": {"remembra": {"env": {}}}}))
 
     with pytest.raises(Exception) as exc_info:
         load_json_agent_target("test", config_path)
@@ -154,13 +150,9 @@ def test_load_json_agent_target_missing_command(tmp_path: Path) -> None:
         (doctor_windsurf, build_json_mcp_config),
     ],
 )
-def test_doctor_json_agent_reports_missing_command(
-    tmp_path: Path, doctor_fn: callable, config_builder: callable
-) -> None:
+def test_doctor_json_agent_reports_missing_command(tmp_path: Path, doctor_fn: callable, config_builder: callable) -> None:
     config_path = tmp_path / "config.json"
-    config_path.write_text(
-        config_builder(command="/does/not/exist")
-    )
+    config_path.write_text(config_builder(command="/does/not/exist"))
 
     results = doctor_fn(config_path)
 
@@ -287,9 +279,7 @@ def test_classify_http_error_maps_connect_error() -> None:
 # ============================================================================
 
 
-def test_doctor_all_returns_empty_when_no_agents(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_doctor_all_returns_empty_when_no_agents(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """doctor_all should return empty dict when no agent configs exist."""
     # Monkeypatch all default paths to nonexistent locations
     monkeypatch.setattr(

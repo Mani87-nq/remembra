@@ -71,20 +71,20 @@ async def require_superadmin(
 ) -> None:
     """Dependency that checks if the current user is a superadmin (in owner_emails)."""
     settings = get_settings()
-    
+
     # Get user's email from the database
     db: Database = request.app.state.db
     user_data = await db.get_user_by_id(current_user.user_id)
-    
+
     if not user_data:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not found",
         )
-    
+
     user_email = user_data.get("email", "").lower()
     owner_emails = [e.lower() for e in settings.owner_emails] if settings.owner_emails else []
-    
+
     if user_email not in owner_emails:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -130,6 +130,7 @@ class AuditListResponse(BaseModel):
 
 class UserListItem(BaseModel):
     """User summary for list view."""
+
     id: str
     email: str
     name: str | None
@@ -143,12 +144,14 @@ class UserListItem(BaseModel):
 
 class UserListResponse(BaseModel):
     """Response for user list endpoint."""
+
     users: list[UserListItem]
     total: int
 
 
 class UserDetailResponse(BaseModel):
     """Full user details including usage."""
+
     id: str
     email: str
     name: str | None
@@ -166,11 +169,13 @@ class UserDetailResponse(BaseModel):
 
 class UpdateUserTierRequest(BaseModel):
     """Request to update a user's plan tier."""
+
     plan: str = Field(description="Plan tier: free, pro, team, enterprise")
 
 
 class AdminResetPasswordResponse(BaseModel):
     """Response with temporary password after admin reset."""
+
     temporary_password: str
     message: str
 
@@ -426,26 +431,26 @@ async def trigger_consolidation(
 ) -> dict[str, Any]:
     """
     Manually trigger sleep-time consolidation.
-    
+
     This runs the background memory improvement process:
     - Deduplication across sessions
     - Entity resolution
     - Importance rescoring
     - Decay cleanup
-    
+
     **Admin only.** Rate limited to 1 per minute.
     """
     sleep_worker = get_sleep_worker(request)
-    
+
     if sleep_worker is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Sleep-time compute is not enabled. Set REMEMBRA_SLEEP_TIME_ENABLED=true",
         )
-    
+
     try:
         report = await sleep_worker.run_consolidation(user_id=user_id)
-        
+
         return {
             "status": "completed",
             "started_at": report.started_at.isoformat(),
@@ -460,7 +465,7 @@ async def trigger_consolidation(
             },
             "errors": report.errors,
         }
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -478,20 +483,20 @@ async def consolidation_status(
 ) -> dict[str, Any]:
     """
     Get the status of sleep-time consolidation.
-    
+
     Returns:
     - Whether sleep-time compute is enabled
     - Last run timestamp
     - Whether a consolidation is currently running
     """
     sleep_worker = get_sleep_worker(request)
-    
+
     if sleep_worker is None:
         return {
             "enabled": False,
             "message": "Sleep-time compute is not enabled",
         }
-    
+
     return {
         "enabled": True,
         "running": sleep_worker.running,
@@ -523,73 +528,75 @@ async def list_all_users(
 ) -> UserListResponse:
     """
     List all registered users with their plan and usage summary.
-    
+
     **Superadmin only** - requires owner_emails access.
     """
     # Build query
     query = "SELECT * FROM users WHERE 1=1"
     params: list[Any] = []
-    
+
     if search:
         query += " AND (email LIKE ? OR name LIKE ?)"
         params.extend([f"%{search}%", f"%{search}%"])
-    
+
     query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
     params.extend([limit, offset])
-    
+
     cursor = await db.conn.execute(query, params)
     rows = await cursor.fetchall()
-    
+
     # Get total count
     count_query = "SELECT COUNT(*) FROM users WHERE 1=1"
     count_params: list[Any] = []
     if search:
         count_query += " AND (email LIKE ? OR name LIKE ?)"
         count_params.extend([f"%{search}%", f"%{search}%"])
-    
+
     count_cursor = await db.conn.execute(count_query, count_params)
     total = (await count_cursor.fetchone())[0]
-    
+
     users = []
     for row in rows:
         user_dict = dict(row)
         user_id = user_dict["id"]
-        
+
         # Get plan from cloud_tenants
         plan_tier = "free"
         if usage_meter:
             plan_tier = (await usage_meter.get_tenant_plan(user_id)).value
-        
+
         # Filter by plan if specified
         if plan and plan_tier != plan.lower():
             continue
-        
+
         # Get memory count
         mem_cursor = await db.conn.execute(
             "SELECT COUNT(*) FROM memories WHERE user_id = ?",
             (user_id,),
         )
         memories_count = (await mem_cursor.fetchone())[0]
-        
+
         # Get API key count
         key_cursor = await db.conn.execute(
             "SELECT COUNT(*) FROM api_keys WHERE user_id = ? AND active = TRUE",
             (user_id,),
         )
         api_keys_count = (await key_cursor.fetchone())[0]
-        
-        users.append(UserListItem(
-            id=user_id,
-            email=user_dict["email"],
-            name=user_dict.get("name"),
-            plan=plan_tier,
-            memories_count=memories_count,
-            api_keys_count=api_keys_count,
-            created_at=user_dict["created_at"],
-            last_login_at=user_dict.get("last_login_at"),
-            is_active=user_dict.get("is_active", True),
-        ))
-    
+
+        users.append(
+            UserListItem(
+                id=user_id,
+                email=user_dict["email"],
+                name=user_dict.get("name"),
+                plan=plan_tier,
+                memories_count=memories_count,
+                api_keys_count=api_keys_count,
+                created_at=user_dict["created_at"],
+                last_login_at=user_dict.get("last_login_at"),
+                is_active=user_dict.get("is_active", True),
+            )
+        )
+
     return UserListResponse(users=users, total=total)
 
 
@@ -609,7 +616,7 @@ async def get_user_details(
 ) -> UserDetailResponse:
     """
     Get full user details including usage and plan limits.
-    
+
     **Superadmin only** - requires owner_emails access.
     """
     user_data = await db.get_user_by_id(user_id)
@@ -618,14 +625,14 @@ async def get_user_details(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found",
         )
-    
+
     # Get tenant info (plan, Stripe IDs)
     tenant = None
     plan_tier = PlanTier.FREE
     if usage_meter:
         tenant = await usage_meter.get_tenant(user_id)
         plan_tier = await usage_meter.get_tenant_plan(user_id)
-    
+
     # Get usage snapshot
     usage = {}
     if usage_meter:
@@ -636,7 +643,7 @@ async def get_user_details(
             "stores_this_month": snapshot.stores_this_month,
             "api_keys_active": snapshot.api_keys_active,
         }
-    
+
     # Get plan limits
     limits_obj = get_plan(plan_tier)
     limits = {
@@ -647,7 +654,7 @@ async def get_user_details(
         "has_webhooks": limits_obj.has_webhooks,
         "has_priority_support": limits_obj.has_priority_support,
     }
-    
+
     return UserDetailResponse(
         id=user_data["id"],
         email=user_data["email"],
@@ -681,12 +688,12 @@ async def update_user_tier(
 ) -> dict[str, Any]:
     """
     Update a user's plan tier manually (bypasses Stripe).
-    
+
     Use this for:
     - Upgrading users to Pro/Team/Enterprise manually
     - Handling enterprise sales
     - Fixing billing issues
-    
+
     **Superadmin only** - requires owner_emails access.
     """
     # Validate user exists
@@ -696,7 +703,7 @@ async def update_user_tier(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found",
         )
-    
+
     # Validate plan tier
     try:
         new_plan = PlanTier(body.plan.lower())
@@ -705,16 +712,16 @@ async def update_user_tier(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid plan: {body.plan}. Valid plans: free, pro, team, enterprise",
         ) from None
-    
+
     if usage_meter is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Cloud features not enabled",
         )
-    
+
     # Register/update tenant with new plan
     await usage_meter.register_tenant(user_id, plan=new_plan)
-    
+
     return {
         "status": "updated",
         "user_id": user_id,
@@ -739,14 +746,14 @@ async def delete_user(
 ) -> dict[str, Any]:
     """
     Permanently delete a user and ALL their data.
-    
+
     This is a destructive operation that removes:
     - User account
     - All memories
     - All API keys
     - All entities and relationships
     - All usage records
-    
+
     **Superadmin only** - requires owner_emails access.
     **Requires confirm=true** to execute.
     """
@@ -755,60 +762,57 @@ async def delete_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Add ?confirm=true to confirm permanent deletion",
         )
-    
+
     user_data = await db.get_user_by_id(user_id)
     if not user_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found",
         )
-    
+
     email = user_data["email"]
-    
+
     # Delete in order to handle foreign keys
     # 1. Delete memories and related data
     await db.conn.execute(
-        "DELETE FROM memory_entities WHERE memory_id IN "
-        "(SELECT id FROM memories WHERE user_id = ?)",
+        "DELETE FROM memory_entities WHERE memory_id IN (SELECT id FROM memories WHERE user_id = ?)",
         (user_id,),
     )
     await db.conn.execute("DELETE FROM memories_fts WHERE user_id = ?", (user_id,))
     await db.conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
-    
+
     # 2. Delete entities and relationships
     await db.conn.execute(
-        "DELETE FROM relationships WHERE from_entity_id IN "
-        "(SELECT id FROM entities WHERE user_id = ?)",
+        "DELETE FROM relationships WHERE from_entity_id IN (SELECT id FROM entities WHERE user_id = ?)",
         (user_id,),
     )
     await db.conn.execute(
-        "DELETE FROM relationships WHERE to_entity_id IN "
-        "(SELECT id FROM entities WHERE user_id = ?)",
+        "DELETE FROM relationships WHERE to_entity_id IN (SELECT id FROM entities WHERE user_id = ?)",
         (user_id,),
     )
     await db.conn.execute("DELETE FROM entities WHERE user_id = ?", (user_id,))
-    
+
     # 3. Delete API keys
     await db.conn.execute("DELETE FROM api_keys WHERE user_id = ?", (user_id,))
-    
+
     # 4. Delete audit logs for user
     await db.conn.execute("DELETE FROM audit_log WHERE user_id = ?", (user_id,))
-    
+
     # 5. Delete cloud tenant record
     await db.conn.execute("DELETE FROM cloud_tenants WHERE user_id = ?", (user_id,))
     await db.conn.execute("DELETE FROM cloud_usage_daily WHERE user_id = ?", (user_id,))
-    
+
     # 6. Delete password reset tokens
     await db.conn.execute("DELETE FROM password_reset_tokens WHERE user_id = ?", (user_id,))
-    
+
     # 7. Delete token blacklist entries
     await db.conn.execute("DELETE FROM token_blacklist WHERE user_id = ?", (user_id,))
-    
+
     # 8. Finally delete user
     await db.conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-    
+
     await db.conn.commit()
-    
+
     return {
         "status": "deleted",
         "user_id": user_id,
@@ -833,11 +837,11 @@ async def admin_reset_password(
 ) -> AdminResetPasswordResponse:
     """
     Reset a user's password to a temporary random password.
-    
+
     The temporary password is returned in the response and should
     be communicated to the user securely. They should change it
     immediately upon login.
-    
+
     **Superadmin only** - requires owner_emails access.
     """
     user_data = await db.get_user_by_id(user_id)
@@ -846,14 +850,14 @@ async def admin_reset_password(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found",
         )
-    
+
     # Generate a random temporary password
     temp_password = secrets.token_urlsafe(12)
-    
+
     # Hash and update
     password_hash = user_manager.hash_password(temp_password)
     await db.update_user_password(user_id, password_hash)
-    
+
     return AdminResetPasswordResponse(
         temporary_password=temp_password,
         message=f"Password reset for {user_data['email']}. User must change password on next login.",
@@ -875,9 +879,9 @@ async def toggle_user_active(
 ) -> dict[str, Any]:
     """
     Activate or deactivate a user account.
-    
+
     Deactivated users cannot log in but their data is preserved.
-    
+
     **Superadmin only** - requires owner_emails access.
     """
     user_data = await db.get_user_by_id(user_id)
@@ -886,13 +890,13 @@ async def toggle_user_active(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found",
         )
-    
+
     await db.conn.execute(
         "UPDATE users SET is_active = ?, updated_at = ? WHERE id = ?",
         (active, datetime.now(UTC).isoformat(), user_id),
     )
     await db.conn.commit()
-    
+
     status_str = "activated" if active else "deactivated"
     return {
         "status": status_str,
@@ -915,24 +919,24 @@ async def get_platform_stats(
 ) -> dict[str, Any]:
     """
     Get overall platform statistics.
-    
+
     **Superadmin only** - requires owner_emails access.
     """
     # User stats
     user_cursor = await db.conn.execute("SELECT COUNT(*) FROM users")
     total_users = (await user_cursor.fetchone())[0]
-    
+
     active_cursor = await db.conn.execute("SELECT COUNT(*) FROM users WHERE is_active = TRUE")
     active_users = (await active_cursor.fetchone())[0]
-    
+
     # Memory stats
     mem_cursor = await db.conn.execute("SELECT COUNT(*) FROM memories")
     total_memories = (await mem_cursor.fetchone())[0]
-    
+
     # API key stats
     key_cursor = await db.conn.execute("SELECT COUNT(*) FROM api_keys WHERE active = TRUE")
     active_keys = (await key_cursor.fetchone())[0]
-    
+
     # Plan distribution
     plan_cursor = await db.conn.execute("""
         SELECT plan, COUNT(*) as count 
@@ -941,12 +945,12 @@ async def get_platform_stats(
     """)
     plan_rows = await plan_cursor.fetchall()
     plan_distribution = {row["plan"]: row["count"] for row in plan_rows}
-    
+
     # Add users without tenant record as free
     tenants_count = sum(plan_distribution.values())
     if tenants_count < total_users:
         plan_distribution["free"] = plan_distribution.get("free", 0) + (total_users - tenants_count)
-    
+
     # Recent signups (last 7 days)
     week_ago = (datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)).isoformat()
     recent_cursor = await db.conn.execute(
@@ -954,7 +958,7 @@ async def get_platform_stats(
         (week_ago,),
     )
     recent_signups = (await recent_cursor.fetchone())[0]
-    
+
     return {
         "users": {
             "total": total_users,
@@ -986,22 +990,22 @@ async def rebuild_vectors(
 ) -> dict[str, Any]:
     """
     Find memories in SQLite that are missing from Qdrant and re-embed them.
-    
+
     This fixes memories that were stored but not properly vectorized.
-    
+
     **Superadmin only** - requires owner_emails access.
-    
+
     Args:
         user_id: Optional - scope to a specific user's memories
         dry_run: If True, only report what would be done without making changes
     """
     from remembra.services.memory import MemoryService
-    
+
     # Get services from app state
     memory_service: MemoryService = request.app.state.memory_service
     qdrant = memory_service.qdrant
     embeddings = memory_service.embeddings
-    
+
     # Build query
     if user_id:
         cursor = await db.conn.execute(
@@ -1009,37 +1013,37 @@ async def rebuild_vectors(
             (user_id,),
         )
     else:
-        cursor = await db.conn.execute(
-            "SELECT id, user_id, project_id, content FROM memories"
-        )
-    
+        cursor = await db.conn.execute("SELECT id, user_id, project_id, content FROM memories")
+
     rows = await cursor.fetchall()
-    
+
     missing = []
     rebuilt = []
     errors = []
-    
+
     for row in rows:
         mem_id, mem_user_id, _mem_project_id, content = row["id"], row["user_id"], row["project_id"], row["content"]
-        
+
         # Check if exists in Qdrant (use get_by_id)
         try:
             existing = await qdrant.get_by_id(mem_id)
             exists = existing is not None
         except Exception:
             exists = False
-        
+
         if not exists:
-            missing.append({
-                "id": mem_id,
-                "user_id": mem_user_id,
-                "content_preview": content[:100] if content else "",
-            })
-            
+            missing.append(
+                {
+                    "id": mem_id,
+                    "user_id": mem_user_id,
+                    "content_preview": content[:100] if content else "",
+                }
+            )
+
             if not dry_run:
                 try:
                     from remembra.core.models import Memory
-                    
+
                     # Get full memory data from SQLite
                     full_cursor = await db.conn.execute(
                         """SELECT id, user_id, project_id, content, metadata, 
@@ -1048,11 +1052,11 @@ async def rebuild_vectors(
                         (mem_id,),
                     )
                     mem_row = await full_cursor.fetchone()
-                    
+
                     if mem_row:
                         # Generate embedding
                         embedding = await embeddings.embed(content)
-                        
+
                         # Create Memory object and upsert to Qdrant
                         memory = Memory(
                             id=mem_row["id"],
@@ -1070,7 +1074,7 @@ async def rebuild_vectors(
                         rebuilt.append(mem_id)
                 except Exception as e:
                     errors.append({"id": mem_id, "error": str(e)})
-    
+
     return {
         "dry_run": dry_run,
         "total_memories_checked": len(rows),
@@ -1096,14 +1100,14 @@ async def sync_user_team_plans(
 ) -> dict[str, Any]:
     """
     Sync all teams owned by a user to match their billing plan.
-    
+
     Use this to fix teams that are out of sync with the owner's
     actual subscription (e.g., team shows "Pro" but billing is "Enterprise").
-    
+
     **Superadmin only** - requires owner_emails access.
     """
     from remembra.cloud.plans import PlanTier, get_plan
-    
+
     # Get user
     user_data = await db.get_user_by_id(user_id)
     if not user_data:
@@ -1111,7 +1115,7 @@ async def sync_user_team_plans(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User {user_id} not found",
         )
-    
+
     # Get user's current billing plan
     usage_meter = getattr(request.app.state, "usage_meter", None)
     if not usage_meter:
@@ -1119,18 +1123,18 @@ async def sync_user_team_plans(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Cloud features not enabled",
         )
-    
+
     tenant = await usage_meter.get_tenant(user_id)
     if not tenant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No billing record for user {user_id}",
         )
-    
+
     plan_str = tenant.get("plan", "free")
     plan_tier = PlanTier(plan_str)
     plan_limits = get_plan(plan_tier)
-    
+
     # Get team manager
     team_manager = getattr(request.app.state, "team_manager", None)
     if not team_manager:
@@ -1138,14 +1142,14 @@ async def sync_user_team_plans(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Team collaboration not enabled",
         )
-    
+
     # Update all teams owned by this user
     teams_updated = await team_manager.update_owner_teams_plan(
         owner_id=user_id,
         plan=plan_str,
         max_seats=plan_limits.max_users,
     )
-    
+
     return {
         "status": "synced",
         "user_id": user_id,

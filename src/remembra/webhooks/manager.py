@@ -22,51 +22,51 @@ logger = logging.getLogger(__name__)
 
 # Blocked IP ranges for SSRF protection
 _BLOCKED_NETWORKS = [
-    ipaddress.ip_network("127.0.0.0/8"),      # Loopback
-    ipaddress.ip_network("10.0.0.0/8"),       # Private Class A
-    ipaddress.ip_network("172.16.0.0/12"),    # Private Class B
-    ipaddress.ip_network("192.168.0.0/16"),   # Private Class C
-    ipaddress.ip_network("169.254.0.0/16"),   # Link-local
-    ipaddress.ip_network("::1/128"),          # IPv6 loopback
-    ipaddress.ip_network("fc00::/7"),         # IPv6 private
-    ipaddress.ip_network("fe80::/10"),        # IPv6 link-local
+    ipaddress.ip_network("127.0.0.0/8"),  # Loopback
+    ipaddress.ip_network("10.0.0.0/8"),  # Private Class A
+    ipaddress.ip_network("172.16.0.0/12"),  # Private Class B
+    ipaddress.ip_network("192.168.0.0/16"),  # Private Class C
+    ipaddress.ip_network("169.254.0.0/16"),  # Link-local
+    ipaddress.ip_network("::1/128"),  # IPv6 loopback
+    ipaddress.ip_network("fc00::/7"),  # IPv6 private
+    ipaddress.ip_network("fe80::/10"),  # IPv6 link-local
 ]
 
 
 def validate_webhook_url(url: str) -> tuple[bool, str | None]:
     """
     Validate a webhook URL for SSRF protection.
-    
+
     Returns (is_valid, error_message).
     """
     try:
         parsed = urlparse(url)
     except Exception:
         return False, "Invalid URL format"
-    
+
     # Only allow HTTP/HTTPS
     if parsed.scheme not in ("http", "https"):
         return False, "Only HTTP and HTTPS URLs are allowed"
-    
+
     # Must have a hostname
     if not parsed.hostname:
         return False, "URL must have a hostname"
-    
+
     hostname = parsed.hostname.lower()
-    
+
     # Block localhost variants
     if hostname in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
         return False, "Localhost URLs are not allowed"
-    
+
     # Block cloud metadata endpoints
     if hostname in ("169.254.169.254", "metadata.google.internal"):
         return False, "Cloud metadata endpoints are not allowed"
-    
+
     # Resolve hostname and check IP
     try:
         # Get all IP addresses for the hostname
         ips = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
-        
+
         for _family, _, _, _, sockaddr in ips:
             ip_str = sockaddr[0]
             try:
@@ -76,12 +76,12 @@ def validate_webhook_url(url: str) -> tuple[bool, str | None]:
                         return False, f"URL resolves to blocked IP range ({blocked})"
             except ValueError:
                 continue
-                
+
     except socket.gaierror:
         # Can't resolve - might be a temporary DNS issue, allow it
         # The actual delivery will fail if the host doesn't exist
         logger.warning("Could not resolve hostname for validation: %s", hostname)
-    
+
     return True, None
 
 
@@ -157,7 +157,7 @@ class WebhookManager:
 
         Returns:
             Webhook registration record.
-            
+
         Raises:
             ValueError: If URL is invalid or points to blocked network.
         """
@@ -165,14 +165,11 @@ class WebhookManager:
         is_valid, error = validate_webhook_url(url)
         if not is_valid:
             raise ValueError(f"Invalid webhook URL: {error}")
-        
+
         # Validate event types
         for event in events:
             if event != "*" and event not in ALL_EVENT_TYPES:
-                raise ValueError(
-                    f"Unknown event type: {event}. "
-                    f"Valid types: {', '.join(ALL_EVENT_TYPES)} or '*'"
-                )
+                raise ValueError(f"Unknown event type: {event}. Valid types: {', '.join(ALL_EVENT_TYPES)} or '*'")
 
         webhook_id = str(uuid4())
         now = datetime.now(UTC).isoformat()

@@ -381,16 +381,23 @@ class TestEventDataclasses:
 
     def test_entity_event_defaults(self):
         e = EntityEvent(
-            entity_id="e1", canonical_name="Alice",
-            entity_type="PERSON", user_id="u1", project_id="p1",
+            entity_id="e1",
+            canonical_name="Alice",
+            entity_type="PERSON",
+            user_id="u1",
+            project_id="p1",
         )
         assert e.action == "created"
         assert e.aliases == []
 
     def test_conflict_event_defaults(self):
         e = ConflictEvent(
-            conflict_id="c1", user_id="u1", project_id="p1",
-            new_fact="new", existing_content="old", existing_memory_id="m1",
+            conflict_id="c1",
+            user_id="u1",
+            project_id="p1",
+            new_fact="new",
+            existing_content="old",
+            existing_memory_id="m1",
         )
         assert e.strategy_applied == "update"
         assert e.status == "open"

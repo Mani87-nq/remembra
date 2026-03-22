@@ -60,7 +60,7 @@ class QdrantStore:
             log.info(
                 "qdrant_collection_exists",
                 name=self.collection_name,
-                points_count=getattr(collection_info, 'points_count', 'unknown'),
+                points_count=getattr(collection_info, "points_count", "unknown"),
             )
         except UnexpectedResponse as e:
             if "Not found" in str(e) or e.status_code == 404:
@@ -101,7 +101,7 @@ class QdrantStore:
     async def upsert(self, memory: Memory) -> None:
         """
         Insert or update a memory in the vector store.
-        
+
         Args:
             memory: Memory object with embedding already computed
         """
@@ -166,14 +166,14 @@ class QdrantStore:
     ) -> list[tuple[str, float, dict[str, Any]]]:
         """
         Semantic search for memories.
-        
+
         Args:
             query_vector: Embedding of the search query
             user_id: Filter to this user's memories
             project_id: Filter to this project
             limit: Max results to return
             score_threshold: Minimum similarity score
-            
+
         Returns:
             List of (memory_id, score, payload) tuples
         """
@@ -199,10 +199,7 @@ class QdrantStore:
             score_threshold=score_threshold,
         )
 
-        return [
-            (r.id, r.score, self._decrypt_payload(r.payload or {}))
-            for r in results.points
-        ]
+        return [(r.id, r.score, self._decrypt_payload(r.payload or {})) for r in results.points]
 
     async def delete(self, memory_id: str) -> bool:
         """Delete a single memory by ID."""

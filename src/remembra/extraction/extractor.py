@@ -61,10 +61,11 @@ Remember: Only extract facts worth remembering long-term. Return JSON with "fact
 # Configuration
 # ============================================================================
 
+
 @dataclass
 class ExtractionConfig:
     """Configuration for fact extraction."""
-    
+
     enabled: bool = True
     provider: str = "openai"
     model: str = "gpt-4o-mini"
@@ -78,20 +79,21 @@ class ExtractionConfig:
 # Fact Extractor
 # ============================================================================
 
+
 class FactExtractor:
     """
     Extracts atomic facts from text using LLM.
-    
+
     Usage:
         extractor = FactExtractor(config)
         facts = await extractor.extract("John is the CEO of Acme Corp")
         # Returns: ["John is the CEO of Acme Corp"]
     """
-    
+
     def __init__(self, config: ExtractionConfig | None = None) -> None:
         self.config = config or ExtractionConfig()
         self._client: AsyncOpenAI | None = None
-    
+
     def _get_client(self) -> AsyncOpenAI:
         """Get or create OpenAI client."""
         if self._client is None:
@@ -102,33 +104,33 @@ class FactExtractor:
                 model=self.config.model,
             )
         return self._client
-    
+
     async def extract(self, content: str) -> list[str]:
         """
         Extract atomic facts from content.
-        
+
         Args:
             content: Raw text to extract facts from
-            
+
         Returns:
             List of atomic fact strings
         """
         if not self.config.enabled:
             # Fallback to simple splitting
             return self._simple_extract(content)
-        
+
         if not content.strip():
             return []
-        
+
         # Skip very short content
         if len(content.strip()) < 10:
             return [content.strip()] if content.strip() else []
-        
+
         try:
             client = self._get_client()
-            
+
             log.debug("extracting_facts", content_length=len(content))
-            
+
             response = await client.chat.completions.create(
                 model=self.config.model,
                 messages=[
@@ -139,47 +141,49 @@ class FactExtractor:
                 response_format={"type": "json_object"},
                 timeout=self.config.timeout,
             )
-            
+
             # Parse response
             result_text = response.choices[0].message.content
             if not result_text:
                 log.warning("empty_extraction_response")
                 return self._simple_extract(content)
-            
+
             result = json.loads(result_text)
             facts = result.get("facts", [])
-            
+
             # Validate and limit
             facts = [f.strip() for f in facts if isinstance(f, str) and f.strip()]
-            facts = facts[:self.config.max_facts_per_input]
-            
+            facts = facts[: self.config.max_facts_per_input]
+
             log.info(
                 "facts_extracted",
                 input_length=len(content),
                 fact_count=len(facts),
             )
-            
+
             return facts
-            
+
         except json.JSONDecodeError as e:
             log.error("extraction_json_error", error=str(e))
             return self._simple_extract(content)
         except Exception as e:
             log.error("extraction_error", error=str(e))
             return self._simple_extract(content)
-    
+
     def _simple_extract(self, content: str) -> list[str]:
         """Fallback: simple sentence splitting."""
         # Split on sentence boundaries
         import re
-        sentences = re.split(r'(?<=[.!?])\s+', content)
+
+        sentences = re.split(r"(?<=[.!?])\s+", content)
         facts = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 5]
-        return facts[:self.config.max_facts_per_input]
+        return facts[: self.config.max_facts_per_input]
 
 
 # ============================================================================
 # Convenience function
 # ============================================================================
+
 
 async def extract_facts(
     content: str,
@@ -187,7 +191,7 @@ async def extract_facts(
 ) -> list[str]:
     """
     Extract facts from content.
-    
+
     Convenience function for one-off extraction.
     """
     extractor = FactExtractor(config)

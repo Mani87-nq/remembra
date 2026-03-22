@@ -16,6 +16,7 @@ from remembra.core.limiter import limiter
 # Email imports (optional - only if cloud module available)
 try:
     from remembra.cloud.email import EmailService
+
     EMAIL_AVAILABLE = True
 except ImportError:
     EMAIL_AVAILABLE = False
@@ -35,33 +36,34 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 class SignupRequest(BaseModel):
     """Request body for user signup."""
+
     email: EmailStr
     password: str = Field(
-        min_length=8,
-        description="Password must be at least 8 chars: uppercase, lowercase, number, special char"
+        min_length=8, description="Password must be at least 8 chars: uppercase, lowercase, number, special char"
     )
     name: str | None = Field(None, max_length=100, description="User's display name")
-    
+
     @field_validator("password")
     @classmethod
     def validate_password_complexity(cls, v: str) -> str:
         """Enforce password complexity requirements."""
         import re
+
         errors = []
         if len(v) < 8:
             errors.append("at least 8 characters")
-        if not re.search(r'[A-Z]', v):
+        if not re.search(r"[A-Z]", v):
             errors.append("one uppercase letter")
-        if not re.search(r'[a-z]', v):
+        if not re.search(r"[a-z]", v):
             errors.append("one lowercase letter")
-        if not re.search(r'\d', v):
+        if not re.search(r"\d", v):
             errors.append("one number")
         if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]', v):
             errors.append("one special character (!@#$%^&*...)")
         if errors:
             raise ValueError(f"Password must contain: {', '.join(errors)}")
         return v
-    
+
     @field_validator("name")
     @classmethod
     def sanitize_name(cls, v: str | None) -> str | None:
@@ -69,17 +71,19 @@ class SignupRequest(BaseModel):
         if v is None:
             return None
         import re
+
         # Remove HTML tags
-        clean = re.sub(r'<[^>]+>', '', v)
+        clean = re.sub(r"<[^>]+>", "", v)
         # Remove common script patterns
-        clean = re.sub(r'javascript:', '', clean, flags=re.IGNORECASE)
-        clean = re.sub(r'on\w+\s*=', '', clean, flags=re.IGNORECASE)
+        clean = re.sub(r"javascript:", "", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"on\w+\s*=", "", clean, flags=re.IGNORECASE)
         # Trim and limit
         return clean.strip()[:100] if clean.strip() else None
 
 
 class SignupResponse(BaseModel):
     """Response for successful signup."""
+
     id: str
     email: str
     name: str | None
@@ -88,6 +92,7 @@ class SignupResponse(BaseModel):
 
 class LoginRequest(BaseModel):
     """Request body for user login."""
+
     email: EmailStr
     password: str
     totp_code: str | None = Field(None, min_length=6, max_length=6, description="6-digit TOTP code (required if 2FA enabled)")
@@ -95,6 +100,7 @@ class LoginRequest(BaseModel):
 
 class LoginResponse(BaseModel):
     """Response for successful login."""
+
     access_token: str | None = None
     token_type: str = "bearer"
     user: dict | None = None
@@ -104,38 +110,43 @@ class LoginResponse(BaseModel):
 
 class LogoutResponse(BaseModel):
     """Response for successful logout."""
+
     message: str = "Logged out successfully"
 
 
 class ForgotPasswordRequest(BaseModel):
     """Request body for password reset request."""
+
     email: EmailStr
 
 
 class ForgotPasswordResponse(BaseModel):
     """Response for password reset request."""
+
     message: str = "If an account with this email exists, a reset link has been sent"
 
 
 class ResetPasswordRequest(BaseModel):
     """Request body for password reset."""
+
     email: EmailStr
     token: str
     new_password: str = Field(min_length=8, description="New password with complexity requirements")
-    
+
     @field_validator("new_password")
     @classmethod
     def validate_password_complexity(cls, v: str) -> str:
         """Enforce password complexity requirements."""
         import re
+
         errors = []
         if len(v) < 8:
             errors.append("at least 8 characters")
-        if not re.search(r'[A-Z]', v):
+        if not re.search(r"[A-Z]", v):
             errors.append("one uppercase letter")
-        if not re.search(r'[a-z]', v):
+        if not re.search(r"[a-z]", v):
             errors.append("one lowercase letter")
-        if not re.search(r'\d', v):
+        if not re.search(r"\d", v):
             errors.append("one number")
         if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]', v):
             errors.append("one special character (!@#$%^&*...)")
@@ -146,11 +157,13 @@ class ResetPasswordRequest(BaseModel):
 
 class ResetPasswordResponse(BaseModel):
     """Response for successful password reset."""
+
     message: str = "Password reset successfully"
 
 
 class UserResponse(BaseModel):
     """Current user info response."""
+
     id: str
     email: str
     name: str | None
@@ -162,6 +175,7 @@ class UserResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response."""
+
     detail: str
 
 
@@ -193,7 +207,7 @@ async def get_current_user_from_jwt(
 ) -> dict:
     """
     Dependency that validates JWT token and returns user info.
-    
+
     Raises 401 if token is missing or invalid.
     Raises 500 if server is misconfigured.
     """
@@ -203,7 +217,7 @@ async def get_current_user_from_jwt(
             detail="Missing authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     try:
         user_manager = await get_user_manager(request)
     except HTTPException:
@@ -215,7 +229,7 @@ async def get_current_user_from_jwt(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Authentication service unavailable",
         )
-    
+
     # Verify JWT token
     try:
         payload = user_manager.verify_jwt_token(credentials.credentials)
@@ -226,14 +240,14 @@ async def get_current_user_from_jwt(
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Check if token is blacklisted
     try:
         if await user_manager.is_token_blacklisted(credentials.credentials):
@@ -247,7 +261,7 @@ async def get_current_user_from_jwt(
     except Exception as e:
         log.error("token_blacklist_check_failed", error=str(e), user_id=payload.get("sub"))
         # Continue - don't fail auth if blacklist check fails
-    
+
     # Get user from database
     try:
         user = await user_manager.get_user_by_id(payload["sub"])
@@ -257,21 +271,21 @@ async def get_current_user_from_jwt(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve user data",
         )
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Account is deactivated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return {
         "id": user.id,
         "email": user.email,
@@ -302,25 +316,25 @@ async def signup(
 ) -> SignupResponse:
     """
     Create a new user account.
-    
+
     - **email**: Valid email address (will be lowercased)
     - **password**: At least 8 characters
     - **name**: Optional display name
     """
     user_manager = await get_user_manager(request)
-    
+
     user, error = await user_manager.create_user(
         email=body.email,
         password=body.password,
         name=body.name,
     )
-    
+
     if error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error,
         )
-    
+
     # Send welcome email with API key (fire-and-forget, don't block signup)
     if EMAIL_AVAILABLE:
         try:
@@ -332,7 +346,7 @@ async def signup(
                     user_id=user.id,
                     name="Default Key",
                 )
-                
+
                 email_service = EmailService()
                 asyncio.create_task(
                     email_service.send_welcome_email(
@@ -346,7 +360,7 @@ async def signup(
         except Exception as e:
             # Don't fail signup if email fails
             log.warning("welcome_email_failed", email=user.email, error=str(e))
-    
+
     return SignupResponse(
         id=user.id,
         email=user.email,
@@ -366,27 +380,27 @@ async def login(
 ) -> LoginResponse:
     """
     Authenticate and get an access token.
-    
+
     - **email**: Registered email address
     - **password**: Account password
     - **totp_code**: 6-digit TOTP code (required if 2FA is enabled)
-    
+
     Returns a JWT access token valid for 7 days.
     If 2FA is enabled and no totp_code provided, returns requires_2fa=true.
     """
     user_manager = await get_user_manager(request)
-    
+
     user, token, error = await user_manager.authenticate(
         email=body.email,
         password=body.password,
     )
-    
+
     if error:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=error,
         )
-    
+
     # Check if 2FA is enabled
     if await user_manager.is_totp_enabled(user.id):
         if not body.totp_code:
@@ -395,14 +409,14 @@ async def login(
                 requires_2fa=True,
                 message="2FA code required",
             )
-        
+
         # Verify TOTP code
         if not await user_manager.verify_totp(user.id, body.totp_code):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid 2FA code",
             )
-    
+
     return LoginResponse(
         access_token=token,
         user={
@@ -424,16 +438,16 @@ async def logout(
 ) -> LogoutResponse:
     """
     Logout and invalidate the current access token.
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     await user_manager.invalidate_token(
         user_id=current_user["id"],
         token=current_user["token"],
     )
-    
+
     return LogoutResponse()
 
 
@@ -448,50 +462,44 @@ async def forgot_password(
 ) -> ForgotPasswordResponse:
     """
     Request a password reset.
-    
+
     - **email**: Email address of the account
-    
+
     If the email exists, a reset token is generated.
     For security, always returns success even if email doesn't exist.
-    
+
     Note: In production, this should send an email with the reset link.
     The reset token is returned in the response for testing purposes only.
     """
     user_manager = await get_user_manager(request)
-    
+
     reset_token, error = await user_manager.create_password_reset_token(body.email)
-    
+
     # Send password reset email if token was generated
     if reset_token:
-        log.info("password_reset_token_generated", 
-                 email=body.email, 
-                 token_preview=reset_token[:8] + "...")
-        
+        log.info("password_reset_token_generated", email=body.email, token_preview=reset_token[:8] + "...")
+
         # Send the password reset email
         try:
             from remembra.cloud.email import EmailProvider, EmailService
-            
+
             email_service = EmailService.create(provider=EmailProvider.RESEND)
             reset_url = f"https://app.remembra.dev/reset-password?token={reset_token}&email={body.email}"
-            
+
             result = await email_service.send_password_reset_email(
                 to=body.email,
                 reset_url=reset_url,
                 expires_in="1 hour",
             )
-            
+
             if result.success:
                 log.info("password_reset_email_sent", email=body.email)
             else:
-                log.warning("password_reset_email_failed", 
-                           email=body.email, 
-                           error=result.error)
+                log.warning("password_reset_email_failed", email=body.email, error=result.error)
         except Exception as e:
             # Don't fail the request if email sending fails
-            log.error("password_reset_email_error", 
-                     email=body.email, 
-                     error=str(e))
-    
+            log.error("password_reset_email_error", email=body.email, error=str(e))
+
     # Always return generic message for security (don't reveal if email exists)
     return ForgotPasswordResponse()
 
@@ -508,25 +516,25 @@ async def reset_password(
 ) -> ResetPasswordResponse:
     """
     Reset password using a reset token.
-    
+
     - **email**: Email address of the account
     - **token**: Reset token from forgot-password request
     - **new_password**: New password (at least 8 characters)
     """
     user_manager = await get_user_manager(request)
-    
+
     success, error = await user_manager.reset_password(
         email=body.email,
         token=body.token,
         new_password=body.new_password,
     )
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error or "Failed to reset password",
         )
-    
+
     return ResetPasswordResponse()
 
 
@@ -541,24 +549,24 @@ async def get_me(
 ) -> UserResponse:
     """
     Get current authenticated user's information.
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     try:
         user_manager = await get_user_manager(request)
-        
+
         user = await user_manager.get_user_by_id(current_user["id"])
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found",
             )
-        
+
         # Check if user is admin (in owner_emails)
         settings = get_settings()
         owner_emails = [e.lower() for e in settings.owner_emails] if settings.owner_emails else []
         is_admin = user.email.lower() in owner_emails
-        
+
         return UserResponse(
             id=user.id,
             email=user.email,
@@ -580,11 +588,13 @@ async def get_me(
 
 class UpdateProfileRequest(BaseModel):
     """Request body for updating user profile."""
+
     name: str | None = Field(None, max_length=100, description="User's display name")
 
 
 class UpdateProfileResponse(BaseModel):
     """Response for successful profile update."""
+
     id: str
     email: str
     name: str | None
@@ -603,24 +613,24 @@ async def update_profile(
 ) -> UpdateProfileResponse:
     """
     Update current user's profile information.
-    
+
     - **name**: Updated display name (optional)
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     user, error = await user_manager.update_profile(
         user_id=current_user["id"],
         name=body.name,
     )
-    
+
     if error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error,
         )
-    
+
     return UpdateProfileResponse(
         id=user.id,
         email=user.email,
@@ -630,22 +640,24 @@ async def update_profile(
 
 class ChangePasswordRequest(BaseModel):
     """Request body for changing password."""
+
     current_password: str = Field(description="Current password for verification")
     new_password: str = Field(min_length=8, description="New password with complexity requirements")
-    
+
     @field_validator("new_password")
     @classmethod
     def validate_password_complexity(cls, v: str) -> str:
         """Enforce password complexity requirements."""
         import re
+
         errors = []
         if len(v) < 8:
             errors.append("at least 8 characters")
-        if not re.search(r'[A-Z]', v):
+        if not re.search(r"[A-Z]", v):
             errors.append("one uppercase letter")
-        if not re.search(r'[a-z]', v):
+        if not re.search(r"[a-z]", v):
             errors.append("one lowercase letter")
-        if not re.search(r'\d', v):
+        if not re.search(r"\d", v):
             errors.append("one number")
         if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~]', v):
             errors.append("one special character (!@#$%^&*...)")
@@ -656,6 +668,7 @@ class ChangePasswordRequest(BaseModel):
 
 class ChangePasswordResponse(BaseModel):
     """Response for successful password change."""
+
     message: str = "Password changed successfully"
 
 
@@ -671,36 +684,38 @@ async def change_password(
 ) -> ChangePasswordResponse:
     """
     Change current user's password.
-    
+
     - **current_password**: Current password for security verification
     - **new_password**: New password (at least 8 characters)
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     success, error = await user_manager.change_password(
         user_id=current_user["id"],
         current_password=body.current_password,
         new_password=body.new_password,
     )
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error or "Failed to change password",
         )
-    
+
     return ChangePasswordResponse()
 
 
 class DeleteAccountRequest(BaseModel):
     """Request body for account deletion."""
+
     password: str = Field(description="Password for confirmation")
 
 
 class DeleteAccountResponse(BaseModel):
     """Response for successful account deletion."""
+
     message: str = "Account has been deactivated"
 
 
@@ -716,30 +731,30 @@ async def delete_account(
 ) -> DeleteAccountResponse:
     """
     Deactivate current user's account.
-    
+
     - **password**: Password for security confirmation
-    
+
     This is a soft delete - the account is deactivated but data is retained.
     Contact support if you need complete data deletion.
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     success, error = await user_manager.delete_account(
         user_id=current_user["id"],
         password=body.password,
     )
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error or "Failed to deactivate account",
         )
-    
+
     # Invalidate current token
     await user_manager.invalidate_token(current_user["id"], current_user["token"])
-    
+
     return DeleteAccountResponse()
 
 
@@ -750,6 +765,7 @@ async def delete_account(
 
 class TotpSetupResponse(BaseModel):
     """Response for TOTP setup initiation."""
+
     secret: str
     provisioning_uri: str
     message: str = "Scan the QR code with your authenticator app, then verify"
@@ -757,26 +773,31 @@ class TotpSetupResponse(BaseModel):
 
 class TotpVerifyRequest(BaseModel):
     """Request body for TOTP verification."""
+
     code: str = Field(min_length=6, max_length=6, description="6-digit TOTP code")
 
 
 class TotpVerifyResponse(BaseModel):
     """Response for TOTP verification/enable."""
+
     message: str = "Two-factor authentication enabled successfully"
 
 
 class TotpDisableRequest(BaseModel):
     """Request body for TOTP disable."""
+
     password: str = Field(description="Password for confirmation")
 
 
 class TotpDisableResponse(BaseModel):
     """Response for TOTP disable."""
+
     message: str = "Two-factor authentication disabled"
 
 
 class TotpStatusResponse(BaseModel):
     """Response for TOTP status check."""
+
     enabled: bool
     message: str
 
@@ -792,22 +813,22 @@ async def setup_totp(
 ) -> TotpSetupResponse:
     """
     Initiate 2FA setup.
-    
+
     Returns a secret and provisioning URI for QR code generation.
     User must verify with a code before 2FA is enabled.
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     secret, provisioning_uri, error = await user_manager.setup_totp(current_user["id"])
-    
+
     if error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error,
         )
-    
+
     return TotpSetupResponse(
         secret=secret,
         provisioning_uri=provisioning_uri,
@@ -826,23 +847,23 @@ async def enable_totp(
 ) -> TotpVerifyResponse:
     """
     Enable 2FA by verifying a TOTP code.
-    
+
     Must call /2fa/setup first to get the secret.
-    
+
     - **code**: 6-digit code from authenticator app
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     success, error = await user_manager.enable_totp(current_user["id"], body.code)
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error or "Failed to enable 2FA",
         )
-    
+
     return TotpVerifyResponse()
 
 
@@ -858,21 +879,21 @@ async def disable_totp(
 ) -> TotpDisableResponse:
     """
     Disable 2FA for the current user.
-    
+
     - **password**: Password for security confirmation
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     success, error = await user_manager.disable_totp(current_user["id"], body.password)
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error or "Failed to disable 2FA",
         )
-    
+
     return TotpDisableResponse()
 
 
@@ -887,13 +908,13 @@ async def get_totp_status(
 ) -> TotpStatusResponse:
     """
     Check if 2FA is enabled for the current user.
-    
+
     Requires a valid Bearer token in the Authorization header.
     """
     user_manager = await get_user_manager(request)
-    
+
     enabled = await user_manager.is_totp_enabled(current_user["id"])
-    
+
     return TotpStatusResponse(
         enabled=enabled,
         message="2FA is enabled" if enabled else "2FA is not enabled",
@@ -907,6 +928,7 @@ async def get_totp_status(
 
 class VerifyKeyResponse(BaseModel):
     """Response for API key verification."""
+
     valid: bool
     key_id: str | None = None
     user_id: str | None = None
@@ -925,43 +947,43 @@ async def verify_api_key(
 ) -> VerifyKeyResponse:
     """
     Verify if the provided API key is valid and active.
-    
+
     Provide the API key in the `X-API-Key` header.
-    
+
     This endpoint:
     - Confirms the key is valid and not revoked
     - Returns key metadata (role, rate limit tier)
     - Does NOT update last_used_at (test only)
-    
+
     Use this to test if a key works before using it in production.
     """
     from remembra.auth.keys import APIKeyManager
     from remembra.auth.rbac import RoleManager
-    
+
     api_key = request.headers.get("X-API-Key")
-    
+
     if not api_key:
         return VerifyKeyResponse(
             valid=False,
             message="No API key provided. Use X-API-Key header.",
         )
-    
+
     # Get API key manager from app state
     key_manager: APIKeyManager = request.app.state.api_key_manager
     role_manager: RoleManager = request.app.state.role_manager
-    
+
     # Validate the key (this also updates last_used_at as a side effect)
     key_info = await key_manager.validate_key(api_key)
-    
+
     if not key_info:
         return VerifyKeyResponse(
             valid=False,
             message="Invalid or revoked API key.",
         )
-    
+
     # Get role info
     key_role = await role_manager.get_role(key_info["id"])
-    
+
     return VerifyKeyResponse(
         valid=True,
         key_id=key_info["id"],

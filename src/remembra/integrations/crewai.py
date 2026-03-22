@@ -178,10 +178,7 @@ def _extract_content(value: Any) -> tuple[str, dict[str, Any]]:
 
     # LongTermMemoryItem
     if hasattr(value, "task") and hasattr(value, "expected_output"):
-        content = (
-            f"Task: {value.task}\n"
-            f"Output: {value.expected_output}"
-        )
+        content = f"Task: {value.task}\nOutput: {value.expected_output}"
         if hasattr(value, "agent") and value.agent:
             metadata["agent"] = value.agent
         if hasattr(value, "quality") and value.quality is not None:
@@ -194,11 +191,7 @@ def _extract_content(value: Any) -> tuple[str, dict[str, Any]]:
 
     # EntityMemoryItem
     if hasattr(value, "name") and hasattr(value, "description") and hasattr(value, "relationships"):
-        content = (
-            f"Entity: {value.name} ({value.type})\n"
-            f"Description: {value.description}\n"
-            f"Relationships: {value.relationships}"
-        )
+        content = f"Entity: {value.name} ({value.type})\nDescription: {value.description}\nRelationships: {value.relationships}"
         metadata["entity_name"] = value.name
         metadata["entity_type"] = value.type
         if hasattr(value, "metadata") and value.metadata:

@@ -28,10 +28,11 @@ class EntityRef(BaseModel):
 class Relationship(BaseModel):
     """
     Relationship between two entities with temporal validity.
-    
+
     Temporal edges enable point-in-time queries like "What was Alice's role in January?"
     and automatic contradiction detection (newer relationships supersede older ones).
     """
+
     id: str = Field(default_factory=_new_id)
     from_entity_id: str
     to_entity_id: str
@@ -39,30 +40,22 @@ class Relationship(BaseModel):
     properties: dict[str, Any] = Field(default_factory=dict)
     confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     source_memory_id: str | None = None
-    
+
     # Temporal validity (bi-temporal model like Zep/Graphiti)
     valid_from: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="When this relationship became true in the real world"
+        default_factory=datetime.utcnow, description="When this relationship became true in the real world"
     )
-    valid_to: datetime | None = Field(
-        default=None,
-        description="When this relationship stopped being true (None = still valid)"
-    )
-    created_at: datetime = Field(
-        default_factory=datetime.utcnow,
-        description="When we learned about this relationship"
-    )
+    valid_to: datetime | None = Field(default=None, description="When this relationship stopped being true (None = still valid)")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="When we learned about this relationship")
     superseded_by: str | None = Field(
-        default=None,
-        description="ID of the relationship that supersedes this one (for contradiction detection)"
+        default=None, description="ID of the relationship that supersedes this one (for contradiction detection)"
     )
-    
+
     @property
     def is_current(self) -> bool:
         """Check if this relationship is currently valid."""
         return self.valid_to is None
-    
+
     def is_valid_at(self, point_in_time: datetime) -> bool:
         """Check if this relationship was valid at a specific point in time."""
         if point_in_time < self.valid_from:
@@ -145,7 +138,8 @@ class StoreRequest(BaseModel):
             raise ValueError("Content exceeds maximum length of 50,000 characters")
         # Remove null bytes and other control characters (except newlines/tabs)
         import re
-        v = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', v)
+
+        v = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", v)
         return v.strip()
 
     @field_validator("visibility")
@@ -263,13 +257,13 @@ class ForgetResponse(BaseModel):
 
 class BatchStoreRequest(BaseModel):
     """Request to store multiple memories in one call."""
-    
+
     items: list[StoreRequest] = Field(..., min_length=1, max_length=100)
 
 
 class BatchStoreResult(BaseModel):
     """Result for a single item in a batch store operation."""
-    
+
     index: int
     success: bool
     response: StoreResponse | None = None
@@ -278,7 +272,7 @@ class BatchStoreResult(BaseModel):
 
 class BatchStoreResponse(BaseModel):
     """Response from batch store operation."""
-    
+
     results: list[BatchStoreResult]
     total: int
     succeeded: int
@@ -287,13 +281,13 @@ class BatchStoreResponse(BaseModel):
 
 class BatchRecallRequest(BaseModel):
     """Request to recall for multiple queries in one call."""
-    
+
     queries: list[RecallRequest] = Field(..., min_length=1, max_length=20)
 
 
 class BatchRecallResponse(BaseModel):
     """Response from batch recall operation."""
-    
+
     results: list[RecallResponse]
     total: int
 

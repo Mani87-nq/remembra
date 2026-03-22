@@ -63,7 +63,9 @@ class PluginManager:
         self._plugins.append(plugin)
         logger.info(
             "Plugin registered: %s v%s (%s)",
-            plugin.name, plugin.version, plugin.description,
+            plugin.name,
+            plugin.version,
+            plugin.description,
         )
 
     async def unregister(self, name: str) -> bool:
@@ -133,7 +135,9 @@ class PluginManager:
                 event = await plugin.on_store(event)
             except Exception as e:
                 logger.warning(
-                    "Plugin on_store failed: %s — %s", plugin.name, e,
+                    "Plugin on_store failed: %s — %s",
+                    plugin.name,
+                    e,
                 )
         return event
 
@@ -146,7 +150,9 @@ class PluginManager:
                 event = await plugin.on_recall(event)
             except Exception as e:
                 logger.warning(
-                    "Plugin on_recall failed: %s — %s", plugin.name, e,
+                    "Plugin on_recall failed: %s — %s",
+                    plugin.name,
+                    e,
                 )
         return event
 
@@ -159,7 +165,9 @@ class PluginManager:
                 event = await plugin.on_delete(event)
             except Exception as e:
                 logger.warning(
-                    "Plugin on_delete failed: %s — %s", plugin.name, e,
+                    "Plugin on_delete failed: %s — %s",
+                    plugin.name,
+                    e,
                 )
         return event
 
@@ -172,7 +180,9 @@ class PluginManager:
                 event = await plugin.on_entity(event)
             except Exception as e:
                 logger.warning(
-                    "Plugin on_entity failed: %s — %s", plugin.name, e,
+                    "Plugin on_entity failed: %s — %s",
+                    plugin.name,
+                    e,
                 )
         return event
 
@@ -185,7 +195,9 @@ class PluginManager:
                 event = await plugin.on_conflict(event)
             except Exception as e:
                 logger.warning(
-                    "Plugin on_conflict failed: %s — %s", plugin.name, e,
+                    "Plugin on_conflict failed: %s — %s",
+                    plugin.name,
+                    e,
                 )
         return event
 

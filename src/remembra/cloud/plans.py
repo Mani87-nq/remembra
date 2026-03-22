@@ -52,8 +52,8 @@ class PlanLimits:
     has_priority_support: bool = False
 
     # Stripe
-    stripe_price_id: str | None = None           # Monthly price
-    stripe_annual_price_id: str | None = None    # Annual price (discounted)
+    stripe_price_id: str | None = None  # Monthly price
+    stripe_annual_price_id: str | None = None  # Annual price (discounted)
 
 
 # ---------------------------------------------------------------------------
@@ -63,14 +63,14 @@ class PlanLimits:
 PLANS: dict[PlanTier, PlanLimits] = {
     # Free: Indie devs, students (tightened limits to encourage Pro upgrades)
     PlanTier.FREE: PlanLimits(
-        max_memories=25_000,        # 25K memories (tightened from 50K)
+        max_memories=25_000,  # 25K memories (tightened from 50K)
         max_storage_mb=250,
-        max_recalls_per_month=50_000,   # 50K/mo (tightened from 100K)
-        max_stores_per_month=25_000,    # 25K/mo (tightened from 50K)
-        max_api_keys=2,             # 2 keys (tightened from 3)
+        max_recalls_per_month=50_000,  # 50K/mo (tightened from 100K)
+        max_stores_per_month=25_000,  # 25K/mo (tightened from 50K)
+        max_api_keys=2,  # 2 keys (tightened from 3)
         max_users=1,
-        max_projects=1,             # 1 project
-        retention_days=None,        # unlimited
+        max_projects=1,  # 1 project
+        retention_days=None,  # unlimited
         has_webhooks=False,
         has_sso=False,
         has_observability=False,
@@ -79,37 +79,37 @@ PLANS: dict[PlanTier, PlanLimits] = {
     ),
     # Pro $49/mo ($499/yr): Startups, side projects
     PlanTier.PRO: PlanLimits(
-        max_memories=500_000,       # 500K memories (research spec)
+        max_memories=500_000,  # 500K memories (research spec)
         max_storage_mb=5_000,
         max_recalls_per_month=1_000_000,
         max_stores_per_month=500_000,
         max_api_keys=10,
         max_users=5,
-        max_projects=5,             # 5 projects (research spec)
+        max_projects=5,  # 5 projects (research spec)
         retention_days=365,
         has_webhooks=True,
         has_sso=False,
         has_observability=True,
         has_priority_support=False,
-        stripe_price_id="price_1T6ZDAQ3CqXwAZA7jUWCVVF0",           # $49/mo
-        stripe_annual_price_id="price_1T92ntQ3CqXwAZA7i8odzMW3",   # $499/yr (15% off)
+        stripe_price_id="price_1T6ZDAQ3CqXwAZA7jUWCVVF0",  # $49/mo
+        stripe_annual_price_id="price_1T92ntQ3CqXwAZA7i8odzMW3",  # $499/yr (15% off)
     ),
     # Team $199/mo ($1,999/yr): Growing companies
     PlanTier.TEAM: PlanLimits(
-        max_memories=2_000_000,     # 2M memories (research spec)
+        max_memories=2_000_000,  # 2M memories (research spec)
         max_storage_mb=20_000,
         max_recalls_per_month=5_000_000,
         max_stores_per_month=2_000_000,
         max_api_keys=50,
         max_users=25,
-        max_projects=100,           # unlimited-ish
-        retention_days=None,        # unlimited
+        max_projects=100,  # unlimited-ish
+        retention_days=None,  # unlimited
         has_webhooks=True,
         has_sso=False,
         has_observability=True,
         has_priority_support=True,
-        stripe_price_id="price_1T92njQ3CqXwAZA79F2iVamm",            # $199/mo
-        stripe_annual_price_id="price_1T92nxQ3CqXwAZA7qFVL4piW",   # $1,999/yr (16% off)
+        stripe_price_id="price_1T92njQ3CqXwAZA79F2iVamm",  # $199/mo
+        stripe_annual_price_id="price_1T92nxQ3CqXwAZA7qFVL4piW",  # $1,999/yr (16% off)
     ),
     # Enterprise: Large orgs, custom pricing
     PlanTier.ENTERPRISE: PlanLimits(
@@ -120,12 +120,12 @@ PLANS: dict[PlanTier, PlanLimits] = {
         max_api_keys=100,
         max_users=1000,
         max_projects=1000,
-        retention_days=None,        # unlimited
+        retention_days=None,  # unlimited
         has_webhooks=True,
         has_sso=True,
         has_observability=True,
         has_priority_support=True,
-        stripe_price_id=None,       # Custom pricing, contact sales
+        stripe_price_id=None,  # Custom pricing, contact sales
     ),
 }
 

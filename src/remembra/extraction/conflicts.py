@@ -60,9 +60,7 @@ class MemoryConflict:
     strategy_applied: ConflictStrategy = ConflictStrategy.UPDATE
     status: ConflictStatus = ConflictStatus.OPEN
     resolved_memory_id: str | None = None
-    created_at: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     resolved_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -204,9 +202,7 @@ class ConflictManager:
         cols = [d[0] for d in cursor.description]
         return [dict(zip(cols, row, strict=False)) for row in rows]
 
-    async def get_conflict(
-        self, conflict_id: str, user_id: str
-    ) -> dict[str, Any] | None:
+    async def get_conflict(self, conflict_id: str, user_id: str) -> dict[str, Any] | None:
         """Get a single conflict by ID with ownership check."""
         cursor = await self._db.conn.execute(
             "SELECT * FROM memory_conflicts WHERE id = ? AND user_id = ?",
@@ -249,9 +245,7 @@ class ConflictManager:
             return None
         return await self.get_conflict(conflict_id, user_id)
 
-    async def dismiss(
-        self, conflict_id: str, user_id: str
-    ) -> dict[str, Any] | None:
+    async def dismiss(self, conflict_id: str, user_id: str) -> dict[str, Any] | None:
         """Dismiss a conflict (mark as not needing resolution)."""
         now = datetime.now(UTC).isoformat()
         cursor = await self._db.conn.execute(

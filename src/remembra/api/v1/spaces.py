@@ -52,17 +52,18 @@ class CreateSpaceRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=128, description="Space name (unique per owner)")
     description: str = Field("", max_length=1024, description="Space description")
     project_id: str = Field("default", description="Project namespace")
-    
+
     @field_validator("name", "description")
     @classmethod
     def sanitize_html(cls, v: str) -> str:
         """Strip HTML/script tags to prevent XSS."""
         import re
+
         # Remove HTML tags
-        clean = re.sub(r'<[^>]+>', '', v)
+        clean = re.sub(r"<[^>]+>", "", v)
         # Remove script patterns
-        clean = re.sub(r'javascript:', '', clean, flags=re.IGNORECASE)
-        clean = re.sub(r'on\w+\s*=', '', clean, flags=re.IGNORECASE)
+        clean = re.sub(r"javascript:", "", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"on\w+\s*=", "", clean, flags=re.IGNORECASE)
         return clean.strip()
 
 

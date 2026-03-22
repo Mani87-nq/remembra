@@ -18,12 +18,12 @@ router = APIRouter(tags=["websocket"])
 
 class ConnectionManager:
     """Manages WebSocket connections for real-time updates."""
-    
+
     def __init__(self) -> None:
         # Map: namespace -> set of (websocket, project_id)
         self._connections: dict[str, set[tuple[WebSocket, str | None]]] = {}
         self._lock = asyncio.Lock()
-    
+
     async def connect(
         self,
         websocket: WebSocket,
@@ -42,7 +42,7 @@ class ConnectionManager:
             project_id=project_id,
             total_connections=self._count_all(),
         )
-    
+
     async def disconnect(
         self,
         websocket: WebSocket,
@@ -61,7 +61,7 @@ class ConnectionManager:
             project_id=project_id,
             total_connections=self._count_all(),
         )
-    
+
     async def broadcast(
         self,
         event_type: str,
@@ -71,29 +71,31 @@ class ConnectionManager:
     ) -> int:
         """
         Broadcast an event to all connected clients in a namespace.
-        
+
         If project_id is provided, only sends to clients subscribed to that project.
         Returns the number of clients that received the message.
         """
-        message = json.dumps({
-            "type": event_type,
-            "data": data,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "namespace": namespace,
-            "project_id": project_id,
-        })
-        
+        message = json.dumps(
+            {
+                "type": event_type,
+                "data": data,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "namespace": namespace,
+                "project_id": project_id,
+            }
+        )
+
         sent_count = 0
         disconnected: list[tuple[WebSocket, str | None]] = []
-        
+
         async with self._lock:
             connections = self._connections.get(namespace, set()).copy()
-        
+
         for ws, ws_project_id in connections:
             # Filter by project_id if specified
             if project_id and ws_project_id and ws_project_id != project_id:
                 continue
-            
+
             try:
                 if ws.client_state == WebSocketState.CONNECTED:
                     await ws.send_text(message)
@@ -101,28 +103,26 @@ class ConnectionManager:
             except Exception as e:
                 log.warning("websocket_send_failed", error=str(e))
                 disconnected.append((ws, ws_project_id))
-        
+
         # Clean up disconnected clients
         if disconnected:
             async with self._lock:
                 for item in disconnected:
                     if namespace in self._connections:
                         self._connections[namespace].discard(item)
-        
+
         return sent_count
-    
+
     def _count_all(self) -> int:
         """Count total active connections across all namespaces."""
         return sum(len(conns) for conns in self._connections.values())
-    
+
     async def get_stats(self) -> dict[str, Any]:
         """Get connection statistics."""
         async with self._lock:
             return {
                 "total_connections": self._count_all(),
-                "namespaces": {
-                    ns: len(conns) for ns, conns in self._connections.items()
-                },
+                "namespaces": {ns: len(conns) for ns, conns in self._connections.items()},
             }
 
 
@@ -144,55 +144,57 @@ async def websocket_endpoint(
 ) -> None:
     """
     WebSocket endpoint for real-time memory updates.
-    
+
     Clients receive events when memories are:
     - Stored (memory.created)
-    - Updated (memory.updated)  
+    - Updated (memory.updated)
     - Deleted (memory.deleted)
     - Searched (memory.searched) - optional
-    
+
     Query params:
     - namespace: Subscribe to a specific namespace (default: "default")
     - project_id: Filter events to a specific project
     - api_key: API key for authentication (optional based on settings)
     """
     settings = get_settings()
-    
+
     # Validate API key if auth is enabled
     if settings.auth_enabled and not settings.debug and not api_key:
         await websocket.close(code=4001, reason="API key required")
         return
         # Note: Full validation would require async DB lookup
         # For MVP, we accept presence of key; production should validate
-    
+
     await connection_manager.connect(websocket, namespace, project_id)
-    
+
     try:
         # Send initial connection confirmation
-        await websocket.send_json({
-            "type": "connected",
-            "data": {
-                "namespace": namespace,
-                "project_id": project_id,
-                "message": "Connected to Remembra real-time updates",
-            },
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-        })
-        
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "data": {
+                    "namespace": namespace,
+                    "project_id": project_id,
+                    "message": "Connected to Remembra real-time updates",
+                },
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+        )
+
         # Keep connection alive and handle incoming messages
         while True:
             try:
                 # Wait for messages (ping/pong, or future commands)
                 data = await asyncio.wait_for(
                     websocket.receive_text(),
-                    timeout=60.0  # Ping every 60s to detect disconnects
+                    timeout=60.0,  # Ping every 60s to detect disconnects
                 )
-                
+
                 # Handle ping
                 if data == "ping":
                     await websocket.send_text("pong")
                     continue
-                
+
                 # Handle subscription changes
                 try:
                     msg = json.loads(data)
@@ -200,28 +202,30 @@ async def websocket_endpoint(
                         # Client wants to change subscription
                         new_ns = msg.get("namespace", namespace)
                         new_proj = msg.get("project_id", project_id)
-                        
+
                         # Update subscription
                         await connection_manager.disconnect(websocket, namespace, project_id)
                         namespace = new_ns
                         project_id = new_proj
                         await connection_manager.connect(websocket, namespace, project_id)
-                        
-                        await websocket.send_json({
-                            "type": "subscribed",
-                            "data": {"namespace": namespace, "project_id": project_id},
-                            "timestamp": datetime.utcnow().isoformat() + "Z",
-                        })
+
+                        await websocket.send_json(
+                            {
+                                "type": "subscribed",
+                                "data": {"namespace": namespace, "project_id": project_id},
+                                "timestamp": datetime.utcnow().isoformat() + "Z",
+                            }
+                        )
                 except json.JSONDecodeError:
                     pass  # Ignore invalid JSON
-                    
+
             except TimeoutError:
                 # Send keepalive ping
                 try:
                     await websocket.send_text("ping")
                 except Exception:
                     break
-                    
+
     except WebSocketDisconnect:
         pass
     except Exception as e:

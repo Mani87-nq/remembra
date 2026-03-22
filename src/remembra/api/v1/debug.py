@@ -217,27 +217,29 @@ async def debug_recall(
             age_days = age_td.total_seconds() / 86400
             # Approximate recency from config half-life
             import math
+
             half_life = settings.ranking_recency_decay_days
             recency_score = math.exp(-math.log(2) * age_days / half_life) if half_life > 0 else 0
 
-        breakdowns.append(ScoringBreakdown(
-            memory_id=mem.id,
-            content=mem.content[:500],  # Truncate for readability
-            created_at=mem.created_at.isoformat() if mem.created_at else None,
-            semantic_score=round(mem.relevance, 4),
-            keyword_score=0.0,  # Would need pipeline hook
-            hybrid_score=round(mem.relevance, 4),
-            rerank_score=None,
-            recency_score=round(recency_score, 4),
-            entity_score=0.0,
-            access_score=0.0,
-            final_score=round(mem.relevance, 4),
-            age_days=round(age_days, 1) if age_days is not None else None,
-        ))
+        breakdowns.append(
+            ScoringBreakdown(
+                memory_id=mem.id,
+                content=mem.content[:500],  # Truncate for readability
+                created_at=mem.created_at.isoformat() if mem.created_at else None,
+                semantic_score=round(mem.relevance, 4),
+                keyword_score=0.0,  # Would need pipeline hook
+                hybrid_score=round(mem.relevance, 4),
+                rerank_score=None,
+                recency_score=round(recency_score, 4),
+                entity_score=0.0,
+                access_score=0.0,
+                final_score=round(mem.relevance, 4),
+                age_days=round(age_days, 1) if age_days is not None else None,
+            )
+        )
 
     matched_entities = [
-        {"id": e.id, "name": e.canonical_name, "type": e.type, "confidence": e.confidence}
-        for e in result.entities
+        {"id": e.id, "name": e.canonical_name, "type": e.type, "confidence": e.confidence} for e in result.entities
     ]
 
     return DebugRecallResponse(
@@ -449,13 +451,15 @@ async def get_entity_graph(
 
     nodes = []
     for row in entity_rows:
-        nodes.append({
-            "id": row[0],
-            "label": row[1],
-            "type": row[2],
-            "confidence": row[3],
-            "memory_count": row[4] or 0,
-        })
+        nodes.append(
+            {
+                "id": row[0],
+                "label": row[1],
+                "type": row[2],
+                "confidence": row[3],
+                "memory_count": row[4] or 0,
+            }
+        )
 
     relationship_query = """
         SELECT r.id, r.from_entity_id, r.to_entity_id, r.type, r.confidence
@@ -474,13 +478,15 @@ async def get_entity_graph(
 
     edges = []
     for row in rel_rows:
-        edges.append({
-            "id": row[0],
-            "source": row[1],
-            "target": row[2],
-            "type": row[3],
-            "confidence": row[4],
-        })
+        edges.append(
+            {
+                "id": row[0],
+                "source": row[1],
+                "target": row[2],
+                "type": row[3],
+                "confidence": row[4],
+            }
+        )
 
     stats = {
         "total_nodes": len(nodes),
@@ -562,15 +568,17 @@ async def get_memory_timeline(
         entity_rows = await ecursor.fetchall()
         entities = [{"name": er[0], "type": er[1]} for er in entity_rows]
 
-        memories.append({
-            "id": memory_id,
-            "content": row[1][:300] if row[1] else "",
-            "created_at": row[2],
-            "project_id": row[3],
-            "access_count": row[4] or 0,
-            "last_accessed": row[5],
-            "entities": entities,
-        })
+        memories.append(
+            {
+                "id": memory_id,
+                "content": row[1][:300] if row[1] else "",
+                "created_at": row[2],
+                "project_id": row[3],
+                "access_count": row[4] or 0,
+                "last_accessed": row[5],
+                "entities": entities,
+            }
+        )
 
     return MemoryTimelineResponse(
         memories=memories,

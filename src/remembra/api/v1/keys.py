@@ -26,10 +26,8 @@ router = APIRouter(prefix="/keys", tags=["api-keys"])
 
 class CreateKeyRequest(BaseModel):
     """Request to create a new API key."""
-    
-    user_id: str | None = Field(
-        None, description="User ID to create key for (required for master key, ignored for JWT)"
-    )
+
+    user_id: str | None = Field(None, description="User ID to create key for (required for master key, ignored for JWT)")
     name: str | None = Field(None, description="Human-readable name for the key")
     rate_limit_tier: str = Field("standard", description="Rate limit tier: standard or premium")
     role: str = Field("editor", description="Role: admin, editor, or viewer")
@@ -42,7 +40,7 @@ class CreateKeyRequest(BaseModel):
 
 class CreateKeyResponse(BaseModel):
     """Response after creating an API key."""
-    
+
     id: str = Field(..., description="Key ID (use for revocation)")
     key: str = Field(..., description="Full API key (only shown once!)")
     user_id: str
@@ -54,14 +52,13 @@ class CreateKeyResponse(BaseModel):
         description="Project restrictions applied to the key. Empty means all projects.",
     )
     message: str = Field(
-        default="Store this key securely. It cannot be retrieved again.",
-        description="Important security notice"
+        default="Store this key securely. It cannot be retrieved again.", description="Important security notice"
     )
 
 
 class KeyInfo(BaseModel):
     """API key info (without actual key)."""
-    
+
     id: str
     user_id: str
     name: str | None
@@ -81,21 +78,21 @@ class KeyInfo(BaseModel):
 
 class ListKeysResponse(BaseModel):
     """Response for listing API keys."""
-    
+
     keys: list[KeyInfo]
     count: int
 
 
 class RevokeKeyResponse(BaseModel):
     """Response after revoking an API key."""
-    
+
     success: bool
     message: str
 
 
 class UpdateKeyRequest(BaseModel):
     """Request to update an API key."""
-    
+
     name: str | None = Field(None, description="New name for the key")
     role: str | None = Field(None, description="New role: admin, editor, or viewer")
     project_ids: list[str] | None = Field(
@@ -106,7 +103,7 @@ class UpdateKeyRequest(BaseModel):
 
 class UpdateKeyResponse(BaseModel):
     """Response after updating an API key."""
-    
+
     success: bool
     key: KeyInfo
     message: str
@@ -175,11 +172,11 @@ async def get_key_with_role(
     key_info = await key_manager.get_key_info(key_id)
     if not key_info:
         return None
-    
+
     # Get role from RBAC
     key_role = await role_manager.get_role(key_id)
     role_value = key_role.role.value
-    
+
     return KeyInfo(
         id=key_info.id,
         user_id=key_info.user_id,
@@ -218,19 +215,19 @@ async def create_api_key(
 ) -> CreateKeyResponse:
     """
     Create a new API key.
-    
+
     **Authentication options:**
     - **JWT token** (Authorization: Bearer): Creates key for authenticated user
     - **Master key** (X-API-Key): Creates key for any user (requires user_id in body)
-    
+
     The full key is returned ONLY in this response.
     Store it securely - it cannot be retrieved again.
-    
+
     **Roles:**
     - `admin` - Full access: manage keys, users, memories, audit logs
     - `editor` - Read/write memories, manage own keys (default)
     - `viewer` - Read-only: recall memories, list entities
-    
+
     **Rate limit:** 10 requests/hour.
     """
     # Determine user_id based on auth method
@@ -252,32 +249,32 @@ async def create_api_key(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required. Use JWT token or provide user_id with master key.",
         )
-    
+
     # Support 'permission' alias for 'role' (dashboard compatibility)
     role_str = body.permission or body.role
     role = validate_role(role_str)
-    
+
     try:
         api_key = await key_manager.create_key(
             user_id=user_id,
             name=body.name,
             rate_limit_tier=body.rate_limit_tier,
         )
-        
+
         # Assign role to the new key
         await role_manager.assign_role(
             api_key_id=api_key.id,
             role=role,
             project_ids=body.project_ids,
         )
-        
+
         # Audit log
         await audit_logger.log_key_created(
             user_id=user_id,
             key_id=api_key.id,
             ip_address=get_client_ip(request),
         )
-        
+
         return CreateKeyResponse(
             id=api_key.id,
             key=api_key.key,
@@ -287,7 +284,7 @@ async def create_api_key(
             role=role.value,
             project_ids=body.project_ids or [],
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -314,12 +311,12 @@ async def list_api_keys(
 ) -> ListKeysResponse:
     """
     List all API keys for the authenticated user.
-    
+
     Supports both JWT Bearer token and API key authentication.
-    
+
     **Query Parameters:**
     - `active_only` (bool): If true, only return active (non-revoked) keys
-    
+
     Note: The actual key values are never shown (only metadata).
     """
     if not current_user:
@@ -327,13 +324,13 @@ async def list_api_keys(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required. Use JWT token or API key.",
         )
-    
+
     keys = await key_manager.list_keys(current_user.user_id)
-    
+
     # Filter by active status if requested
     if active_only:
         keys = [k for k in keys if k.active]
-    
+
     # Enrich with roles and additional fields
     enriched_keys = []
     for k in keys:
@@ -354,7 +351,7 @@ async def list_api_keys(
                 permission=role_value,  # Alias for frontend compatibility
             )
         )
-    
+
     return ListKeysResponse(
         keys=enriched_keys,
         count=len(enriched_keys),
@@ -379,7 +376,7 @@ async def get_api_key_info(
 ) -> KeyInfo:
     """
     Get information about a specific API key.
-    
+
     Users can only view their own keys.
     The actual key value is never shown.
     """
@@ -388,22 +385,22 @@ async def get_api_key_info(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required. Use JWT token or API key.",
         )
-    
+
     key_info = await get_key_with_role(key_manager, role_manager, key_id)
-    
+
     if not key_info:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Key {key_id} not found",
         )
-    
+
     # Security: Ensure user can only see their own keys
     if key_info.user_id != current_user.user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Key {key_id} not found",  # Don't reveal it exists
         )
-    
+
     return key_info
 
 
@@ -429,10 +426,10 @@ async def update_api_key(
 ) -> UpdateKeyResponse:
     """
     Update an API key's name or role.
-    
+
     Users can update their own keys.
     Only the fields provided will be updated.
-    
+
     **Roles:**
     - `admin` - Full access
     - `editor` - Read/write memories (default)
@@ -443,34 +440,34 @@ async def update_api_key(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required. Use JWT token or API key.",
         )
-    
+
     # Get existing key info
     existing_key = await key_manager.get_key_info(key_id)
-    
+
     if not existing_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Key {key_id} not found",
         )
-    
+
     # Security: Ensure user can only update their own keys
     if existing_key.user_id != current_user.user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Key {key_id} not found",  # Don't reveal it exists
         )
-    
+
     # Check if key is active
     if not existing_key.active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot update a revoked key",
         )
-    
+
     # Update name if provided
     if body.name is not None:
         await key_manager.update_key_name(key_id, body.name)
-    
+
     # Update role if provided
     if body.role is not None or body.project_ids is not None:
         current_role = await role_manager.get_role(key_id)
@@ -482,10 +479,10 @@ async def update_api_key(
             scopes=current_role.scopes,
             project_ids=project_ids,
         )
-    
+
     # Get updated key info
     updated_key = await get_key_with_role(key_manager, role_manager, key_id)
-    
+
     # Audit log
     await audit_logger.log_event(
         user_id=current_user.user_id,
@@ -498,7 +495,7 @@ async def update_api_key(
             "project_ids_updated": body.project_ids is not None,
         },
     )
-    
+
     return UpdateKeyResponse(
         success=True,
         key=updated_key,
@@ -528,18 +525,18 @@ async def revoke_api_key(
 ) -> RevokeKeyResponse:
     """
     Revoke or permanently delete an API key.
-    
+
     Users can only manage their own keys.
-    
+
     **Query Parameters:**
     - `hard` (bool): If true, permanently delete the key from the database.
                      If false (default), soft-revoke (mark as inactive).
-    
+
     **Soft revoke (default):**
     - Key is marked as inactive but remains in database
     - Useful for audit trails and compliance
     - Key cannot be used for authentication
-    
+
     **Hard delete (`?hard=true`):**
     - Key is permanently removed from database
     - No recovery possible
@@ -550,7 +547,7 @@ async def revoke_api_key(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required. Use JWT token or API key.",
         )
-    
+
     if hard:
         # Permanently delete the key
         success = await key_manager.delete_key_permanently(key_id, current_user.user_id)
@@ -559,16 +556,16 @@ async def revoke_api_key(
         # Soft revoke (existing behavior)
         success = await key_manager.revoke_key(key_id, current_user.user_id)
         action = "key_revoked"
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Key {key_id} not found or already revoked/deleted",
         )
-    
+
     # Clean up role assignment
     await role_manager.remove_role(key_id)
-    
+
     # Audit log
     await audit_logger.log_event(
         user_id=current_user.user_id,
@@ -577,7 +574,7 @@ async def revoke_api_key(
         ip_address=get_client_ip(request),
         details={"hard_delete": hard},
     )
-    
+
     return RevokeKeyResponse(
         success=True,
         message=f"API key {key_id} has been revoked",

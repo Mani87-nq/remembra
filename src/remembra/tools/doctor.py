@@ -14,9 +14,7 @@ import httpx
 
 # Default config paths for each agent
 DEFAULT_CODEX_CONFIG = Path.home() / ".codex" / "config.toml"
-DEFAULT_CLAUDE_DESKTOP_CONFIG = (
-    Path.home() / "Library/Application Support/Claude/claude_desktop_config.json"
-)
+DEFAULT_CLAUDE_DESKTOP_CONFIG = Path.home() / "Library/Application Support/Claude/claude_desktop_config.json"
 DEFAULT_CLAUDE_CODE_CONFIG = Path.home() / ".claude" / "settings.json"
 DEFAULT_GEMINI_CONFIG = Path.home() / ".gemini" / "settings.json"
 DEFAULT_CURSOR_CONFIG = Path.home() / ".cursor" / "mcp.json"
@@ -323,12 +321,12 @@ def doctor_all(*, timeout: float = 5.0) -> dict[str, list[CheckResult]]:
         "cursor": (DEFAULT_CURSOR_CONFIG, doctor_cursor),
         "windsurf": (DEFAULT_WINDSURF_CONFIG, doctor_windsurf),
     }
-    
+
     results: dict[str, list[CheckResult]] = {}
     for agent, (config_path, doctor_fn) in agents.items():
         if config_path.exists():
             results[agent] = doctor_fn(config_path, timeout=timeout)
-    
+
     return results
 
 
@@ -353,9 +351,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # Claude Desktop
-    claude_desktop = subparsers.add_parser(
-        "claude-desktop", help="Diagnose Claude Desktop MCP setup"
-    )
+    claude_desktop = subparsers.add_parser("claude-desktop", help="Diagnose Claude Desktop MCP setup")
     claude_desktop.add_argument(
         "--config-path",
         type=Path,
@@ -460,7 +456,7 @@ def main() -> None:
         if not all_results:
             print("No agents detected. Install an agent first.")
             raise SystemExit(1)
-        
+
         failed = False
         for agent, results in all_results.items():
             print(f"\n=== {agent} ===")
@@ -468,7 +464,7 @@ def main() -> None:
                 print(f"[{result.status}] {result.name}: {result.message}")
                 if result.status == "fail":
                     failed = True
-        
+
         raise SystemExit(1 if failed else 0)
 
     if args.agent not in agent_doctors:

@@ -139,9 +139,7 @@ def install_codex_config(
 
     created = not config_path.exists()
     existing = config_path.read_text() if config_path.exists() else ""
-    bridge_enabled = (
-        use_bridge if use_bridge is not None else is_sandboxed_codex(environ)
-    )
+    bridge_enabled = use_bridge if use_bridge is not None else is_sandboxed_codex(environ)
     target_url = build_bridge_url(bridge_host, bridge_port) if bridge_enabled else url
     mcp_api_key = None if bridge_enabled else api_key
     block = build_codex_mcp_block(
@@ -253,12 +251,9 @@ def start_bridge_background(
     if not wait_for_healthy(host, port, timeout=health_timeout):
         # Check if process died
         if process.poll() is not None:
-            raise BridgeStartupError(
-                f"Bridge process exited immediately. Check logs at {stderr_path}"
-            )
+            raise BridgeStartupError(f"Bridge process exited immediately. Check logs at {stderr_path}")
         raise BridgeStartupError(
-            f"Bridge started (PID {process.pid}) but failed health check after {health_timeout}s. "
-            f"Check logs at {stderr_path}"
+            f"Bridge started (PID {process.pid}) but failed health check after {health_timeout}s. Check logs at {stderr_path}"
         )
 
     return process.pid

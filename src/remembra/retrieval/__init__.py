@@ -17,7 +17,7 @@ from remembra.retrieval.reranker import CrossEncoderReranker, RerankedResult, ge
 __all__ = [
     # Hybrid search
     "HybridSearcher",
-    "SearchResult", 
+    "SearchResult",
     "HybridSearchConfig",
     "BM25Index",
     # Graph retrieval

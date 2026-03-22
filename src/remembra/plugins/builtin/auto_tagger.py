@@ -44,12 +44,8 @@ _PRIORITY_PATTERNS: dict[str, str] = {
     r"(?i)\b(important|key|essential)\b": "priority:medium",
 }
 
-_SENTIMENT_POSITIVE = re.compile(
-    r"(?i)\b(great|excellent|amazing|love|happy|success|win|positive)\b"
-)
-_SENTIMENT_NEGATIVE = re.compile(
-    r"(?i)\b(bad|terrible|fail|issue|problem|concern|risk|negative|broken)\b"
-)
+_SENTIMENT_POSITIVE = re.compile(r"(?i)\b(great|excellent|amazing|love|happy|success|win|positive)\b")
+_SENTIMENT_NEGATIVE = re.compile(r"(?i)\b(bad|terrible|fail|issue|problem|concern|risk|negative|broken)\b")
 
 
 class AutoTaggerPlugin(RemembraPlugin):
@@ -71,10 +67,12 @@ class AutoTaggerPlugin(RemembraPlugin):
         self._custom_rules: list[tuple[re.Pattern, str]] = []
         for rule in self.config.get("custom_rules", []):
             try:
-                self._custom_rules.append((
-                    re.compile(rule["pattern"]),
-                    rule["tag"],
-                ))
+                self._custom_rules.append(
+                    (
+                        re.compile(rule["pattern"]),
+                        rule["tag"],
+                    )
+                )
             except (KeyError, re.error) as e:
                 logger.warning("Invalid custom rule: %s", e)
 

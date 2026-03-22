@@ -15,7 +15,7 @@ log = structlog.get_logger(__name__)
 
 def _safe_json_loads(data: str | None, default: Any = None) -> Any:
     """Safely parse JSON, returning default on failure.
-    
+
     Handles corrupted data (e.g., concatenated JSON like '[][]').
     """
     if not data:
@@ -25,6 +25,7 @@ def _safe_json_loads(data: str | None, default: Any = None) -> Any:
     except json.JSONDecodeError as e:
         log.warning("json_parse_error", data_preview=data[:100] if data else None, error=str(e))
         return default if default is not None else []
+
 
 # SQL schemas
 SCHEMA_SQL = """
@@ -258,7 +259,7 @@ CREATE INDEX IF NOT EXISTS idx_team_spaces_space ON team_spaces(space_id);
 class Database:
     """
     Async SQLite database for metadata storage.
-    
+
     Stores:
     - Memory metadata (content lives in Qdrant)
     - Entities and their aliases
@@ -291,13 +292,13 @@ class Database:
         """Create tables if they don't exist."""
         if not self._connection:
             await self.connect()
-        
+
         await self._connection.executescript(SCHEMA_SQL)
         await self._connection.commit()
-        
+
         # Run migrations for existing tables
         await self._run_migrations()
-        
+
         log.info("database_schema_initialized")
 
     async def _run_migrations(self) -> None:
@@ -319,14 +320,14 @@ class Database:
             "ALTER TABLE memories ADD COLUMN space_id TEXT",
             "ALTER TABLE memories ADD COLUMN team_id TEXT",
         ]
-        
+
         for migration in migrations:
             try:
                 await self._connection.execute(migration)
             except Exception:
                 # Column likely already exists, ignore
                 pass
-        
+
         # Create indexes on newly added columns (safe to run even if they exist)
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_memories_visibility ON memories(visibility)",
@@ -338,7 +339,7 @@ class Database:
             except Exception:
                 # Index or column might not exist in some edge cases
                 pass
-        
+
         await self._connection.commit()
 
     @property
@@ -410,9 +411,7 @@ class Database:
 
     async def get_memory(self, memory_id: str) -> dict[str, Any] | None:
         """Get memory metadata by ID."""
-        cursor = await self.conn.execute(
-            "SELECT * FROM memories WHERE id = ?", (memory_id,)
-        )
+        cursor = await self.conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,))
         row = await cursor.fetchone()
         if not row:
             return None
@@ -520,7 +519,7 @@ class Database:
 
     async def delete_memory(self, memory_id: str) -> bool:
         """Delete a memory and its associations.
-        
+
         Properly handles FK constraints by deleting relationships first.
         """
         # Delete relationships that reference this memory as source
@@ -529,34 +528,30 @@ class Database:
             "DELETE FROM relationships WHERE source_memory_id = ?",
             (memory_id,),
         )
-        
+
         # memory_entities has ON DELETE CASCADE, but explicit delete is cleaner
         await self.conn.execute(
             "DELETE FROM memory_entities WHERE memory_id = ?",
             (memory_id,),
         )
-        
+
         # Now safe to delete the memory
-        cursor = await self.conn.execute(
-            "DELETE FROM memories WHERE id = ?", (memory_id,)
-        )
+        cursor = await self.conn.execute("DELETE FROM memories WHERE id = ?", (memory_id,))
         await self.conn.commit()
         return cursor.rowcount > 0
 
     async def delete_user_memories(self, user_id: str) -> int:
         """Delete all memories for a user.
-        
+
         Properly handles FK constraints by deleting relationships first.
         """
         # First, get all memory IDs for this user
-        cursor = await self.conn.execute(
-            "SELECT id FROM memories WHERE user_id = ?", (user_id,)
-        )
+        cursor = await self.conn.execute("SELECT id FROM memories WHERE user_id = ?", (user_id,))
         memory_ids = [row[0] for row in await cursor.fetchall()]
-        
+
         if not memory_ids:
             return 0
-        
+
         # Delete relationships that reference these memories as source
         # (source_memory_id FK doesn't have CASCADE)
         placeholders = ",".join("?" * len(memory_ids))
@@ -564,17 +559,15 @@ class Database:
             f"DELETE FROM relationships WHERE source_memory_id IN ({placeholders})",
             memory_ids,
         )
-        
+
         # Delete memory_entities (has CASCADE but explicit is cleaner)
         await self.conn.execute(
             f"DELETE FROM memory_entities WHERE memory_id IN ({placeholders})",
             memory_ids,
         )
-        
+
         # Now safe to delete the memories
-        cursor = await self.conn.execute(
-            "DELETE FROM memories WHERE user_id = ?", (user_id,)
-        )
+        cursor = await self.conn.execute("DELETE FROM memories WHERE user_id = ?", (user_id,))
         await self.conn.commit()
         return cursor.rowcount
 
@@ -585,7 +578,7 @@ class Database:
     ) -> int:
         """
         Migrate relationships from old memory to new memory.
-        
+
         Used during UPDATE consolidation to preserve entity links.
         """
         # Update relationships that reference the old memory as source
@@ -594,7 +587,7 @@ class Database:
             (new_memory_id, old_memory_id),
         )
         rel_count = cursor.rowcount
-        
+
         # Migrate memory_entity links
         await self.conn.execute(
             """
@@ -603,7 +596,7 @@ class Database:
             """,
             (new_memory_id, old_memory_id),
         )
-        
+
         await self.conn.commit()
         return rel_count
 
@@ -619,28 +612,28 @@ class Database:
     ) -> list[str]:
         """
         Get IDs of expired memories (expires_at < now).
-        
+
         Args:
             user_id: Filter by user (optional)
             project_id: Project namespace (omit for all projects)
             before: Check expiry before this time (default: now)
         """
         check_time = (before or datetime.utcnow()).isoformat()
-        
+
         query = """
             SELECT id FROM memories 
             WHERE expires_at IS NOT NULL AND expires_at < ?
         """
         params: list[Any] = [check_time]
-        
+
         if user_id:
             query += " AND user_id = ?"
             params.append(user_id)
-        
+
         if project_id:
             query += " AND project_id = ?"
             params.append(project_id)
-        
+
         cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
         return [row["id"] for row in rows]
@@ -654,11 +647,11 @@ class Database:
     ) -> list[dict[str, Any]]:
         """
         Get memories that existed at a specific point in time.
-        
+
         Returns memories where:
         - created_at <= as_of
         - (expires_at IS NULL OR expires_at > as_of)
-        
+
         This enables "time travel" queries to see historical state.
         """
         cursor = await self.conn.execute(
@@ -681,7 +674,7 @@ class Database:
     ) -> dict[str, Any] | None:
         """
         Get memory with decay metadata (access_count, last_accessed).
-        
+
         Used for calculating decay scores.
         """
         cursor = await self.conn.execute(
@@ -703,7 +696,7 @@ class Database:
     ) -> list[dict[str, Any]]:
         """
         Get all memories with decay/access metadata.
-        
+
         Returns memories with access_count and last_accessed for decay calculation.
         """
         query = """
@@ -739,30 +732,30 @@ class Database:
     ) -> int:
         """
         Delete all expired memories.
-        
+
         Returns count of deleted memories.
         """
         now = datetime.utcnow().isoformat()
-        
+
         query = "SELECT id FROM memories WHERE expires_at IS NOT NULL AND expires_at < ?"
         params: list[Any] = [now]
-        
+
         if user_id:
             query += " AND user_id = ?"
             params.append(user_id)
         if project_id:
             query += " AND project_id = ?"
             params.append(project_id)
-        
+
         cursor = await self.conn.execute(query, params)
         expired_ids = [row["id"] for row in await cursor.fetchall()]
-        
+
         # Delete each memory properly (handles FK constraints)
         count = 0
         for memory_id in expired_ids:
             if await self.delete_memory(memory_id):
                 count += 1
-        
+
         return count
 
     async def update_access(self, memory_id: str) -> None:
@@ -820,13 +813,13 @@ class Database:
     ) -> list[tuple[str, float]]:
         """
         Perform FTS5 BM25 search.
-        
+
         Returns list of (memory_id, bm25_score) tuples, sorted by relevance.
         BM25 scores are negative (closer to 0 = more relevant).
         """
         # Escape special FTS5 characters
         safe_query = query.replace('"', '""')
-        
+
         cursor = await self.conn.execute(
             """
             SELECT id, bm25(memories_fts) as score
@@ -839,7 +832,7 @@ class Database:
             (user_id, project_id, safe_query, limit),
         )
         rows = await cursor.fetchall()
-        
+
         # Convert negative BM25 scores to positive (negate them)
         return [(row["id"], -row["score"]) for row in rows]
 
@@ -862,10 +855,10 @@ class Database:
     async def rebuild_fts_index(self, user_id: str, project_id: str = "default") -> int:
         """Rebuild FTS5 index for a user's memories. Returns count indexed."""
         memories = await self.get_all_memory_content_for_user(user_id, project_id)
-        
+
         for memory_id, content in memories:
             await self.index_memory_fts(memory_id, user_id, project_id, content)
-        
+
         return len(memories)
 
     # -----------------------------------------------------------------------
@@ -901,9 +894,7 @@ class Database:
         )
         await self.conn.commit()
 
-    async def find_entity_by_name(
-        self, name: str, user_id: str, project_id: str = "default"
-    ) -> Entity | None:
+    async def find_entity_by_name(self, name: str, user_id: str, project_id: str = "default") -> Entity | None:
         """Find entity by canonical name or alias."""
         # First try canonical name
         cursor = await self.conn.execute(
@@ -941,11 +932,9 @@ class Database:
             updated_at=datetime.fromisoformat(row["updated_at"]),
         )
 
-    async def get_user_entities(
-        self, user_id: str, project_id: str | None = None
-    ) -> list[Entity]:
+    async def get_user_entities(self, user_id: str, project_id: str | None = None) -> list[Entity]:
         """Get all entities for a user with full details including aliases.
-        
+
         If project_id is None, returns entities from ALL projects.
         """
         if project_id:
@@ -985,12 +974,10 @@ class Database:
 
     async def delete_user_entities(self, user_id: str) -> int:
         """Delete all entities for a user."""
-        cursor = await self.conn.execute(
-            "DELETE FROM entities WHERE user_id = ?", (user_id,)
-        )
+        cursor = await self.conn.execute("DELETE FROM entities WHERE user_id = ?", (user_id,))
         await self.conn.commit()
         return cursor.rowcount
-    
+
     async def get_entity(
         self,
         entity_id: str,
@@ -1019,15 +1006,10 @@ class Database:
             attributes=_safe_json_loads(row["attributes"], {}),
             confidence=row["confidence"],
         )
-    
-    async def get_entities_by_type(
-        self, 
-        user_id: str, 
-        project_id: str | None, 
-        entity_type: str
-    ) -> list[Entity]:
+
+    async def get_entities_by_type(self, user_id: str, project_id: str | None, entity_type: str) -> list[Entity]:
         """Get all entities of a specific type for a user/project.
-        
+
         If project_id is None, returns entities from ALL projects.
         """
         if project_id:
@@ -1058,7 +1040,7 @@ class Database:
             )
             for row in rows
         ]
-    
+
     async def update_entity_aliases(self, entity_id: str, aliases: list[str]) -> None:
         """Update aliases for an entity."""
         await self.conn.execute(
@@ -1066,7 +1048,7 @@ class Database:
             (json.dumps(aliases), datetime.utcnow().isoformat(), entity_id),
         )
         await self.conn.commit()
-    
+
     async def link_memory_to_entity(self, memory_id: str, entity_id: str) -> None:
         """Link a memory to an entity."""
         await self.conn.execute(
@@ -1077,7 +1059,7 @@ class Database:
             (memory_id, entity_id),
         )
         await self.conn.commit()
-    
+
     async def get_memories_by_entity(
         self,
         entity_id: str,
@@ -1145,7 +1127,7 @@ class Database:
         include_superseded: bool = False,
     ) -> list[Relationship]:
         """Get relationships for an entity with temporal filtering.
-        
+
         Args:
             entity_id: Entity to get relationships for
             as_of: Optional point-in-time filter. Returns relationships valid at this time.
@@ -1166,7 +1148,7 @@ class Database:
             valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
             valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
             created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
-            
+
             rel = Relationship(
                 id=row["id"],
                 from_entity_id=row["from_entity_id"],
@@ -1180,7 +1162,7 @@ class Database:
                 created_at=created_at,
                 superseded_by=row["superseded_by"],
             )
-            
+
             # Apply temporal filtering
             if as_of is not None:
                 if not rel.is_valid_at(as_of):
@@ -1189,9 +1171,9 @@ class Database:
                 # For current queries, exclude superseded relationships
                 if not rel.is_current:
                     continue
-            
+
             relationships.append(rel)
-        
+
         return relationships
 
     async def delete_user_relationships(self, user_id: str) -> int:
@@ -1214,11 +1196,11 @@ class Database:
         end_time: datetime | None = None,
     ) -> None:
         """Mark a relationship as superseded by a newer one.
-        
+
         This is used for contradiction detection - when we learn that
         "Alice works at Google" but she used to work at Meta, we supersede
         the Meta relationship.
-        
+
         Args:
             old_rel_id: ID of the relationship being superseded
             new_rel_id: ID of the new relationship that supersedes it
@@ -1242,27 +1224,27 @@ class Database:
         rel_type: str,
     ) -> list[Relationship]:
         """Find existing current relationships that might be contradicted.
-        
+
         Used to detect when a new relationship contradicts an existing one.
         For exclusive relationship types (WORKS_AT, SPOUSE_OF), finding an
         existing relationship to a DIFFERENT entity suggests the old one
         should be superseded.
-        
+
         Args:
             from_entity_id: Subject entity
             to_entity_id: Object entity (the one we're adding)
             rel_type: Relationship type
-            
+
         Returns:
             List of current relationships of the same type from the same
             subject but to DIFFERENT objects.
         """
         # Exclusive relationship types - only one can be current at a time
         exclusive_types = {"WORKS_AT", "SPOUSE_OF", "MARRIED_TO", "LIVES_IN", "ROLE"}
-        
+
         if rel_type.upper() not in exclusive_types:
             return []
-        
+
         cursor = await self.conn.execute(
             """
             SELECT * FROM relationships 
@@ -1274,27 +1256,29 @@ class Database:
             (from_entity_id, rel_type, to_entity_id),
         )
         rows = await cursor.fetchall()
-        
+
         relationships = []
         for row in rows:
             valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
             valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
             created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
-            
-            relationships.append(Relationship(
-                id=row["id"],
-                from_entity_id=row["from_entity_id"],
-                to_entity_id=row["to_entity_id"],
-                type=row["type"],
-                properties=_safe_json_loads(row["properties"], {}),
-                confidence=row["confidence"],
-                source_memory_id=row["source_memory_id"],
-                valid_from=valid_from,
-                valid_to=valid_to,
-                created_at=created_at,
-                superseded_by=row["superseded_by"],
-            ))
-        
+
+            relationships.append(
+                Relationship(
+                    id=row["id"],
+                    from_entity_id=row["from_entity_id"],
+                    to_entity_id=row["to_entity_id"],
+                    type=row["type"],
+                    properties=_safe_json_loads(row["properties"], {}),
+                    confidence=row["confidence"],
+                    source_memory_id=row["source_memory_id"],
+                    valid_from=valid_from,
+                    valid_to=valid_to,
+                    created_at=created_at,
+                    superseded_by=row["superseded_by"],
+                )
+            )
+
         return relationships
 
     async def get_relationship_history(
@@ -1304,62 +1288,62 @@ class Database:
         rel_type: str | None = None,
     ) -> list[Relationship]:
         """Get full relationship history including superseded relationships.
-        
+
         Useful for timeline queries like "Where has Alice worked?"
-        
+
         Args:
             from_entity_id: Subject entity
             to_entity_id: Optional filter by object entity
             rel_type: Optional filter by relationship type
-            
+
         Returns:
             List of all relationships (current and superseded), ordered by valid_from.
         """
         query = "SELECT * FROM relationships WHERE from_entity_id = ?"
         params: list[Any] = [from_entity_id]
-        
+
         if to_entity_id:
             query += " AND to_entity_id = ?"
             params.append(to_entity_id)
-        
+
         if rel_type:
             query += " AND type = ?"
             params.append(rel_type)
-        
+
         query += " ORDER BY valid_from DESC"
-        
+
         cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
-        
+
         relationships = []
         for row in rows:
             valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
             valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
             created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
-            
-            relationships.append(Relationship(
-                id=row["id"],
-                from_entity_id=row["from_entity_id"],
-                to_entity_id=row["to_entity_id"],
-                type=row["type"],
-                properties=_safe_json_loads(row["properties"], {}),
-                confidence=row["confidence"],
-                source_memory_id=row["source_memory_id"],
-                valid_from=valid_from,
-                valid_to=valid_to,
-                created_at=created_at,
-                superseded_by=row["superseded_by"],
-            ))
-        
+
+            relationships.append(
+                Relationship(
+                    id=row["id"],
+                    from_entity_id=row["from_entity_id"],
+                    to_entity_id=row["to_entity_id"],
+                    type=row["type"],
+                    properties=_safe_json_loads(row["properties"], {}),
+                    confidence=row["confidence"],
+                    source_memory_id=row["source_memory_id"],
+                    valid_from=valid_from,
+                    valid_to=valid_to,
+                    created_at=created_at,
+                    superseded_by=row["superseded_by"],
+                )
+            )
+
         return relationships
 
     # -----------------------------------------------------------------------
     # Memory-Entity associations
     # -----------------------------------------------------------------------
 
-    async def link_memory_entity(
-        self, memory_id: str, entity_id: str, confidence: float = 1.0
-    ) -> None:
+    async def link_memory_entity(self, memory_id: str, entity_id: str, confidence: float = 1.0) -> None:
         """Link a memory to an entity."""
         await self.conn.execute(
             """
@@ -1393,7 +1377,6 @@ class Database:
             )
             for row in rows
         ]
-
 
     # -----------------------------------------------------------------------
     # API Key operations (Week 7 - Authentication)
@@ -1459,7 +1442,7 @@ class Database:
     async def delete_api_key_permanently(self, key_id: str, user_id: str) -> bool:
         """
         Permanently delete an API key from the database (hard delete).
-        
+
         Also removes associated role assignments.
         Returns True if found and deleted.
         """
@@ -1468,7 +1451,7 @@ class Database:
             "DELETE FROM api_key_roles WHERE api_key_id = ?",
             (key_id,),
         )
-        
+
         # Then delete the key itself
         cursor = await self.conn.execute(
             "DELETE FROM api_keys WHERE id = ? AND user_id = ?",
@@ -1540,18 +1523,18 @@ class Database:
         """Get audit log entries with optional filters."""
         query = "SELECT * FROM audit_log WHERE 1=1"
         params: list[Any] = []
-        
+
         if user_id:
             query += " AND user_id = ?"
             params.append(user_id)
-        
+
         if action:
             query += " AND action = ?"
             params.append(action)
-        
+
         query += " ORDER BY timestamp DESC LIMIT ?"
         params.append(limit)
-        
+
         cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
         return [dict(row) for row in rows]
@@ -1750,6 +1733,7 @@ class Database:
 # ---------------------------------------------------------------------------
 # Initialization helper
 # ---------------------------------------------------------------------------
+
 
 async def init_db(settings: Settings) -> Database:
     """Initialize and return a connected database."""

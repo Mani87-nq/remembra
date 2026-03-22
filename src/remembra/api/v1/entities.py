@@ -27,6 +27,7 @@ DatabaseDep = Annotated[Database, Depends(get_database)]
 
 class EntityResponse(BaseModel):
     """Single entity response."""
+
     id: str
     canonical_name: str
     type: str
@@ -38,6 +39,7 @@ class EntityResponse(BaseModel):
 
 class RelationshipResponse(BaseModel):
     """Relationship between entities with temporal validity."""
+
     id: str
     from_entity_id: str
     from_entity_name: str
@@ -47,13 +49,14 @@ class RelationshipResponse(BaseModel):
     confidence: float = 1.0
     # Temporal validity (bi-temporal edges)
     valid_from: str | None = None  # When relationship became true
-    valid_to: str | None = None    # When relationship ended (None = still valid)
-    is_current: bool = True        # Whether relationship is currently valid
+    valid_to: str | None = None  # When relationship ended (None = still valid)
+    is_current: bool = True  # Whether relationship is currently valid
     superseded_by: str | None = None  # ID of relationship that supersedes this
 
 
 class EntitiesListResponse(BaseModel):
     """Response for listing entities."""
+
     entities: list[EntityResponse]
     total: int
     by_type: dict[str, int]  # Count by entity type
@@ -61,6 +64,7 @@ class EntitiesListResponse(BaseModel):
 
 class RelationshipsListResponse(BaseModel):
     """Response for listing relationships."""
+
     relationships: list[RelationshipResponse]
     total: int
 
@@ -86,7 +90,7 @@ async def list_entities(
 ) -> EntitiesListResponse:
     """
     List all entities for the authenticated user.
-    
+
     Entities are automatically extracted from stored memories and include:
     - People (person)
     - Organizations/Companies (company, organization)
@@ -107,14 +111,14 @@ async def list_entities(
             user_id=current_user.user_id,
             project_id=project_id,
         )
-    
+
     # Limit results
     entities = entities[:limit]
-    
+
     # Get memory counts for each entity
     entity_responses = []
     type_counts: dict[str, int] = {}
-    
+
     for entity in entities:
         # Count linked memories
         memory_ids = await db.get_memories_by_entity(
@@ -122,21 +126,23 @@ async def list_entities(
             user_id=current_user.user_id,
             project_id=project_id,
         )
-        
-        entity_responses.append(EntityResponse(
-            id=entity.id,
-            canonical_name=entity.canonical_name,
-            type=entity.type,
-            aliases=entity.aliases,
-            attributes=entity.attributes,
-            confidence=entity.confidence,
-            memory_count=len(memory_ids),
-        ))
-        
+
+        entity_responses.append(
+            EntityResponse(
+                id=entity.id,
+                canonical_name=entity.canonical_name,
+                type=entity.type,
+                aliases=entity.aliases,
+                attributes=entity.attributes,
+                confidence=entity.confidence,
+                memory_count=len(memory_ids),
+            )
+        )
+
         # Track type counts
         t = entity.type.lower()
         type_counts[t] = type_counts.get(t, 0) + 1
-    
+
     return EntitiesListResponse(
         entities=entity_responses,
         total=len(entity_responses),
@@ -160,20 +166,20 @@ async def get_entity(
     """Get a specific entity by ID."""
     project_id = resolve_project_access(current_user, project_id)
     entity = await db.get_entity(entity_id, user_id=current_user.user_id, project_id=project_id)
-    
+
     if not entity:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Entity {entity_id} not found",
         )
-    
+
     # Get linked memories
     memory_ids = await db.get_memories_by_entity(
         entity_id,
         user_id=current_user.user_id,
         project_id=project_id,
     )
-    
+
     return EntityResponse(
         id=entity.id,
         canonical_name=entity.canonical_name,
@@ -208,14 +214,14 @@ async def get_entity_relationships(
 ) -> RelationshipsListResponse:
     """
     Get relationships involving a specific entity with temporal filtering.
-    
+
     Supports point-in-time queries like "Where did Alice work in January 2022?"
-    
+
     - **as_of**: Query relationships as they were at a specific date
     - **include_history**: Include relationships that have been superseded
     """
     from datetime import datetime
-    
+
     project_id = resolve_project_access(current_user, project_id)
 
     # Verify entity exists
@@ -225,7 +231,7 @@ async def get_entity_relationships(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Entity {entity_id} not found",
         )
-    
+
     # Parse as_of date if provided
     as_of_dt = None
     if as_of:
@@ -236,34 +242,36 @@ async def get_entity_relationships(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid date format for as_of: {as_of}. Use ISO format (e.g., 2022-01-15)",
             )
-    
+
     # Get relationships with temporal filtering
     relationships = await db.get_entity_relationships(
         entity_id,
         as_of=as_of_dt,
         include_superseded=include_history,
     )
-    
+
     # Enrich with entity names
     relationship_responses = []
     for rel in relationships:
         from_entity = await db.get_entity(rel.from_entity_id)
         to_entity = await db.get_entity(rel.to_entity_id)
-        
-        relationship_responses.append(RelationshipResponse(
-            id=rel.id,
-            from_entity_id=rel.from_entity_id,
-            from_entity_name=from_entity.canonical_name if from_entity else "Unknown",
-            to_entity_id=rel.to_entity_id,
-            to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
-            type=rel.type,
-            confidence=rel.confidence,
-            valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
-            valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
-            is_current=rel.is_current,
-            superseded_by=rel.superseded_by,
-        ))
-    
+
+        relationship_responses.append(
+            RelationshipResponse(
+                id=rel.id,
+                from_entity_id=rel.from_entity_id,
+                from_entity_name=from_entity.canonical_name if from_entity else "Unknown",
+                to_entity_id=rel.to_entity_id,
+                to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
+                type=rel.type,
+                confidence=rel.confidence,
+                valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
+                valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
+                is_current=rel.is_current,
+                superseded_by=rel.superseded_by,
+            )
+        )
+
     return RelationshipsListResponse(
         relationships=relationship_responses,
         total=len(relationship_responses),
@@ -288,16 +296,16 @@ async def search_relationships_by_name(
 ) -> RelationshipsListResponse:
     """
     Search relationships by entity name with temporal filtering.
-    
+
     This is the main endpoint for temporal relationship queries like:
     - "Where did Alice work in January 2022?"
     - "Who was Bob married to in 2019?"
-    
+
     The bi-temporal model tracks both when we learned about a relationship
     (created_at) and when it was actually true (valid_from/valid_to).
     """
     from datetime import datetime
-    
+
     project_id = resolve_project_access(current_user, project_id) or "default"
 
     # Parse as_of date if provided
@@ -310,49 +318,51 @@ async def search_relationships_by_name(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid date format for as_of: {as_of}. Use ISO format (e.g., 2022-01-15)",
             )
-    
+
     # Find entity by name
     entity = await db.find_entity_by_name(
         name=entity_name,
         user_id=current_user.user_id,
         project_id=project_id,
     )
-    
+
     if not entity:
         # Return empty list if entity not found (don't error)
         return RelationshipsListResponse(relationships=[], total=0)
-    
+
     # Get relationships with temporal filtering
     relationships = await db.get_entity_relationships(
         entity.id,
         as_of=as_of_dt,
         include_superseded=include_history,
     )
-    
+
     # Filter by relationship type if specified
     if relationship_type:
         relationships = [r for r in relationships if r.type.upper() == relationship_type.upper()]
-    
+
     # Enrich with entity names
     relationship_responses = []
     for rel in relationships:
         from_entity = await db.get_entity(rel.from_entity_id)
         to_entity = await db.get_entity(rel.to_entity_id)
-        
-        relationship_responses.append(RelationshipResponse(
-            id=rel.id,
-            from_entity_id=rel.from_entity_id,
-            from_entity_name=from_entity.canonical_name if from_entity else "Unknown",
-            to_entity_id=rel.to_entity_id,
-            to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
-            type=rel.type,
-            confidence=rel.confidence,
-            valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
-            valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
-            is_current=rel.is_current,
-            superseded_by=rel.superseded_by,
-        ))
-    
+
+        relationship_responses.append(
+            RelationshipResponse(
+                id=rel.id,
+                from_entity_id=rel.from_entity_id,
+                from_entity_name=from_entity.canonical_name if from_entity else "Unknown",
+                to_entity_id=rel.to_entity_id,
+                to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
+                type=rel.type,
+                confidence=rel.confidence,
+                valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
+                valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
+                is_current=rel.is_current,
+                superseded_by=rel.superseded_by,
+            )
+        )
+
     return RelationshipsListResponse(
         relationships=relationship_responses,
         total=len(relationship_responses),
@@ -381,25 +391,27 @@ async def get_entity_memories(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Entity {entity_id} not found",
         )
-    
+
     # Get linked memory IDs
     memory_ids = await db.get_memories_by_entity(
         entity_id,
         user_id=current_user.user_id,
         project_id=project_id,
     )
-    
+
     # Get memory details
     memories = []
     for mid in memory_ids[:limit]:
         memory = await db.get_memory(mid)
         if memory:
-            memories.append({
-                "id": memory["id"],
-                "content": memory["content"],
-                "created_at": memory["created_at"],
-            })
-    
+            memories.append(
+                {
+                    "id": memory["id"],
+                    "content": memory["content"],
+                    "created_at": memory["created_at"],
+                }
+            )
+
     return {
         "entity_id": entity_id,
         "entity_name": entity.canonical_name,

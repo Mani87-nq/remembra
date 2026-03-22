@@ -13,7 +13,12 @@ from remembra.config import Settings
 log = structlog.get_logger(__name__)
 
 EmbeddingProvider = Literal[
-    "openai", "azure_openai", "ollama", "cohere", "voyage", "jina",
+    "openai",
+    "azure_openai",
+    "ollama",
+    "cohere",
+    "voyage",
+    "jina",
 ]
 
 # ---------------------------------------------------------------------------
@@ -162,10 +167,7 @@ class AzureOpenAIEmbedder(BaseEmbedder):
         return results[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        url = (
-            f"{self.endpoint}/openai/deployments/{self.deployment}"
-            f"/embeddings?api-version={self.api_version}"
-        )
+        url = f"{self.endpoint}/openai/deployments/{self.deployment}/embeddings?api-version={self.api_version}"
         response = await self._client.post(
             url,
             json={"input": texts},

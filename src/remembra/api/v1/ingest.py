@@ -67,7 +67,7 @@ SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 class ChangelogIngestRequest(BaseModel):
     """Request to ingest a changelog."""
-    
+
     content: str | None = Field(
         default=None,
         description="Raw markdown content of the changelog",
@@ -98,7 +98,7 @@ class ChangelogIngestRequest(BaseModel):
 
 class ChangelogIngestResponse(BaseModel):
     """Response from changelog ingestion."""
-    
+
     releases_parsed: int
     memories_stored: int
     memory_ids: list[str]
@@ -128,14 +128,14 @@ async def ingest_changelog(
 ) -> ChangelogIngestResponse:
     """
     Parse a CHANGELOG.md and store each release as a memory.
-    
+
     Supports:
     - Keep a Changelog format (https://keepachangelog.com/)
     - Most markdown changelogs with ## version headers
-    
+
     Each release becomes a memory with version/date metadata,
     making project history searchable and recallable.
-    
+
     **Usage (content):**
     ```json
     {
@@ -143,7 +143,7 @@ async def ingest_changelog(
       "project_name": "my-project"
     }
     ```
-    
+
     **Usage (file path):**
     ```json
     {
@@ -151,7 +151,7 @@ async def ingest_changelog(
       "project_name": "my-project"
     }
     ```
-    
+
     Rate limit: 10 requests/minute.
     """
     if not body.content and not body.file_path:
@@ -159,11 +159,11 @@ async def ingest_changelog(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Either 'content' or 'file_path' must be provided",
         )
-    
+
     parser = ChangelogParser()
     releases: list[ChangelogRelease] = []
     errors: list[str] = []
-    
+
     # Parse changelog
     try:
         if body.file_path:
@@ -180,7 +180,7 @@ async def ingest_changelog(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to parse changelog: {str(e)}",
         ) from e
-    
+
     if not releases:
         return ChangelogIngestResponse(
             releases_parsed=0,
@@ -188,28 +188,28 @@ async def ingest_changelog(
             memory_ids=[],
             errors=["No releases found in changelog"],
         )
-    
+
     # Filter releases
     if body.skip_unreleased:
         releases = [r for r in releases if r.version.lower() != "unreleased"]
-    
-    releases = releases[:body.max_releases]
-    
+
+    releases = releases[: body.max_releases]
+
     # Store each release as a memory
     memory_ids: list[str] = []
-    
+
     for release in releases:
         try:
             # Build content string
             content = release.to_memory_content()
             if body.project_name:
                 content = f"Project {body.project_name} - {content}"
-            
+
             # Build metadata
             metadata = release.to_metadata()
             if body.project_name:
                 metadata["project_name"] = body.project_name
-            
+
             # Store via memory service
             store_request = StoreRequest(
                 user_id=current_user.user_id,
@@ -217,19 +217,19 @@ async def ingest_changelog(
                 project_id=body.project_id,
                 metadata=metadata,
             )
-            
+
             result = await memory_service.store(
                 store_request,
                 source="changelog_ingestion",
                 trust_score=1.0,  # Changelogs are trusted
             )
-            
+
             if result.id:
                 memory_ids.append(result.id)
-                
+
         except Exception as e:
             errors.append(f"Failed to store release {release.version}: {str(e)}")
-    
+
     # Audit log
     await audit_logger.log_memory_store(
         user_id=current_user.user_id,
@@ -239,7 +239,7 @@ async def ingest_changelog(
         success=len(memory_ids) > 0,
         error="; ".join(errors) if errors else None,
     )
-    
+
     return ChangelogIngestResponse(
         releases_parsed=len(releases),
         memories_stored=len(memory_ids),
@@ -271,22 +271,22 @@ async def ingest_conversation(
 ) -> ConversationIngestResponse:
     """
     Parse a conversation and automatically extract memorable facts.
-    
+
     This is the primary ingestion endpoint for AI agents. It accepts a list
     of messages and intelligently extracts facts worth remembering long-term.
-    
+
     **Features:**
     - Automatic fact extraction with importance scoring
     - Entity extraction (people, organizations, locations, etc.)
     - Deduplication against existing memories
     - Speaker attribution
     - Pronoun resolution using conversation context
-    
+
     **Modes:**
     - `options.infer=true` (default): Full extraction pipeline
     - `options.infer=false`: Store raw messages without extraction
     - `options.store=false`: Dry run - returns extraction without storing
-    
+
     **Example:**
     ```json
     {
@@ -298,18 +298,18 @@ async def ingest_conversation(
       "options": {"min_importance": 0.5}
     }
     ```
-    
+
     **Response includes:**
     - `facts`: Extracted facts with importance scores and storage status
     - `entities`: People, organizations, locations found
     - `deduped`: Facts that matched existing memories
     - `stats`: Processing statistics
-    
+
     Rate limit: 20 requests/minute.
     """
     # Override user_id with authenticated user (security: prevent spoofing)
     body.user_id = current_user.user_id
-    
+
     # Sanitize all message content
     if settings.sanitization_enabled:
         for msg in body.messages:
@@ -319,11 +319,11 @@ async def ingest_conversation(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Message content failed security check: {sanitization.warnings}",
                 )
-    
+
     try:
         # Process conversation through the ingest service
         result = await conversation_ingest.ingest(body)
-        
+
         # Audit log
         await audit_logger.log_memory_store(
             user_id=current_user.user_id,
@@ -333,27 +333,30 @@ async def ingest_conversation(
             success=result.status in ["ok", "partial"],
             error=None if result.status == "ok" else "Partial processing",
         )
-        
+
         # Dispatch webhook if configured
         webhook_manager = getattr(request.app.state, "webhook_manager", None)
         if webhook_manager and result.stats.facts_stored > 0:
             try:
                 from remembra.webhooks.events import WebhookEvent
-                await webhook_manager.dispatch(WebhookEvent(
-                    event_type="conversation_ingested",
-                    user_id=current_user.user_id,
-                    data={
-                        "session_id": result.session_id,
-                        "facts_stored": result.stats.facts_stored,
-                        "entities_found": result.stats.entities_found,
-                        "project_id": body.project_id,
-                    },
-                ))
+
+                await webhook_manager.dispatch(
+                    WebhookEvent(
+                        event_type="conversation_ingested",
+                        user_id=current_user.user_id,
+                        data={
+                            "session_id": result.session_id,
+                            "facts_stored": result.stats.facts_stored,
+                            "entities_found": result.stats.entities_found,
+                            "project_id": body.project_id,
+                        },
+                    )
+                )
             except Exception:
                 pass  # Don't fail the request on webhook error
-        
+
         return result
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -397,10 +400,10 @@ async def ingest_conversation_stream(
 ) -> Response:
     """
     Stream extraction progress as Server-Sent Events.
-    
+
     Same functionality as POST /conversation but with real-time progress updates.
     Useful for large conversations where the client needs feedback during processing.
-    
+
     **Event format:**
     ```
     data: {"phase": "parsing", "progress": 0}
@@ -408,58 +411,59 @@ async def ingest_conversation_stream(
     data: {"phase": "storing", "progress": 80}
     data: {"phase": "complete", "progress": 100, "result": {...}}
     ```
-    
+
     **Phases:**
     - `parsing`: Initial message parsing
     - `extracting_facts`: LLM fact extraction
     - `storing`: Writing to vector store
     - `complete`: Done with full result
     - `error`: Processing failed
-    
+
     Rate limit: 20 requests/minute.
     """
     # Override user_id with authenticated user
     body.user_id = current_user.user_id
-    
+
     # Pre-sanitize message content
     if settings.sanitization_enabled:
         for msg in body.messages:
             sanitization = sanitizer.analyze(msg.content, source="conversation_ingest")
             if sanitization.trust_score < 0.3:
+
                 async def error_generator(
                     warnings: list = sanitization.warnings,
                 ) -> AsyncGenerator[str, None]:
                     error_msg = f"Message content failed security check: {warnings}"
-                    yield f'data: {json.dumps({"phase": "error", "error": error_msg})}\n\n'
+                    yield f"data: {json.dumps({'phase': 'error', 'error': error_msg})}\n\n"
 
                 return StreamingResponse(
                     error_generator(),
                     media_type="text/event-stream",
                 )
-    
+
     async def event_generator() -> AsyncGenerator[str, None]:
         start = time.time()
         try:
             # Phase 1: Parsing
-            yield f'data: {json.dumps({"phase": "parsing", "progress": 0})}\n\n'
-            
+            yield f"data: {json.dumps({'phase': 'parsing', 'progress': 0})}\n\n"
+
             # Phase 2: Extraction
-            yield f'data: {json.dumps({"phase": "extracting_facts", "progress": 20})}\n\n'
-            
+            yield f"data: {json.dumps({'phase': 'extracting_facts', 'progress': 20})}\n\n"
+
             # Run the actual ingestion
             result = await conversation_ingest.ingest(body)
-            
+
             # Phase 3: Storing
-            yield f'data: {json.dumps({"phase": "storing", "progress": 80})}\n\n'
-            
+            yield f"data: {json.dumps({'phase': 'storing', 'progress': 80})}\n\n"
+
             # Final result
             elapsed = int((time.time() - start) * 1000)
             result_dict = result.model_dump(mode="json")
             result_dict["processing_time_ms"] = elapsed
-            
+
             complete_data = {"phase": "complete", "progress": 100, "result": result_dict}
-            yield f'data: {json.dumps(complete_data)}\n\n'
-            
+            yield f"data: {json.dumps(complete_data)}\n\n"
+
             # Audit log
             await audit_logger.log_memory_store(
                 user_id=current_user.user_id,
@@ -468,10 +472,10 @@ async def ingest_conversation_stream(
                 ip_address=get_client_ip(request),
                 success=result.status in ["ok", "partial"],
             )
-            
+
         except Exception as e:
-            yield f'data: {json.dumps({"phase": "error", "error": str(e)})}\n\n'
-    
+            yield f"data: {json.dumps({'phase': 'error', 'error': str(e)})}\n\n"
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",

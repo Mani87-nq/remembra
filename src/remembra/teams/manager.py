@@ -28,8 +28,8 @@ INVITE_EXPIRY_DAYS = 7
 def slugify(name: str) -> str:
     """Convert name to URL-friendly slug."""
     slug = name.lower().strip()
-    slug = re.sub(r'[^\w\s-]', '', slug)
-    slug = re.sub(r'[-\s]+', '-', slug)
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[-\s]+", "-", slug)
     return slug[:50]
 
 
@@ -236,18 +236,10 @@ class TeamManager:
             raise PermissionError("Only the team owner can delete the team")
 
         # Delete team members, invites, team_spaces, then team
-        await self._db.conn.execute(
-            "DELETE FROM team_members WHERE team_id = ?", (team_id,)
-        )
-        await self._db.conn.execute(
-            "DELETE FROM team_invites WHERE team_id = ?", (team_id,)
-        )
-        await self._db.conn.execute(
-            "DELETE FROM team_spaces WHERE team_id = ?", (team_id,)
-        )
-        cursor = await self._db.conn.execute(
-            "DELETE FROM teams WHERE id = ?", (team_id,)
-        )
+        await self._db.conn.execute("DELETE FROM team_members WHERE team_id = ?", (team_id,))
+        await self._db.conn.execute("DELETE FROM team_invites WHERE team_id = ?", (team_id,))
+        await self._db.conn.execute("DELETE FROM team_spaces WHERE team_id = ?", (team_id,))
+        cursor = await self._db.conn.execute("DELETE FROM teams WHERE id = ?", (team_id,))
         await self._db.conn.commit()
 
         deleted = cursor.rowcount > 0
@@ -266,7 +258,7 @@ class TeamManager:
         Called when billing changes (Stripe webhook).
         """
         now = datetime.now(UTC).isoformat()
-        
+
         if max_seats is not None:
             await self._db.conn.execute(
                 "UPDATE teams SET plan = ?, max_seats = ?, updated_at = ? WHERE id = ?",
@@ -294,17 +286,17 @@ class TeamManager:
         Returns number of teams updated.
         """
         now = datetime.now(UTC).isoformat()
-        
+
         # Get all teams owned by this user
         cursor = await self._db.conn.execute(
             "SELECT id FROM teams WHERE owner_id = ?",
             (owner_id,),
         )
         teams = await cursor.fetchall()
-        
+
         if not teams:
             return 0
-        
+
         # Update each team's plan
         if max_seats is not None:
             await self._db.conn.execute(
@@ -321,7 +313,10 @@ class TeamManager:
         count = len(teams)
         logger.info(
             "Updated %d teams for owner %s to plan=%s seats=%s",
-            count, owner_id, plan, max_seats,
+            count,
+            owner_id,
+            plan,
+            max_seats,
         )
         return count
 
@@ -329,9 +324,7 @@ class TeamManager:
     # Membership
     # -----------------------------------------------------------------------
 
-    async def get_membership(
-        self, team_id: str, user_id: str
-    ) -> dict[str, Any] | None:
+    async def get_membership(self, team_id: str, user_id: str) -> dict[str, Any] | None:
         """Get a user's membership in a team."""
         cursor = await self._db.conn.execute(
             """
@@ -395,10 +388,7 @@ class TeamManager:
             raise ValueError("Team not found")
 
         if team["used_seats"] >= team["max_seats"]:
-            raise ValueError(
-                f"Team has reached maximum seats ({team['max_seats']}). "
-                "Upgrade your plan to add more members."
-            )
+            raise ValueError(f"Team has reached maximum seats ({team['max_seats']}). Upgrade your plan to add more members.")
 
         now = datetime.now(UTC).isoformat()
         await self._db.conn.execute(
@@ -419,7 +409,10 @@ class TeamManager:
 
         logger.info(
             "Member added: team=%s user=%s role=%s by=%s",
-            team_id, user_id, role, invited_by,
+            team_id,
+            user_id,
+            role,
+            invited_by,
         )
 
         return {
@@ -460,7 +453,10 @@ class TeamManager:
 
         logger.info(
             "Member role updated: team=%s user=%s role=%s by=%s",
-            team_id, user_id, new_role, updated_by,
+            team_id,
+            user_id,
+            new_role,
+            updated_by,
         )
 
         return await self.get_membership(team_id, user_id)
@@ -497,7 +493,9 @@ class TeamManager:
             await self._db.conn.commit()
             logger.info(
                 "Member removed: team=%s user=%s by=%s",
-                team_id, user_id, removed_by,
+                team_id,
+                user_id,
+                removed_by,
             )
             return True
 
@@ -537,10 +535,7 @@ class TeamManager:
             raise ValueError("Team not found")
 
         if team["used_seats"] >= team["max_seats"]:
-            raise ValueError(
-                f"Team has reached maximum seats ({team['max_seats']}). "
-                "Upgrade your plan to invite more members."
-            )
+            raise ValueError(f"Team has reached maximum seats ({team['max_seats']}). Upgrade your plan to invite more members.")
 
         # Check if already a member
         cursor = await self._db.conn.execute(
@@ -596,7 +591,10 @@ class TeamManager:
 
         logger.info(
             "Invite created: team=%s email=%s role=%s by=%s",
-            team_id, email, role, invited_by,
+            team_id,
+            email,
+            role,
+            invited_by,
         )
 
         return {
@@ -735,7 +733,9 @@ class TeamManager:
 
         logger.info(
             "Invite accepted: team=%s user=%s role=%s",
-            invite["team_id"], user_id, invite["role"],
+            invite["team_id"],
+            user_id,
+            invite["role"],
         )
 
         return {
@@ -769,7 +769,8 @@ class TeamManager:
 
         logger.info(
             "Invite revoked: id=%s by=%s",
-            invite_id, revoked_by,
+            invite_id,
+            revoked_by,
         )
         return True
 
@@ -849,9 +850,7 @@ class TeamManager:
     # Internal helpers
     # -----------------------------------------------------------------------
 
-    async def _has_permission(
-        self, team_id: str, user_id: str, required: str
-    ) -> bool:
+    async def _has_permission(self, team_id: str, user_id: str, required: str) -> bool:
         """Check if user has at least the required permission level."""
         hierarchy = {"viewer": 1, "member": 2, "admin": 3, "owner": 4}
         required_level = hierarchy.get(required, 0)

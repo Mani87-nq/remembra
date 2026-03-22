@@ -186,9 +186,7 @@ def test_install_agent_config_unknown_agent_raises(tmp_path: Path) -> None:
 # ============================================================================
 
 
-def test_install_all_agents_installs_detected(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_install_all_agents_installs_detected(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Create fake agent directories
     claude_dir = tmp_path / "Claude"
     claude_dir.mkdir()
@@ -196,20 +194,12 @@ def test_install_all_agents_installs_detected(
     cursor_dir.mkdir()
 
     # Patch the config paths
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "claude-desktop", claude_dir / "claude_desktop_config.json"
-    )
+    monkeypatch.setitem(AGENT_CONFIGS, "claude-desktop", claude_dir / "claude_desktop_config.json")
     monkeypatch.setitem(AGENT_CONFIGS, "cursor", cursor_dir / "mcp.json")
     # Remove other agents by setting non-existent paths
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "claude-code", tmp_path / "nonexistent" / "config.json"
-    )
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "gemini", tmp_path / "nonexistent" / "config.json"
-    )
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "windsurf", tmp_path / "nonexistent" / "config.json"
-    )
+    monkeypatch.setitem(AGENT_CONFIGS, "claude-code", tmp_path / "nonexistent" / "config.json")
+    monkeypatch.setitem(AGENT_CONFIGS, "gemini", tmp_path / "nonexistent" / "config.json")
+    monkeypatch.setitem(AGENT_CONFIGS, "windsurf", tmp_path / "nonexistent" / "config.json")
 
     results = install_all_agents(
         api_key="rem_test",
@@ -227,43 +217,27 @@ def test_install_all_agents_installs_detected(
 # ============================================================================
 
 
-def test_detect_agents_finds_installed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_detect_agents_finds_installed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Create fake agent directory
     claude_dir = tmp_path / "Claude"
     claude_dir.mkdir()
 
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "claude-desktop", claude_dir / "claude_desktop_config.json"
-    )
+    monkeypatch.setitem(AGENT_CONFIGS, "claude-desktop", claude_dir / "claude_desktop_config.json")
     # Others don't exist
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "claude-code", tmp_path / "nonexistent" / "config.json"
-    )
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "gemini", tmp_path / "nonexistent" / "config.json"
-    )
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "cursor", tmp_path / "nonexistent" / "config.json"
-    )
-    monkeypatch.setitem(
-        AGENT_CONFIGS, "windsurf", tmp_path / "nonexistent" / "config.json"
-    )
+    monkeypatch.setitem(AGENT_CONFIGS, "claude-code", tmp_path / "nonexistent" / "config.json")
+    monkeypatch.setitem(AGENT_CONFIGS, "gemini", tmp_path / "nonexistent" / "config.json")
+    monkeypatch.setitem(AGENT_CONFIGS, "cursor", tmp_path / "nonexistent" / "config.json")
+    monkeypatch.setitem(AGENT_CONFIGS, "windsurf", tmp_path / "nonexistent" / "config.json")
 
     detected = detect_agents()
 
     assert detected == ["claude-desktop"]
 
 
-def test_detect_agents_empty_when_none_installed(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_detect_agents_empty_when_none_installed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # All paths nonexistent
     for agent in AGENT_CONFIGS:
-        monkeypatch.setitem(
-            AGENT_CONFIGS, agent, tmp_path / "nonexistent" / f"{agent}.json"
-        )
+        monkeypatch.setitem(AGENT_CONFIGS, agent, tmp_path / "nonexistent" / f"{agent}.json")
 
     detected = detect_agents()
 

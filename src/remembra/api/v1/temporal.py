@@ -33,12 +33,14 @@ MemoryServiceDep = Annotated[MemoryService, Depends(get_memory_service)]
 
 class DecayReportRequest(BaseModel):
     """Request for decay report."""
+
     project_id: str = "default"
     limit: int = Field(default=50, ge=1, le=200)
 
 
 class MemoryDecayInfo(BaseModel):
     """Decay information for a single memory."""
+
     id: str
     content_preview: str
     relevance_score: float
@@ -52,6 +54,7 @@ class MemoryDecayInfo(BaseModel):
 
 class DecayReportResponse(BaseModel):
     """Response with decay report for user's memories."""
+
     user_id: str
     project_id: str
     total_memories: int
@@ -63,6 +66,7 @@ class DecayReportResponse(BaseModel):
 
 class CleanupResponse(BaseModel):
     """Response from cleanup operation."""
+
     dry_run: bool
     expired_found: int
     expired_deleted: int
@@ -93,58 +97,58 @@ async def get_decay_report(
 ) -> DecayReportResponse:
     """
     Get a decay report showing relevance scores for all memories.
-    
+
     Shows which memories are close to being pruned based on:
     - Time since last access
     - Access count (frequency)
     - Importance score
     - TTL expiration
-    
+
     Use this to understand memory health and identify stale data.
     """
     db = memory_service.db
     config = DecayConfig()
-    
+
     # Get memories with decay info
     memories = await db.get_memories_with_decay_info(
         user_id=current_user.user_id,
         project_id=project_id,
         limit=limit,
     )
-    
+
     memory_reports = []
     prune_candidates = 0
     total_relevance = 0.0
-    
+
     for memory in memories:
         decay_info = calculate_memory_decay_info(memory, config)
-        
-        memory_reports.append(MemoryDecayInfo(
-            id=memory["id"],
-            content_preview=(
-                memory.get("content", "")[:100] + "..."
-                if len(memory.get("content", "")) > 100
-                else memory.get("content", "")
-            ),
-            relevance_score=decay_info["relevance_score"],
-            stability=decay_info["stability"],
-            days_since_access=decay_info["days_since_access"],
-            access_count=decay_info["access_count"],
-            should_prune=decay_info["should_prune"],
-            ttl_remaining_seconds=decay_info["ttl_remaining_seconds"],
-            is_expired=decay_info["is_expired"],
-        ))
-        
+
+        memory_reports.append(
+            MemoryDecayInfo(
+                id=memory["id"],
+                content_preview=(
+                    memory.get("content", "")[:100] + "..." if len(memory.get("content", "")) > 100 else memory.get("content", "")
+                ),
+                relevance_score=decay_info["relevance_score"],
+                stability=decay_info["stability"],
+                days_since_access=decay_info["days_since_access"],
+                access_count=decay_info["access_count"],
+                should_prune=decay_info["should_prune"],
+                ttl_remaining_seconds=decay_info["ttl_remaining_seconds"],
+                is_expired=decay_info["is_expired"],
+            )
+        )
+
         total_relevance += decay_info["relevance_score"]
         if decay_info["should_prune"]:
             prune_candidates += 1
-    
+
     # Sort by relevance (lowest first to show most at-risk memories)
     memory_reports.sort(key=lambda m: m.relevance_score)
-    
+
     total = len(memories)
     avg_relevance = total_relevance / total if total > 0 else 0.0
-    
+
     return DecayReportResponse(
         user_id=current_user.user_id,
         project_id=project_id,
@@ -176,15 +180,15 @@ async def run_cleanup(
 ) -> CleanupResponse:
     """
     Run cleanup to remove expired and optionally decayed memories.
-    
+
     - **dry_run**: If true (default), shows what would be deleted without deleting
     - **include_decayed**: If true, also removes memories below decay threshold
-    
+
     ⚠️ WARNING: Setting dry_run=false will permanently delete memories!
     """
-    
+
     start_time = datetime.utcnow()
-    
+
     # Create cleanup job
     cleanup = TemporalCleanupJob(
         database=memory_service.db,
@@ -193,16 +197,16 @@ async def run_cleanup(
         auto_prune_decayed=include_decayed,
         prune_to_archive=True,  # Archive instead of hard delete
     )
-    
+
     # Run cleanup
     result = await cleanup.run_cleanup(
         user_id=current_user.user_id,
         project_id=project_id,
         dry_run=dry_run,
     )
-    
+
     duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
-    
+
     return CleanupResponse(
         dry_run=dry_run,
         expired_found=result.get("expired_found", 0),
@@ -229,7 +233,7 @@ async def get_memory_decay(
 ) -> MemoryDecayInfo:
     """
     Get detailed decay information for a specific memory.
-    
+
     Shows:
     - Current relevance score
     - Memory stability (based on access patterns)
@@ -238,17 +242,17 @@ async def get_memory_decay(
     - TTL remaining (if set)
     """
     db = memory_service.db
-    
+
     memory = await db.get_memory_with_decay(memory_id)
-    
+
     if not memory:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Memory {memory_id} not found",
         )
-    
+
     decay_info = calculate_memory_decay_info(memory, DecayConfig())
-    
+
     return MemoryDecayInfo(
         id=memory_id,
         content_preview=memory.get("content", "")[:100] + "...",

@@ -106,14 +106,10 @@ class TestConflictManagerCRUD:
         # Resolve the first one
         await conflict_manager.resolve(c1.id, "user-1")
 
-        open_conflicts = await conflict_manager.list_conflicts(
-            "user-1", status=ConflictStatus.OPEN
-        )
+        open_conflicts = await conflict_manager.list_conflicts("user-1", status=ConflictStatus.OPEN)
         assert len(open_conflicts) == 1
 
-        resolved = await conflict_manager.list_conflicts(
-            "user-1", status=ConflictStatus.RESOLVED
-        )
+        resolved = await conflict_manager.list_conflicts("user-1", status=ConflictStatus.RESOLVED)
         assert len(resolved) == 1
 
     async def test_list_conflicts_filter_by_project(self, conflict_manager):
@@ -149,9 +145,7 @@ class TestConflictManagerResolution:
         conflict = _make_conflict()
         await conflict_manager.record(conflict)
 
-        resolved = await conflict_manager.resolve(
-            conflict.id, "user-1", resolved_memory_id="mem-new-1"
-        )
+        resolved = await conflict_manager.resolve(conflict.id, "user-1", resolved_memory_id="mem-new-1")
         assert resolved is not None
         assert resolved["status"] == "resolved"
         assert resolved["resolved_memory_id"] == "mem-new-1"

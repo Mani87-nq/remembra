@@ -9,7 +9,7 @@ log = structlog.get_logger(__name__)
 
 async def check_qdrant(qdrant_url: str) -> dict[str, Any]:
     """Ping Qdrant and return status details.
-    
+
     Note: Internal URLs are not exposed in the response for security.
     """
     import httpx
@@ -32,14 +32,14 @@ def build_health_response(
     encryption_enabled: bool = False,
 ) -> dict[str, Any]:
     overall = "ok" if qdrant["status"] == "ok" else "degraded"
-    
+
     response = {
         "status": overall,
         "version": version,
         "dependencies": {"qdrant": qdrant},
     }
-    
+
     if encryption_enabled:
         response["encryption"] = "AES-256-GCM"
-        
+
     return response

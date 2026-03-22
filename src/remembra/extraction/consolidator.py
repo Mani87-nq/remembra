@@ -75,8 +75,10 @@ Return JSON with action, target_id, content, and reason."""
 # Types
 # ============================================================================
 
+
 class ConsolidationAction(StrEnum):
     """Action to take for memory consolidation."""
+
     ADD = "ADD"
     UPDATE = "UPDATE"
     DELETE = "DELETE"
@@ -86,6 +88,7 @@ class ConsolidationAction(StrEnum):
 @dataclass
 class ConsolidationResult:
     """Result of consolidation decision."""
+
     action: ConsolidationAction
     target_id: str | None
     content: str | None
@@ -95,6 +98,7 @@ class ConsolidationResult:
 @dataclass
 class ExistingMemory:
     """Existing memory for comparison."""
+
     id: str
     content: str
     score: float = 0.0
@@ -104,10 +108,11 @@ class ExistingMemory:
 # Memory Consolidator
 # ============================================================================
 
+
 class MemoryConsolidator:
     """
     Decides how to integrate new facts with existing memories.
-    
+
     Usage:
         consolidator = MemoryConsolidator()
         result = await consolidator.consolidate(
@@ -116,7 +121,7 @@ class MemoryConsolidator:
         )
         # result.action == ConsolidationAction.UPDATE
     """
-    
+
     def __init__(
         self,
         model: str = "gpt-4o-mini",
@@ -127,13 +132,13 @@ class MemoryConsolidator:
         self.api_key = api_key
         self.similarity_threshold = similarity_threshold
         self._client: AsyncOpenAI | None = None
-    
+
     def _get_client(self) -> AsyncOpenAI:
         """Get or create OpenAI client."""
         if self._client is None:
             self._client = AsyncOpenAI(api_key=self.api_key)
         return self._client
-    
+
     async def consolidate(
         self,
         new_fact: str,
@@ -141,17 +146,17 @@ class MemoryConsolidator:
     ) -> ConsolidationResult:
         """
         Decide how to integrate a new fact with existing memories.
-        
+
         Args:
             new_fact: The new fact to integrate
             existing: List of existing similar memories
-            
+
         Returns:
             ConsolidationResult with action and details
         """
         # Filter by similarity threshold
         relevant = [m for m in existing if m.score >= self.similarity_threshold]
-        
+
         # If no similar memories, just ADD
         if not relevant:
             log.debug("no_similar_memories", fact=new_fact[:50])
@@ -161,61 +166,64 @@ class MemoryConsolidator:
                 content=new_fact,
                 reason="No similar existing memories",
             )
-        
+
         try:
             client = self._get_client()
-            
+
             # Format existing memories for prompt
             existing_formatted = json.dumps(
                 [{"id": m.id, "content": m.content} for m in relevant],
                 indent=2,
             )
-            
+
             log.debug(
                 "consolidating_fact",
                 fact=new_fact[:50],
                 similar_count=len(relevant),
             )
-            
+
             response = await client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": CONSOLIDATION_SYSTEM_PROMPT},
-                    {"role": "user", "content": CONSOLIDATION_USER_PROMPT.format(
-                        new_fact=new_fact,
-                        existing_memories=existing_formatted,
-                    )},
+                    {
+                        "role": "user",
+                        "content": CONSOLIDATION_USER_PROMPT.format(
+                            new_fact=new_fact,
+                            existing_memories=existing_formatted,
+                        ),
+                    },
                 ],
                 temperature=0.1,
                 response_format={"type": "json_object"},
                 timeout=30.0,
             )
-            
+
             result_text = response.choices[0].message.content
             if not result_text:
                 return self._default_add(new_fact)
-            
+
             result = json.loads(result_text)
-            
+
             action = ConsolidationAction(result.get("action", "ADD"))
-            
+
             log.info(
                 "consolidation_decision",
                 action=action.value,
                 reason=result.get("reason", "")[:50],
             )
-            
+
             return ConsolidationResult(
                 action=action,
                 target_id=result.get("target_id"),
                 content=result.get("content"),
                 reason=result.get("reason", ""),
             )
-            
+
         except Exception as e:
             log.error("consolidation_error", error=str(e))
             return self._default_add(new_fact)
-    
+
     def _default_add(self, fact: str) -> ConsolidationResult:
         """Default to ADD on error."""
         return ConsolidationResult(
@@ -230,6 +238,7 @@ class MemoryConsolidator:
 # Convenience function
 # ============================================================================
 
+
 async def consolidate_memory(
     new_fact: str,
     existing: list[ExistingMemory],
@@ -237,7 +246,7 @@ async def consolidate_memory(
 ) -> ConsolidationResult:
     """
     Decide how to handle a new fact.
-    
+
     Convenience function for one-off consolidation.
     """
     consolidator = MemoryConsolidator(model=model)

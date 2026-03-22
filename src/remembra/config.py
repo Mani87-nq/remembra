@@ -21,10 +21,7 @@ class Settings(BaseSettings):
     port: int = 8787
     debug: bool = False
     log_level: str = "info"
-    static_dir: str | None = Field(
-        None,
-        description="Directory for static files (dashboard UI). Set to enable serving."
-    )
+    static_dir: str | None = Field(None, description="Directory for static files (dashboard UI). Set to enable serving.")
 
     # CORS
     cors_origins: list[str] = Field(
@@ -93,99 +90,42 @@ class Settings(BaseSettings):
     # -----------------------------------------------------------------------
     # Intelligent Extraction (Week 4)
     # -----------------------------------------------------------------------
-    smart_extraction_enabled: bool = Field(
-        True, 
-        description="Enable LLM-powered fact extraction"
-    )
-    extraction_model: str = Field(
-        "gpt-4o-mini",
-        description="Model for fact extraction and consolidation"
-    )
-    consolidation_threshold: float = Field(
-        0.5,
-        description="Similarity threshold for memory consolidation"
-    )
+    smart_extraction_enabled: bool = Field(True, description="Enable LLM-powered fact extraction")
+    extraction_model: str = Field("gpt-4o-mini", description="Model for fact extraction and consolidation")
+    consolidation_threshold: float = Field(0.5, description="Similarity threshold for memory consolidation")
 
     # -----------------------------------------------------------------------
     # Entity Resolution (Week 5)
     # -----------------------------------------------------------------------
-    enable_entity_resolution: bool = Field(
-        True,
-        description="Enable entity extraction and resolution"
-    )
-    entity_matching_threshold: float = Field(
-        0.6,
-        description="Minimum confidence for entity matching"
-    )
+    enable_entity_resolution: bool = Field(True, description="Enable entity extraction and resolution")
+    entity_matching_threshold: float = Field(0.6, description="Minimum confidence for entity matching")
 
     # -----------------------------------------------------------------------
     # Advanced Retrieval (Week 6)
     # -----------------------------------------------------------------------
     # Hybrid Search (FTS5 + Vector)
-    enable_hybrid_search: bool = Field(
-        True,
-        description="Enable FTS5 BM25 keyword search alongside vector search"
-    )
-    hybrid_alpha: float = Field(
-        0.4,
-        description="Weight for keyword (BM25) in hybrid fusion. Research default: 0.4"
-    )
-    
+    enable_hybrid_search: bool = Field(True, description="Enable FTS5 BM25 keyword search alongside vector search")
+    hybrid_alpha: float = Field(0.4, description="Weight for keyword (BM25) in hybrid fusion. Research default: 0.4")
+
     # Reranking (CrossEncoder)
-    enable_reranking: bool = Field(
-        True,
-        description="Enable CrossEncoder reranking for improved accuracy"
-    )
-    rerank_model: str = Field(
-        "cross-encoder/ms-marco-MiniLM-L-6-v2",
-        description="HuggingFace model for reranking"
-    )
-    rerank_top_k: int = Field(
-        20,
-        description="Rerank top K results from hybrid search"
-    )
-    
+    enable_reranking: bool = Field(True, description="Enable CrossEncoder reranking for improved accuracy")
+    rerank_model: str = Field("cross-encoder/ms-marco-MiniLM-L-6-v2", description="HuggingFace model for reranking")
+    rerank_top_k: int = Field(20, description="Rerank top K results from hybrid search")
+
     # Graph-Aware Retrieval
-    enable_graph_retrieval: bool = Field(
-        True,
-        description="Enable entity graph traversal during recall"
-    )
-    graph_max_depth: int = Field(
-        2,
-        description="Maximum depth for entity relationship traversal"
-    )
-    
+    enable_graph_retrieval: bool = Field(True, description="Enable entity graph traversal during recall")
+    graph_max_depth: int = Field(2, description="Maximum depth for entity relationship traversal")
+
     # Context Optimization
-    context_max_tokens: int = Field(
-        4000,
-        description="Maximum tokens in recall context output"
-    )
-    context_include_metadata: bool = Field(
-        True,
-        description="Include timestamps and relevance in context"
-    )
-    
+    context_max_tokens: int = Field(4000, description="Maximum tokens in recall context output")
+    context_include_metadata: bool = Field(True, description="Include timestamps and relevance in context")
+
     # Relevance Ranking
-    ranking_semantic_weight: float = Field(
-        0.6,
-        description="Weight for semantic similarity in ranking"
-    )
-    ranking_recency_weight: float = Field(
-        0.15,
-        description="Weight for recency boost in ranking"
-    )
-    ranking_entity_weight: float = Field(
-        0.15,
-        description="Weight for entity match boost in ranking"
-    )
-    ranking_keyword_weight: float = Field(
-        0.1,
-        description="Weight for keyword match boost in ranking"
-    )
-    ranking_recency_decay_days: float = Field(
-        30.0,
-        description="Half-life in days for recency decay"
-    )
+    ranking_semantic_weight: float = Field(0.6, description="Weight for semantic similarity in ranking")
+    ranking_recency_weight: float = Field(0.15, description="Weight for recency boost in ranking")
+    ranking_entity_weight: float = Field(0.15, description="Weight for entity match boost in ranking")
+    ranking_keyword_weight: float = Field(0.1, description="Weight for keyword match boost in ranking")
+    ranking_recency_decay_days: float = Field(30.0, description="Half-life in days for recency decay")
 
     # -----------------------------------------------------------------------
     # Features
@@ -265,42 +205,23 @@ class Settings(BaseSettings):
     # -----------------------------------------------------------------------
     # Security & Authentication (Week 7)
     # -----------------------------------------------------------------------
-    auth_enabled: bool = Field(
-        True,
-        description="Enable API key authentication (disable for development only)"
-    )
-    auth_master_key: str | None = Field(
-        None,
-        description="Master key for admin operations (key management)"
-    )
+    auth_enabled: bool = Field(True, description="Enable API key authentication (disable for development only)")
+    auth_master_key: str | None = Field(None, description="Master key for admin operations (key management)")
     jwt_secret: str = Field(
-        "remembra-jwt-secret-change-in-production",
-        description="Secret key for JWT token signing (MUST change in production)"
+        "remembra-jwt-secret-change-in-production", description="Secret key for JWT token signing (MUST change in production)"
     )
     jwt_expiration_hours: int = Field(
         168,  # 7 days
-        description="JWT token expiration in hours"
+        description="JWT token expiration in hours",
     )
-    
+
     # Rate Limiting
-    rate_limit_enabled: bool = Field(
-        True,
-        description="Enable rate limiting"
-    )
-    rate_limit_storage: str = Field(
-        "memory",
-        description="Rate limit storage backend: 'memory' or 'redis://...'"
-    )
-    
+    rate_limit_enabled: bool = Field(True, description="Enable rate limiting")
+    rate_limit_storage: str = Field("memory", description="Rate limit storage backend: 'memory' or 'redis://...'")
+
     # Input Sanitization
-    sanitization_enabled: bool = Field(
-        True,
-        description="Enable input sanitization and trust scoring"
-    )
-    trust_score_threshold: float = Field(
-        0.5,
-        description="Content below this trust score is flagged as suspicious"
-    )
+    sanitization_enabled: bool = Field(True, description="Enable input sanitization and trust scoring")
+    trust_score_threshold: float = Field(0.5, description="Content below this trust score is flagged as suspicious")
 
     # -----------------------------------------------------------------------
     # Security Hardening (Phase 2 - OWASP 2026)
@@ -309,12 +230,12 @@ class Settings(BaseSettings):
         50000,
         description="Maximum content length per memory (50KB default)",
     )
-    
+
     # Encryption at Rest (AES-256-GCM)
     encryption_key: str | None = Field(
         None,
         description="AES-256-GCM encryption key for memory content at rest. "
-        "Generate with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"",
+        'Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"',
     )
 
     # PII Detection (OWASP ASI06)
@@ -330,7 +251,7 @@ class Settings(BaseSettings):
         default_factory=list,
         description="PII pattern types to exclude from detection",
     )
-    
+
     # Anomaly Detection
     anomaly_detection_enabled: bool = Field(
         True,
@@ -381,28 +302,24 @@ class Settings(BaseSettings):
         description="Model for background consolidation (uses cheaper model if set)",
     )
 
-    @model_validator(mode='after')
-    def check_security_settings(self) -> 'Settings':
+    @model_validator(mode="after")
+    def check_security_settings(self) -> "Settings":
         """Warn about insecure settings in production and filter CORS origins."""
         if self.auth_enabled and not self.debug:
             # Check JWT secret
             if self.jwt_secret == "remembra-jwt-secret-change-in-production":
                 warnings.warn(
-                    "⚠️  SECURITY WARNING: Using default JWT secret in production! "
-                    "Set REMEMBRA_JWT_SECRET environment variable.",
+                    "⚠️  SECURITY WARNING: Using default JWT secret in production! Set REMEMBRA_JWT_SECRET environment variable.",
                     UserWarning,
                     stacklevel=2,
                 )
-        
+
         # Filter out localhost from CORS origins in production mode
         if not self.debug and self.cors_filter_localhost_in_production:
             # Use object.__setattr__ since model is frozen after validation
-            filtered = [
-                origin for origin in self.cors_origins 
-                if "localhost" not in origin and "127.0.0.1" not in origin
-            ]
-            object.__setattr__(self, 'cors_origins', filtered)
-        
+            filtered = [origin for origin in self.cors_origins if "localhost" not in origin and "127.0.0.1" not in origin]
+            object.__setattr__(self, "cors_origins", filtered)
+
         return self
 
 

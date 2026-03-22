@@ -85,11 +85,12 @@ class AppState:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
     configure_logging(settings.log_level)
-    
+
     # Initialize OpenTelemetry tracing (soft dependency)
     from remembra.core.tracing import setup_tracing
+
     setup_tracing(settings)
-    
+
     # CRITICAL: Force unique JWT secret in production (OWASP compliance)
     if not settings.debug:
         default_secrets = [
@@ -104,13 +105,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "CRITICAL SECURITY ERROR: You must set REMEMBRA_JWT_SECRET "
                 "to a unique value in production.\n"
                 "Generate one with: "
-                "python -c \"import secrets; print(secrets.token_urlsafe(64))\""
+                'python -c "import secrets; print(secrets.token_urlsafe(64))"'
             )
         if len(settings.jwt_secret) < 32:
-            raise RuntimeError(
-                "CRITICAL SECURITY ERROR: REMEMBRA_JWT_SECRET must be at least 32 characters."
-            )
-    
+            raise RuntimeError("CRITICAL SECURITY ERROR: REMEMBRA_JWT_SECRET must be at least 32 characters.")
+
     log.info(
         "remembra_starting",
         version=__version__,
@@ -245,6 +244,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from remembra.plugins.builtin.auto_tagger import AutoTaggerPlugin
     from remembra.plugins.builtin.recall_logger import RecallLoggerPlugin
     from remembra.plugins.builtin.slack_notifier import SlackNotifierPlugin
+
     app.state.plugin_manager.register_class(SlackNotifierPlugin)
     app.state.plugin_manager.register_class(AutoTaggerPlugin)
     app.state.plugin_manager.register_class(RecallLoggerPlugin)
@@ -252,6 +252,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Conversation Ingestion Service (Phase 1 - Critical Feature)
     from remembra.services.conversation_ingest import ConversationIngestService
+
     app.state.conversation_ingest = ConversationIngestService(
         settings=settings,
         memory_service=app.state.memory_service,
@@ -261,6 +262,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Sleep-Time Compute Worker (Phase 3 - Major Differentiator)
     if settings.sleep_time_enabled:
         from remembra.services.sleep_time import SleepTimeWorker
+
         app.state.sleep_worker = SleepTimeWorker(
             settings=settings,
             memory_service=app.state.memory_service,
@@ -270,12 +272,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             trigger=settings.sleep_time_trigger,
             interval_hours=settings.sleep_time_interval_hours,
         )
-        
+
         # Schedule automatic runs if interval mode
         if settings.sleep_time_trigger == "interval":
+
             async def scheduled_consolidation() -> None:
                 """Background task for scheduled consolidation."""
                 import asyncio
+
                 while True:
                     await asyncio.sleep(settings.sleep_time_interval_hours * 3600)
                     try:
@@ -287,9 +291,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                         )
                     except Exception as e:
                         log.error("scheduled_consolidation_failed", error=str(e))
-            
+
             # Start background task
             import asyncio
+
             asyncio.create_task(scheduled_consolidation())
             log.info("sleep_time_scheduler_started")
     else:
@@ -306,11 +311,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Close persistent HTTP clients
     if hasattr(app.state, "embeddings"):
         await app.state.embeddings.close()
-    if (
-        hasattr(app.state, "webhook_manager")
-        and app.state.webhook_manager
-        and hasattr(app.state.webhook_manager, "_delivery")
-    ):
+    if hasattr(app.state, "webhook_manager") and app.state.webhook_manager and hasattr(app.state.webhook_manager, "_delivery"):
         await app.state.webhook_manager._delivery.close()
     await app.state.db.close()
     await app.state.qdrant.close()
@@ -344,10 +345,10 @@ def create_app() -> FastAPI:
 
     # Add rate limiter to app state
     app.state.limiter = limiter
-    
+
     # Add rate limit exception handler
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-    
+
     # Generic exception handler to sanitize error messages
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -364,7 +365,7 @@ def create_app() -> FastAPI:
             error=str(exc),
             exc_info=True,
         )
-        
+
         # Return a generic error to the client
         return JSONResponse(
             status_code=500,
@@ -373,7 +374,7 @@ def create_app() -> FastAPI:
                 "error_id": request.headers.get("x-request-id", "unknown"),
             },
         )
-    
+
     # Add SlowAPI middleware for rate limiting
     app.add_middleware(SlowAPIMiddleware)
 
@@ -387,11 +388,9 @@ def create_app() -> FastAPI:
 
     # Security headers middleware
     from starlette.middleware.base import BaseHTTPMiddleware
-    
+
     class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-        async def dispatch(
-            self, request: Request, call_next: RequestResponseEndpoint
-        ) -> Response:
+        async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
             response = await call_next(request)
             response.headers["X-Content-Type-Options"] = "nosniff"
             response.headers["X-Frame-Options"] = "DENY"
@@ -399,21 +398,17 @@ def create_app() -> FastAPI:
             response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
             # Content Security Policy - API-focused policy
             response.headers["Content-Security-Policy"] = (
-                "default-src 'none'; "
-                "frame-ancestors 'none'; "
-                "base-uri 'none'; "
-                "form-action 'none'"
+                "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
             )
             if not settings.debug:
-                response.headers["Strict-Transport-Security"] = (
-                    "max-age=31536000; includeSubDomains"
-                )
+                response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
             return response
-    
+
     app.add_middleware(SecurityHeadersMiddleware)
 
     # Instrument app for OpenTelemetry tracing (if enabled)
     from remembra.core.tracing import instrument_app
+
     instrument_app(app)
 
     # -----------------------------------------------------------------------
@@ -445,27 +440,29 @@ def create_app() -> FastAPI:
         """Return MCP server card for Smithery and other registries."""
         import json
         from pathlib import Path
-        
+
         # Try to load from file first
         card_path = Path(__file__).parent / "api" / "well_known" / "server-card.json"
         if card_path.exists():
             with open(card_path) as f:
                 return JSONResponse(content=json.load(f))
-        
+
         # Fallback inline card
-        return JSONResponse(content={
-            "serverInfo": {"name": "Remembra", "version": __version__},
-            "authentication": {"required": True, "schemes": ["apiKey"]},
-            "tools": [
-                {"name": "store_memory", "description": "Store in memory"},
-                {"name": "recall_memories", "description": "Search memories"},
-                {"name": "forget_memories", "description": "Delete memories"},
-                {"name": "health_check", "description": "Check server health"},
-                {"name": "ingest_conversation", "description": "Ingest conversation"},
-            ],
-            "resources": [{"uri": "memory://recent", "name": "Recent Memories"}],
-            "prompts": [],
-        })
+        return JSONResponse(
+            content={
+                "serverInfo": {"name": "Remembra", "version": __version__},
+                "authentication": {"required": True, "schemes": ["apiKey"]},
+                "tools": [
+                    {"name": "store_memory", "description": "Store in memory"},
+                    {"name": "recall_memories", "description": "Search memories"},
+                    {"name": "forget_memories", "description": "Delete memories"},
+                    {"name": "health_check", "description": "Check server health"},
+                    {"name": "ingest_conversation", "description": "Ingest conversation"},
+                ],
+                "resources": [{"uri": "memory://recent", "name": "Recent Memories"}],
+                "prompts": [],
+            }
+        )
 
     # -----------------------------------------------------------------------
     # Versioned API routes
@@ -476,6 +473,7 @@ def create_app() -> FastAPI:
     # WebSocket routes (at root level for easy access)
     # -----------------------------------------------------------------------
     from remembra.api.v1.websocket import router as ws_router
+
     app.include_router(ws_router)
 
     # -----------------------------------------------------------------------
@@ -484,14 +482,15 @@ def create_app() -> FastAPI:
     static_dir = settings.static_dir
     if static_dir:
         from pathlib import Path
+
         static_path = Path(static_dir)
         if static_path.exists() and static_path.is_dir():
             from fastapi.responses import FileResponse
             from fastapi.staticfiles import StaticFiles
-            
+
             # Serve static files at /static
             app.mount("/static", StaticFiles(directory=static_path), name="static")
-            
+
             # Serve index.html for SPA routes
             @app.get("/{full_path:path}", include_in_schema=False)
             async def serve_spa(full_path: str) -> Response:
@@ -499,19 +498,19 @@ def create_app() -> FastAPI:
                 api_paths = ("api/", "docs", "redoc", "openapi")
                 if any(full_path.startswith(p) for p in api_paths):
                     return JSONResponse({"detail": "Not found"}, status_code=404)
-                
+
                 # Try to serve the file directly
                 file_path = static_path / full_path
                 if file_path.exists() and file_path.is_file():
                     return FileResponse(file_path)
-                
+
                 # Fall back to index.html for SPA routing
                 index_path = static_path / "index.html"
                 if index_path.exists():
                     return FileResponse(index_path)
-                
+
                 return JSONResponse({"detail": "Not found"}, status_code=404)
-            
+
             log.info("static_files_enabled", path=str(static_path))
 
     return app

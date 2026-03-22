@@ -115,9 +115,7 @@ class TestAccessControl:
 
     async def test_grant_read_access(self, space_manager):
         space = await space_manager.create_space(name="s1", owner_id="user-1")
-        grant = await space_manager.grant_access(
-            space["id"], "user-2", "read", granted_by="user-1"
-        )
+        grant = await space_manager.grant_access(space["id"], "user-2", "read", granted_by="user-1")
         assert grant["permission"] == "read"
         assert await space_manager.check_access(space["id"], "user-2", "read") is True
         assert await space_manager.check_access(space["id"], "user-2", "write") is False
@@ -132,17 +130,13 @@ class TestAccessControl:
     async def test_grant_invalid_permission_raises(self, space_manager):
         space = await space_manager.create_space(name="s1", owner_id="user-1")
         with pytest.raises(ValueError, match="Invalid permission"):
-            await space_manager.grant_access(
-                space["id"], "user-2", "superadmin", granted_by="user-1"
-            )
+            await space_manager.grant_access(space["id"], "user-2", "superadmin", granted_by="user-1")
 
     async def test_grant_by_non_admin_raises(self, space_manager):
         space = await space_manager.create_space(name="s1", owner_id="user-1")
         # user-2 has no access — can't grant
         with pytest.raises(PermissionError, match="Admin access required"):
-            await space_manager.grant_access(
-                space["id"], "user-3", "read", granted_by="user-2"
-            )
+            await space_manager.grant_access(space["id"], "user-3", "read", granted_by="user-2")
 
     async def test_update_permission(self, space_manager):
         space = await space_manager.create_space(name="s1", owner_id="user-1")

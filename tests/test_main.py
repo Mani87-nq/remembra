@@ -20,23 +20,45 @@ from remembra.services.memory import MemoryService
 def mock_memory_service():
     """Create a mock memory service for testing."""
     service = MagicMock(spec=MemoryService)
-    
-    # Mock store
-    service.store = AsyncMock(return_value=StoreResponse(
-        id="test-memory-id",
-        extracted_facts=["John is the CTO at Acme Corp."],
-        entities=[],
-    ))
-    
-    # Mock recall
-    service.recall = AsyncMock(return_value=RecallResponse(
-        context="John is the CTO at Acme Corp.",
-        memories=[],
-        entities=[],
-    ))
 
-    service.list_memories = AsyncMock(return_value=[
-        {
+    # Mock store
+    service.store = AsyncMock(
+        return_value=StoreResponse(
+            id="test-memory-id",
+            extracted_facts=["John is the CTO at Acme Corp."],
+            entities=[],
+        )
+    )
+
+    # Mock recall
+    service.recall = AsyncMock(
+        return_value=RecallResponse(
+            context="John is the CTO at Acme Corp.",
+            memories=[],
+            entities=[],
+        )
+    )
+
+    service.list_memories = AsyncMock(
+        return_value=[
+            {
+                "id": "test-memory-id",
+                "user_id": "default_user",
+                "project_id": "default",
+                "content": "John is the CTO at Acme Corp.",
+                "created_at": "2026-03-16T00:00:00",
+                "updated_at": "2026-03-16T00:00:00",
+                "accessed_at": None,
+                "access_count": 0,
+                "memory_type": None,
+                "entities": ["John", "Acme Corp"],
+                "metadata": {},
+            }
+        ]
+    )
+
+    service.get = AsyncMock(
+        return_value={
             "id": "test-memory-id",
             "user_id": "default_user",
             "project_id": "default",
@@ -49,30 +71,19 @@ def mock_memory_service():
             "entities": ["John", "Acme Corp"],
             "metadata": {},
         }
-    ])
+    )
 
-    service.get = AsyncMock(return_value={
-        "id": "test-memory-id",
-        "user_id": "default_user",
-        "project_id": "default",
-        "content": "John is the CTO at Acme Corp.",
-        "created_at": "2026-03-16T00:00:00",
-        "updated_at": "2026-03-16T00:00:00",
-        "accessed_at": None,
-        "access_count": 0,
-        "memory_type": None,
-        "entities": ["John", "Acme Corp"],
-        "metadata": {},
-    })
-    
     # Mock forget
     from remembra.models.memory import ForgetResponse
-    service.forget = AsyncMock(return_value=ForgetResponse(
-        deleted_memories=0,
-        deleted_entities=0,
-        deleted_relationships=0,
-    ))
-    
+
+    service.forget = AsyncMock(
+        return_value=ForgetResponse(
+            deleted_memories=0,
+            deleted_entities=0,
+            deleted_relationships=0,
+        )
+    )
+
     return service
 
 
@@ -82,15 +93,15 @@ def mock_security_services():
     from remembra.auth.keys import APIKeyManager
     from remembra.security.audit import AuditLogger
     from remembra.security.sanitizer import ContentSanitizer
-    
+
     audit_logger = MagicMock(spec=AuditLogger)
     audit_logger.log_memory_store = AsyncMock()
     audit_logger.log_memory_recall = AsyncMock()
     audit_logger.log_memory_forget = AsyncMock()
-    
+
     api_key_manager = MagicMock(spec=APIKeyManager)
     sanitizer = ContentSanitizer()
-    
+
     return {
         "audit_logger": audit_logger,
         "api_key_manager": api_key_manager,
@@ -106,14 +117,13 @@ async def client(mock_memory_service, mock_security_services):
     app.state.audit_logger = mock_security_services["audit_logger"]
     app.state.api_key_manager = mock_security_services["api_key_manager"]
     app.state.sanitizer = mock_security_services["sanitizer"]
-    
+
     # Reset settings to pick up env vars
     import remembra.config
+
     remembra.config._settings = None
-    
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as c:
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
 
 
@@ -150,7 +160,7 @@ async def test_store_memory_returns_201(client: AsyncClient, mock_memory_service
     assert data["id"] == "test-memory-id"
     assert isinstance(data["extracted_facts"], list)
     assert isinstance(data["entities"], list)
-    
+
     # Verify the service was called
     mock_memory_service.store.assert_called_once()
 
@@ -176,7 +186,7 @@ async def test_recall_memories(client: AsyncClient, mock_memory_service) -> None
     assert "context" in data
     assert "memories" in data
     assert "entities" in data
-    
+
     # Verify the service was called
     mock_memory_service.recall.assert_called_once()
 

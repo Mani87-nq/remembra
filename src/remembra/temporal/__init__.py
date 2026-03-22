@@ -10,7 +10,7 @@ from remembra.temporal.ttl import calculate_expires_at, parse_ttl
 
 __all__ = [
     "calculate_relevance_score",
-    "calculate_decay_factor", 
+    "calculate_decay_factor",
     "should_prune",
     "DecayConfig",
     "parse_ttl",

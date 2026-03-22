@@ -38,7 +38,7 @@ _warned_users_limit: set[str] = set()
 
 
 async def _send_usage_warning_email(
-    user_id: str, 
+    user_id: str,
     user_email: str,
     usage_percent: float,
     current_usage: int,
@@ -48,9 +48,10 @@ async def _send_usage_warning_email(
     """Send usage warning email (80% threshold) - fire and forget."""
     if user_id in _warned_users_80:
         return  # Already warned this session
-    
+
     try:
         from remembra.cloud.email import EmailService
+
         email_service = EmailService()
         await email_service.send_usage_warning_email(
             to=user_email,
@@ -75,9 +76,10 @@ async def _send_limit_exceeded_email(
     """Send limit exceeded email - fire and forget."""
     if user_id in _warned_users_limit:
         return  # Already notified this session
-    
+
     try:
         from remembra.cloud.email import EmailService
+
         email_service = EmailService()
         await email_service.send_limit_exceeded_email(
             to=user_email,
@@ -148,9 +150,7 @@ async def enforce_store_limit(
 
     # Compute usage percentage based on memory count vs plan max
     plan_limits = get_plan(snapshot.plan)
-    usage_percent = round(
-        (snapshot.memories_stored / plan_limits.max_memories) * 100, 1
-    )
+    usage_percent = round((snapshot.memories_stored / plan_limits.max_memories) * 100, 1)
 
     # Set usage headers on the response
     response.headers["X-Remembra-Usage-Percent"] = str(usage_percent)
@@ -190,7 +190,7 @@ async def enforce_store_limit(
             snapshot.plan.value,
             check.reason,
         )
-        
+
         # Send limit exceeded email (fire-and-forget)
         if current_user.user_id not in _warned_users_limit:
             try:
@@ -209,7 +209,7 @@ async def enforce_store_limit(
                         )
             except Exception as e:
                 logger.warning("failed_to_queue_limit_email", error=str(e))
-        
+
         detail = check.reason or "Store limit exceeded"
         if check.upgrade_hint:
             detail += f" — {check.upgrade_hint}"
@@ -247,9 +247,7 @@ async def enforce_recall_limit(
 
     # Compute usage percentage based on recalls this month vs plan max
     plan_limits = get_plan(snapshot.plan)
-    usage_percent = round(
-        (snapshot.recalls_this_month / plan_limits.max_recalls_per_month) * 100, 1
-    )
+    usage_percent = round((snapshot.recalls_this_month / plan_limits.max_recalls_per_month) * 100, 1)
 
     # Set usage headers on the response
     response.headers["X-Remembra-Usage-Percent"] = str(usage_percent)
@@ -294,7 +292,7 @@ async def enforce_key_limit(
     meter = _get_meter_or_none(request)
     if meter is None:
         return
-    
+
     # Skip limit check if user not authenticated (endpoint will handle auth)
     if current_user is None:
         return

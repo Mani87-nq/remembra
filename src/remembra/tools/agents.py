@@ -34,35 +34,35 @@ def write_credentials(
     url: str = DEFAULT_REMEMBRA_URL,
 ) -> Path:
     """Write credentials to ~/.remembra/credentials with secure permissions.
-    
+
     Returns the path to the credentials file.
     """
     REMEMBRA_HOME.mkdir(parents=True, exist_ok=True)
-    
+
     credentials = {
         "api_key": api_key,
         "project": project,
         "user_id": user_id,
         "url": url,
     }
-    
+
     # Write credentials
     CREDENTIALS_FILE.write_text(json.dumps(credentials, indent=2))
-    
+
     # Secure with chmod 600 (owner read/write only)
     os.chmod(CREDENTIALS_FILE, stat.S_IRUSR | stat.S_IWUSR)
-    
+
     return CREDENTIALS_FILE
 
 
 def read_credentials() -> dict[str, str] | None:
     """Read credentials from ~/.remembra/credentials.
-    
+
     Returns None if file doesn't exist or is invalid.
     """
     if not CREDENTIALS_FILE.exists():
         return None
-    
+
     try:
         return json.loads(CREDENTIALS_FILE.read_text())
     except (json.JSONDecodeError, OSError):
@@ -71,20 +71,20 @@ def read_credentials() -> dict[str, str] | None:
 
 def get_api_key(cli_api_key: str | None = None) -> str | None:
     """Get API key from CLI argument, env var, or credentials file.
-    
+
     Priority: CLI arg > env var > credentials file
     """
     if cli_api_key:
         return cli_api_key
-    
+
     env_key = os.environ.get("REMEMBRA_API_KEY")
     if env_key:
         return env_key
-    
+
     creds = read_credentials()
     if creds and creds.get("api_key"):
         return creds["api_key"]
-    
+
     return None
 
 
@@ -134,7 +134,7 @@ def upsert_mcp_config(
 ) -> tuple[dict[str, Any], bool, bool]:
     """
     Insert or replace the Remembra MCP block in a JSON config.
-    
+
     Returns: (updated_config, was_created, was_updated)
     """
     created = False
@@ -225,7 +225,7 @@ def install_all_agents(
 ) -> list[AgentInstallResult]:
     """
     Install MCP config for all detected agents.
-    
+
     Only installs to agents whose config directories exist.
     """
     results: list[AgentInstallResult] = []
@@ -272,7 +272,7 @@ Examples:
   remembra-install --agent cursor --api-key rem_xxx --project myproject
         """,
     )
-    
+
     # Agent selection
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
@@ -340,7 +340,7 @@ def main() -> None:
 
     # Get API key from CLI, env var, or credentials file
     api_key = get_api_key(args.api_key)
-    
+
     if not api_key:
         # Check if credentials file exists for better error message
         if CREDENTIALS_FILE.exists():
@@ -349,11 +349,8 @@ def main() -> None:
                 "Pass --api-key or set REMEMBRA_API_KEY environment variable."
             )
         else:
-            parser.error(
-                "--api-key is required for installation. "
-                "You can also set REMEMBRA_API_KEY environment variable."
-            )
-    
+            parser.error("--api-key is required for installation. You can also set REMEMBRA_API_KEY environment variable.")
+
     # Save credentials for future use
     creds_path = write_credentials(
         api_key=api_key,
@@ -366,7 +363,7 @@ def main() -> None:
     if args.all:
         print("🧠 Remembra Universal Agent Installer")
         print("=" * 50)
-        
+
         results = install_all_agents(
             api_key=api_key,
             project=args.project,

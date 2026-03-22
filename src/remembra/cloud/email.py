@@ -62,7 +62,7 @@ class EmailBackend(ABC):
 
 class ResendBackend(EmailBackend):
     """Resend email backend.
-    
+
     Requires RESEND_API_KEY environment variable.
     Get your API key from: https://resend.com/api-keys
     """
@@ -70,9 +70,7 @@ class ResendBackend(EmailBackend):
     def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key or os.getenv("RESEND_API_KEY")
         if not self.api_key:
-            raise ValueError(
-                "RESEND_API_KEY environment variable is required for Resend backend"
-            )
+            raise ValueError("RESEND_API_KEY environment variable is required for Resend backend")
 
     async def send(self, message: EmailMessage) -> EmailResult:
         """Send email via Resend API."""
@@ -93,9 +91,7 @@ class ResendBackend(EmailBackend):
                 params["reply_to"] = message.reply_to
 
             if message.tags:
-                params["tags"] = [
-                    {"name": k, "value": v} for k, v in message.tags.items()
-                ]
+                params["tags"] = [{"name": k, "value": v} for k, v in message.tags.items()]
 
             response = resend.Emails.send(params)
 
@@ -125,7 +121,7 @@ class ResendBackend(EmailBackend):
 
 class SMTPBackend(EmailBackend):
     """SMTP email backend.
-    
+
     Supports Gmail, Google Workspace, and other SMTP servers.
     Requires environment variables:
     - SMTP_HOST
@@ -149,9 +145,7 @@ class SMTPBackend(EmailBackend):
         self.use_tls = use_tls
 
         if not self.username or not self.password:
-            raise ValueError(
-                "SMTP_USERNAME and SMTP_PASSWORD environment variables required"
-            )
+            raise ValueError("SMTP_USERNAME and SMTP_PASSWORD environment variables required")
 
     async def send(self, message: EmailMessage) -> EmailResult:
         """Send email via SMTP."""
@@ -206,21 +200,21 @@ class SMTPBackend(EmailBackend):
 
 class EmailService:
     """High-level email service for Remembra.
-    
+
     Handles template loading and email sending with retries.
-    
+
     Args:
         backend: Email backend to use (ResendBackend or SMTPBackend)
         template_dir: Directory containing HTML email templates
-    
+
     Example:
         ```python
         # Using Resend (recommended)
         service = EmailService.create(provider=EmailProvider.RESEND)
-        
+
         # Using SMTP
         service = EmailService.create(provider=EmailProvider.SMTP)
-        
+
         # Send welcome email
         await service.send_welcome_email(
             to="user@example.com",
@@ -236,9 +230,7 @@ class EmailService:
         template_dir: Path | None = None,
     ) -> None:
         self.backend = backend
-        self.template_dir = template_dir or (
-            Path(__file__).parent / "templates" / "email"
-        )
+        self.template_dir = template_dir or (Path(__file__).parent / "templates" / "email")
 
     @classmethod
     def create(
@@ -247,11 +239,11 @@ class EmailService:
         **kwargs: Any,
     ) -> EmailService:
         """Create an EmailService with the specified provider.
-        
+
         Args:
             provider: Email provider to use
             **kwargs: Additional arguments for the backend
-        
+
         Returns:
             Configured EmailService instance
         """
@@ -267,17 +259,15 @@ class EmailService:
     def _load_template(self, template_name: str) -> str:
         """Load an email template from disk."""
         template_path = self.template_dir / f"{template_name}.html"
-        
+
         if not template_path.exists():
-            raise FileNotFoundError(
-                f"Email template not found: {template_path}"
-            )
-        
+            raise FileNotFoundError(f"Email template not found: {template_path}")
+
         return template_path.read_text()
 
     def _render_template(self, template: str, **kwargs: Any) -> str:
         """Simple template rendering using string formatting.
-        
+
         For more complex templates, consider using Jinja2.
         """
         return template.format(**kwargs)
@@ -290,13 +280,13 @@ class EmailService:
         **template_vars: Any,
     ) -> EmailResult:
         """Send an email using a template.
-        
+
         Args:
             to: Recipient email address
             subject: Email subject line
             template_name: Name of the template file (without .html)
             **template_vars: Variables to render in the template
-        
+
         Returns:
             EmailResult with success status and details
         """
@@ -352,7 +342,7 @@ class EmailService:
         plan: str = "Free",
     ) -> EmailResult:
         """Send welcome email with API key to new user.
-        
+
         Args:
             to: User's email address
             api_key: Generated API key
@@ -379,7 +369,7 @@ class EmailService:
         plan: str,
     ) -> EmailResult:
         """Send usage warning email (80% threshold).
-        
+
         Args:
             to: User's email address
             usage_percent: Current usage percentage
@@ -407,7 +397,7 @@ class EmailService:
         plan: str,
     ) -> EmailResult:
         """Send limit exceeded email.
-        
+
         Args:
             to: User's email address
             current_usage: Current memory count
@@ -435,7 +425,7 @@ class EmailService:
         period_end: str,
     ) -> EmailResult:
         """Send payment receipt email.
-        
+
         Args:
             to: User's email address
             amount: Payment amount (e.g., "$49.00")
@@ -465,7 +455,7 @@ class EmailService:
         update_payment_url: str = "https://app.remembra.dev/billing",
     ) -> EmailResult:
         """Send payment failed email.
-        
+
         Args:
             to: User's email address
             amount: Failed payment amount (e.g., "$49.00")
@@ -492,7 +482,7 @@ class EmailService:
         cancel_date: str,
     ) -> EmailResult:
         """Send subscription cancelled email.
-        
+
         Args:
             to: User's email address
             plan: Cancelled plan tier name
@@ -515,7 +505,7 @@ class EmailService:
         expires_in: str = "1 hour",
     ) -> EmailResult:
         """Send password reset email.
-        
+
         Args:
             to: User's email address
             reset_url: Full URL with reset token
@@ -541,7 +531,7 @@ class EmailService:
         expires_at: str,
     ) -> EmailResult:
         """Send team invite email.
-        
+
         Args:
             to: Invitee's email address
             team_name: Name of the team

@@ -85,7 +85,7 @@ class BillingManager:
         name: str | None = None,
     ) -> None:
         """Update Stripe customer email (and optionally name).
-        
+
         Used to fix customers created with placeholder emails.
         """
         update_data: dict[str, Any] = {"email": email}
@@ -261,7 +261,7 @@ class BillingManager:
             plan = data.get("metadata", {}).get("plan", "pro")
             subscription_id = data.get("subscription")
             customer_id = data.get("customer")
-            
+
             # For payment link flow: no user_id, but we have customer email
             customer_email = data.get("customer_email") or data.get("customer_details", {}).get("email")
             customer_name = data.get("customer_details", {}).get("name")

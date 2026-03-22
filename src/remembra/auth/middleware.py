@@ -36,16 +36,16 @@ def get_client_ip(request: Request) -> str:
     if forwarded:
         # Take the first IP in the chain (original client)
         return forwarded.split(",")[0].strip()
-    
+
     # Check X-Real-IP header (nginx)
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
         return real_ip
-    
+
     # Fallback to direct client IP
     if request.client:
         return request.client.host
-    
+
     return "unknown"
 
 
@@ -60,19 +60,19 @@ async def get_current_user(
 ) -> AuthenticatedUser:
     """
     Dependency that requires valid authentication (JWT Bearer OR API key).
-    
+
     Checks in order:
     1. Authorization: Bearer <jwt_token>
     2. X-API-Key header
-    
+
     Raises 401 if:
     - Auth is enabled and no credentials provided
     - Auth is enabled and credentials are invalid/revoked
-    
+
     If auth is disabled (dev mode), returns a default user.
     """
     settings = get_settings()
-    
+
     # If auth is disabled (development), use default user
     if not settings.auth_enabled:
         log.debug("auth_disabled_using_default_user")
@@ -81,13 +81,14 @@ async def get_current_user(
             api_key_id="dev_key",
             rate_limit_tier="standard",
         )
-    
+
     # Check for JWT Bearer token first
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]  # Remove "Bearer " prefix
         try:
             from remembra.auth.users import UserManager
+
             db = getattr(request.app.state, "db", None)
             if db is None:
                 log.warning("database_not_initialized_for_jwt_auth")
@@ -109,12 +110,12 @@ async def get_current_user(
         except Exception as e:
             log.warning("jwt_verification_failed", error=str(e), error_type=type(e).__name__)
             # Fall through to API key check
-    
+
     # Check API key
     if api_key:
         key_manager = await get_api_key_manager(request)
         key_info = await key_manager.validate_key(api_key)
-        
+
         if key_info:
             return AuthenticatedUser(
                 user_id=key_info["user_id"],
@@ -136,7 +137,7 @@ async def get_current_user(
                 detail="Invalid or revoked API key.",
                 headers={"WWW-Authenticate": "ApiKey"},
             )
-    
+
     # No valid auth provided
     log.warning("auth_missing_credentials", ip=get_client_ip(request))
     raise HTTPException(
@@ -152,19 +153,19 @@ async def get_optional_user(
 ) -> AuthenticatedUser | None:
     """
     Dependency that optionally validates an API key.
-    
+
     Returns None if no key provided (instead of raising 401).
     Used for endpoints that work with or without auth.
     """
     settings = get_settings()
-    
+
     if not settings.auth_enabled:
         return AuthenticatedUser(
             user_id="default_user",
             api_key_id="dev_key",
             rate_limit_tier="standard",
         )
-    
+
     if not api_key:
         return None
 
@@ -175,23 +176,23 @@ async def get_user_from_jwt_or_api_key(
 ) -> AuthenticatedUser | None:
     """
     Dependency that validates either JWT Bearer token OR API key.
-    
+
     Checks in order:
     1. Authorization: Bearer <jwt_token>
     2. X-API-Key header
-    
+
     Returns None if neither provided (instead of raising 401).
     Used for endpoints that accept both auth methods.
     """
     settings = get_settings()
-    
+
     if not settings.auth_enabled:
         return AuthenticatedUser(
             user_id="default_user",
             api_key_id="dev_key",
             rate_limit_tier="standard",
         )
-    
+
     # Check for JWT Bearer token first
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
@@ -199,6 +200,7 @@ async def get_user_from_jwt_or_api_key(
         try:
             # Create UserManager to verify JWT
             from remembra.auth.users import UserManager
+
             db = getattr(request.app.state, "db", None)
             if db is None:
                 log.debug("database_not_initialized_for_jwt_auth_optional")
@@ -218,7 +220,7 @@ async def get_user_from_jwt_or_api_key(
                     )
         except Exception as e:
             log.debug("jwt_verification_failed_optional", error=str(e), error_type=type(e).__name__)
-    
+
     # Fall back to API key
     if api_key:
         key_manager = await get_api_key_manager(request)
@@ -281,27 +283,27 @@ async def require_master_key(
 ) -> None:
     """
     Dependency that requires the master key for admin operations.
-    
+
     Used for key management endpoints.
     """
     settings = get_settings()
-    
+
     # If auth disabled, allow through
     if not settings.auth_enabled:
         return
-    
+
     # If no master key configured, allow through (not recommended for production)
     if not settings.auth_master_key:
         log.warning("master_key_not_configured", endpoint=str(request.url.path))
         return
-    
+
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Master key required for this operation.",
             headers={"WWW-Authenticate": "ApiKey"},
         )
-    
+
     # Check against master key
     if api_key != settings.auth_master_key:
         log.warning(
@@ -330,17 +332,31 @@ RequireMasterKey = Annotated[None, Depends(require_master_key)]
 # Permission names aligned with remembra.auth.rbac.Permission
 ROLE_PERMISSIONS = {
     "admin": {
-        "memory:store", "memory:recall", "memory:delete",
-        "entity:read", "entity:merge",
-        "webhook:manage", "admin:audit", "admin:users", "key:create", "key:list", "key:revoke",
+        "memory:store",
+        "memory:recall",
+        "memory:delete",
+        "entity:read",
+        "entity:merge",
+        "webhook:manage",
+        "admin:audit",
+        "admin:users",
+        "key:create",
+        "key:list",
+        "key:revoke",
     },
     "editor": {
-        "memory:store", "memory:recall", "memory:delete",
-        "entity:read", "key:list", "webhook:manage", "conflict:manage",
+        "memory:store",
+        "memory:recall",
+        "memory:delete",
+        "entity:read",
+        "key:list",
+        "webhook:manage",
+        "conflict:manage",
     },
     "viewer": {
         "memory:recall",
-        "entity:read", "key:list",
+        "entity:read",
+        "key:list",
     },
 }
 
@@ -348,18 +364,18 @@ ROLE_PERMISSIONS = {
 def has_permission(user: AuthenticatedUser, permission: str) -> bool:
     """Check if user has a specific permission based on their role."""
     role_perms = ROLE_PERMISSIONS.get(user.role, set())
-    
+
     # If user has explicit scopes, use those instead of role defaults
     if user.scopes:
         return permission in user.scopes
-    
+
     return permission in role_perms
 
 
 def require_permission(permission: str):
     """
     Dependency factory that requires a specific permission.
-    
+
     Usage:
         @router.post("/memories")
         async def store_memory(
@@ -368,6 +384,7 @@ def require_permission(permission: str):
         ):
             ...
     """
+
     async def check_permission(current_user: CurrentUser) -> None:
         if not has_permission(current_user, permission):
             log.warning(
@@ -381,16 +398,38 @@ def require_permission(permission: str):
                 detail=f"Permission denied: {permission} required",
             )
         return None
-    
+
     return Depends(check_permission)
 
 
 # Permission dependency factories (aligned with remembra.auth.rbac.Permission)
-def require_memory_store(): return require_permission("memory:store")
-def require_memory_recall(): return require_permission("memory:recall")
-def require_memory_delete(): return require_permission("memory:delete")
-def require_entity_read(): return require_permission("entity:read")
-def require_entity_merge(): return require_permission("entity:merge")
-def require_webhook_manage(): return require_permission("webhook:manage")
-def require_audit_read(): return require_permission("admin:audit")
-def require_user_manage(): return require_permission("admin:users")
+def require_memory_store():
+    return require_permission("memory:store")
+
+
+def require_memory_recall():
+    return require_permission("memory:recall")
+
+
+def require_memory_delete():
+    return require_permission("memory:delete")
+
+
+def require_entity_read():
+    return require_permission("entity:read")
+
+
+def require_entity_merge():
+    return require_permission("entity:merge")
+
+
+def require_webhook_manage():
+    return require_permission("webhook:manage")
+
+
+def require_audit_read():
+    return require_permission("admin:audit")
+
+
+def require_user_manage():
+    return require_permission("admin:users")

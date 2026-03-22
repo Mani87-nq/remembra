@@ -180,7 +180,7 @@ class FieldEncryptor:
             from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
             # Strip prefix and decode
-            encoded = ciphertext[len(_ENCRYPTED_PREFIX):]
+            encoded = ciphertext[len(_ENCRYPTED_PREFIX) :]
             packed = base64.b64decode(encoded)
 
             # Unpack: nonce (12 bytes) + ciphertext + tag

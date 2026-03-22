@@ -1,6 +1,5 @@
 """Tests for AES-256-GCM field-level encryption."""
 
-
 from remembra.security.encryption import FieldEncryptor, _ENCRYPTED_PREFIX
 
 

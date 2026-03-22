@@ -204,15 +204,9 @@ class SpaceManager:
         if not await self._has_permission(space_id, user_id, "admin"):
             return False
 
-        await self._db.conn.execute(
-            "DELETE FROM memory_space_membership WHERE space_id = ?", (space_id,)
-        )
-        await self._db.conn.execute(
-            "DELETE FROM space_access WHERE space_id = ?", (space_id,)
-        )
-        cursor = await self._db.conn.execute(
-            "DELETE FROM memory_spaces WHERE id = ?", (space_id,)
-        )
+        await self._db.conn.execute("DELETE FROM memory_space_membership WHERE space_id = ?", (space_id,))
+        await self._db.conn.execute("DELETE FROM space_access WHERE space_id = ?", (space_id,))
+        cursor = await self._db.conn.execute("DELETE FROM memory_spaces WHERE id = ?", (space_id,))
         await self._db.conn.commit()
 
         deleted = cursor.rowcount > 0
@@ -255,7 +249,10 @@ class SpaceManager:
 
         logger.info(
             "Access granted: space=%s agent=%s perm=%s by=%s",
-            space_id, agent_id, permission, granted_by,
+            space_id,
+            agent_id,
+            permission,
+            granted_by,
         )
         return {
             "space_id": space_id,
@@ -265,9 +262,7 @@ class SpaceManager:
             "granted_at": now,
         }
 
-    async def revoke_access(
-        self, space_id: str, agent_id: str, revoked_by: str
-    ) -> bool:
+    async def revoke_access(self, space_id: str, agent_id: str, revoked_by: str) -> bool:
         """Revoke an agent's access to a space."""
         if not await self._has_permission(space_id, revoked_by, "admin"):
             raise PermissionError("Admin access required to revoke permissions")
@@ -296,9 +291,7 @@ class SpaceManager:
             for row in rows
         ]
 
-    async def check_access(
-        self, space_id: str, agent_id: str, required: str = "read"
-    ) -> bool:
+    async def check_access(self, space_id: str, agent_id: str, required: str = "read") -> bool:
         """Check if an agent has the required permission level."""
         return await self._has_permission(space_id, agent_id, required)
 
@@ -306,9 +299,7 @@ class SpaceManager:
     # Memory membership
     # -----------------------------------------------------------------------
 
-    async def add_memory_to_space(
-        self, memory_id: str, space_id: str, added_by: str
-    ) -> bool:
+    async def add_memory_to_space(self, memory_id: str, space_id: str, added_by: str) -> bool:
         """Add a memory to a space (requires write access)."""
         if not await self._has_permission(space_id, added_by, "write"):
             raise PermissionError("Write access required to add memories to a space")
@@ -328,9 +319,7 @@ class SpaceManager:
             logger.warning("Failed to add memory to space: %s", e)
             return False
 
-    async def remove_memory_from_space(
-        self, memory_id: str, space_id: str, removed_by: str
-    ) -> bool:
+    async def remove_memory_from_space(self, memory_id: str, space_id: str, removed_by: str) -> bool:
         """Remove a memory from a space (requires write access)."""
         if not await self._has_permission(space_id, removed_by, "write"):
             raise PermissionError("Write access required to remove memories")
@@ -342,9 +331,7 @@ class SpaceManager:
         await self._db.conn.commit()
         return cursor.rowcount > 0
 
-    async def get_space_memory_ids(
-        self, space_id: str, limit: int = 1000
-    ) -> list[str]:
+    async def get_space_memory_ids(self, space_id: str, limit: int = 1000) -> list[str]:
         """Get all memory IDs in a space."""
         cursor = await self._db.conn.execute(
             "SELECT memory_id FROM memory_space_membership WHERE space_id = ? LIMIT ?",
@@ -374,18 +361,13 @@ class SpaceManager:
             (memory_id,),
         )
         rows = await cursor.fetchall()
-        return [
-            {"space_id": row[0], "space_name": row[1], "added_at": row[2]}
-            for row in rows
-        ]
+        return [{"space_id": row[0], "space_name": row[1], "added_at": row[2]} for row in rows]
 
     # -----------------------------------------------------------------------
     # Internal helpers
     # -----------------------------------------------------------------------
 
-    async def _has_permission(
-        self, space_id: str, agent_id: str, required: str
-    ) -> bool:
+    async def _has_permission(self, space_id: str, agent_id: str, required: str) -> bool:
         """Check if agent has at least the required permission level."""
         hierarchy = {"read": 1, "write": 2, "admin": 3}
         required_level = hierarchy.get(required, 0)

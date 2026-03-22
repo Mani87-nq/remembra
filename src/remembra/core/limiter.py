@@ -12,7 +12,7 @@ from remembra.config import get_settings
 def get_key_func(request):
     """
     Get rate limit key - prefer API key over IP.
-    
+
     This allows per-user rate limiting when authenticated,
     falling back to IP for unauthenticated requests.
     """
@@ -21,7 +21,7 @@ def get_key_func(request):
     if api_key:
         # Use first 8 chars of key as identifier (don't log full key)
         return f"key:{api_key[:8]}"
-    
+
     # Fall back to IP address
     return get_remote_address(request)
 

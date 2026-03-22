@@ -98,6 +98,7 @@ async def _broadcast_websocket(
     """Fire-and-forget WebSocket broadcast for real-time updates."""
     try:
         from remembra.api.v1.websocket import connection_manager
+
         await connection_manager.broadcast(
             event_type=event_type,
             data=data,
@@ -178,12 +179,12 @@ async def store_memory(
 ) -> StoreResponse:
     """
     Accept raw text, extract facts and entities, embed, and persist.
-    
+
     - **content**: The text content to memorize
     - **project_id**: Optional project namespace (default: "default")
     - **metadata**: Optional key-value metadata
     - **ttl**: Optional time-to-live (e.g., "30d", "1y")
-    
+
     Note: user_id is determined by API key (cannot be overridden).
     Rate limit: 30 requests/minute.
     """
@@ -193,11 +194,11 @@ async def store_memory(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:store required",
         )
-    
+
     # Override user_id with authenticated user (security: prevent user spoofing)
     body.user_id = current_user.user_id
     body.project_id = resolve_project_access(current_user, body.project_id) or "default"
-    
+
     # PII Detection (OWASP ASI06)
     pii_result = None
     if pii_detector:
@@ -216,12 +217,12 @@ async def store_memory(
             elif pii_result.redacted_content:
                 # Redact mode: replace PII with placeholders
                 body.content = pii_result.redacted_content
-    
+
     # Sanitize content and compute trust score
     sanitization = None
     if settings.sanitization_enabled:
         sanitization = sanitizer.analyze(body.content, source="user_input")
-    
+
     try:
         result = await memory_service.store(
             body,
@@ -229,7 +230,7 @@ async def store_memory(
             trust_score=sanitization.trust_score if sanitization else 1.0,
             checksum=sanitization.checksum if sanitization else None,
         )
-        
+
         # Audit log (don't log content, only memory_id)
         await audit_logger.log_memory_store(
             user_id=current_user.user_id,
@@ -261,10 +262,7 @@ async def store_memory(
                 "memory_id": result.id,
                 "user_id": current_user.user_id,
                 "facts": result.extracted_facts or [],
-                "entities": [
-                    e.model_dump() if hasattr(e, 'model_dump') else e
-                    for e in (result.entities or [])
-                ],
+                "entities": [e.model_dump() if hasattr(e, "model_dump") else e for e in (result.entities or [])],
             },
             project_id=body.project_id or "default",
         )
@@ -327,12 +325,12 @@ async def batch_store(
 ) -> BatchStoreResponse:
     """
     Store up to 100 memories in a single request.
-    
+
     Requires memory:store permission.
-    
+
     Partial success is supported - failed items don't block successful ones.
     Each item is processed independently with its own result.
-    
+
     **Request:**
     ```json
     {
@@ -342,13 +340,13 @@ async def batch_store(
       ]
     }
     ```
-    
+
     **Response includes:**
     - `results`: Per-item success/failure with responses or errors
     - `total`: Total items requested
     - `succeeded`: Count of successful stores
     - `failed`: Count of failed stores
-    
+
     Rate limit: 5 requests/minute.
     """
     # RBAC: Check permission
@@ -357,36 +355,36 @@ async def batch_store(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:store required",
         )
-    
+
     results: list[BatchStoreResult] = []
     succeeded = 0
-    
+
     for i, item in enumerate(body.items):
         try:
             # Enforce authenticated user
             item.user_id = current_user.user_id
             item.project_id = resolve_project_access(current_user, item.project_id) or "default"
-            
+
             # PII Detection for batch items
             if pii_detector:
                 pii_result = pii_detector.scan(item.content, source="batch_input")
                 if pii_result.has_pii:
                     if pii_result.blocked:
-                        results.append(BatchStoreResult(
-                            index=i, 
-                            success=False, 
-                            error=f"PII_DETECTED: {[m.type for m in pii_result.matches]}"
-                        ))
+                        results.append(
+                            BatchStoreResult(
+                                index=i, success=False, error=f"PII_DETECTED: {[m.type for m in pii_result.matches]}"
+                            )
+                        )
                         continue
                     elif pii_result.redacted_content:
                         item.content = pii_result.redacted_content
-            
+
             resp = await memory_service.store(item)
             results.append(BatchStoreResult(index=i, success=True, response=resp))
             succeeded += 1
         except Exception as e:
             results.append(BatchStoreResult(index=i, success=False, error=str(e)))
-    
+
     await audit_logger.log_memory_store(
         user_id=current_user.user_id,
         memory_id=f"batch:{succeeded}/{len(body.items)}",
@@ -394,7 +392,7 @@ async def batch_store(
         ip_address=get_client_ip(request),
         success=True,
     )
-    
+
     return BatchStoreResponse(
         results=results,
         total=len(body.items),
@@ -422,12 +420,12 @@ async def batch_recall(
 ) -> BatchRecallResponse:
     """
     Execute up to 20 recall queries in a single request.
-    
+
     Useful for:
     - Fetching context for multiple topics at once
     - Parallel memory lookups
     - Reducing API call overhead
-    
+
     **Request:**
     ```json
     {
@@ -437,7 +435,7 @@ async def batch_recall(
       ]
     }
     ```
-    
+
     Rate limit: 10 requests/minute.
     """
     # RBAC: Check permission
@@ -446,17 +444,17 @@ async def batch_recall(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:recall required",
         )
-    
+
     results: list[RecallResponse] = []
-    
+
     for query in body.queries:
         # Enforce authenticated user
         query.user_id = current_user.user_id
         query.project_id = resolve_project_access(current_user, query.project_id) or "default"
-        
+
         resp = await memory_service.recall(query)
         results.append(resp)
-    
+
     return BatchRecallResponse(
         results=results,
         total=len(body.queries),
@@ -484,19 +482,19 @@ async def recall_memories(
 ) -> RecallResponse:
     """
     Embed the query, perform semantic search, synthesise a context string.
-    
+
     Uses advanced retrieval (v0.4.0):
     - Hybrid search (semantic + BM25 keyword matching)
     - Graph-aware retrieval (entity relationships)
     - Relevance ranking (recency, entity, keyword boosts)
     - Context window optimization (smart truncation)
-    
+
     - **query**: Natural language query
     - **project_id**: Optional project namespace (default: "default")
     - **limit**: Maximum results to return (1-50, default: 5)
     - **threshold**: Minimum relevance score (0.0-1.0, default: 0.40)
     - **max_tokens**: Maximum tokens in context output (optional)
-    
+
     Note: user_id is determined by API key (cannot be overridden).
     Rate limit: 60 requests/minute.
     """
@@ -506,14 +504,14 @@ async def recall_memories(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:recall required",
         )
-    
+
     # Override user_id with authenticated user
     body.user_id = current_user.user_id
     body.project_id = resolve_project_access(current_user, body.project_id) or "default"
-    
+
     try:
         result = await memory_service.recall(body)
-        
+
         # Audit log
         await audit_logger.log_memory_recall(
             user_id=current_user.user_id,
@@ -574,11 +572,12 @@ async def get_memory(
 ) -> dict:
     """
     Retrieve a specific memory by its ID.
-    
+
     Note: Can only access memories belonging to the authenticated user.
     """
     # Validate memory_id is a valid UUID format
     import uuid
+
     try:
         uuid.UUID(memory_id)
     except ValueError:
@@ -586,21 +585,21 @@ async def get_memory(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Memory {memory_id} not found",
         ) from None
-    
+
     # RBAC: Check permission
     if not has_permission(current_user, "memory:recall"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:recall required",
         )
-    
+
     result = await memory_service.get(memory_id)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Memory {memory_id} not found",
         )
-    
+
     # Security: Verify memory belongs to authenticated user
     if result.get("user_id") != current_user.user_id:
         raise HTTPException(
@@ -611,7 +610,7 @@ async def get_memory(
     project_id = result.get("project_id")
     if project_id:
         resolve_project_access(current_user, project_id)
-    
+
     return result
 
 
@@ -636,16 +635,16 @@ async def update_memory(
 ) -> UpdateResponse:
     """
     Re-extract facts from updated content and merge entity graph.
-    
+
     - **content**: New text content for the memory
     - **metadata**: Optional metadata to merge with existing
-    
+
     The endpoint will:
     1. Re-extract facts from the new content
     2. Re-generate embeddings
     3. Update the vector store and database
     4. Re-extract and link entities
-    
+
     Rate limit: 20 requests/minute.
     """
     # RBAC: Check permission (update requires store permission)
@@ -654,7 +653,7 @@ async def update_memory(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:store required",
         )
-    
+
     existing = await memory_service.get(memory_id)
     if not existing or existing.get("user_id") != current_user.user_id:
         raise HTTPException(
@@ -732,10 +731,10 @@ async def cleanup_expired(
 ) -> dict:
     """
     Delete all expired memories (TTL-based cleanup).
-    
+
     This endpoint should be called periodically to clean up
     memories that have exceeded their time-to-live.
-    
+
     Rate limit: 5 requests/minute.
     """
     # RBAC: Check permission
@@ -744,14 +743,14 @@ async def cleanup_expired(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:delete required",
         )
-    
+
     try:
         project_id = resolve_project_access(current_user, None)
         deleted = await memory_service.cleanup_expired(
             user_id=current_user.user_id,
             project_id=project_id,
         )
-        
+
         await audit_logger.log_memory_forget(
             user_id=current_user.user_id,
             resource_id=f"expired:{deleted}",
@@ -759,9 +758,9 @@ async def cleanup_expired(
             ip_address=get_client_ip(request),
             success=True,
         )
-        
+
         return {"deleted_count": deleted}
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -780,21 +779,15 @@ async def forget_memories(
     memory_service: MemoryServiceDep,
     audit_logger: AuditLoggerDep,
     current_user: CurrentUser,
-    memory_id: Annotated[
-        str | None, Query(description="Delete a specific memory by ID")
-    ] = None,
-    entity: Annotated[
-        str | None, Query(description="Delete all memories about an entity")
-    ] = None,
-    all_memories: Annotated[
-        bool, Query(description="Delete all memories for the user")
-    ] = False,
+    memory_id: Annotated[str | None, Query(description="Delete a specific memory by ID")] = None,
+    entity: Annotated[str | None, Query(description="Delete all memories about an entity")] = None,
+    all_memories: Annotated[bool, Query(description="Delete all memories for the user")] = False,
 ) -> ForgetResponse:
     """
     Delete memories matching the given filter.
 
     At least one of `memory_id`, `entity`, or `all_memories=true` is required.
-    
+
     Note: Can only delete your own memories.
     Rate limit: 10 requests/minute.
     """
@@ -804,7 +797,7 @@ async def forget_memories(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:delete required",
         )
-    
+
     if not any([memory_id, entity, all_memories]):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -818,10 +811,7 @@ async def forget_memories(
     if current_user.project_ids and (entity or all_memories):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Project-scoped API keys must delete by memory_id "
-                "until project-scoped bulk delete is implemented."
-            ),
+            detail=("Project-scoped API keys must delete by memory_id until project-scoped bulk delete is implemented."),
         )
 
     if memory_id:
@@ -840,7 +830,7 @@ async def forget_memories(
             user_id=user_id,
             entity=entity,
         )
-        
+
         # Audit log
         await audit_logger.log_memory_forget(
             user_id=current_user.user_id,

@@ -137,13 +137,16 @@ class ReindexManager:
         await self._save_job(job)
 
         # Launch background processing
-        asyncio.create_task(
-            self._run_reindex(job, user_id=user_id, project_id=project_id)
-        )
+        asyncio.create_task(self._run_reindex(job, user_id=user_id, project_id=project_id))
 
         logger.info(
             "Reindex started: id=%s total=%d %s/%s -> %s/%s",
-            job.id, total, old_provider, old_model, new_provider, new_model,
+            job.id,
+            total,
+            old_provider,
+            old_model,
+            new_provider,
+            new_model,
         )
         return job
 
@@ -173,10 +176,18 @@ class ReindexManager:
         if row is None:
             return None
         return ReindexJob(
-            id=row[0], old_provider=row[1], old_model=row[2],
-            new_provider=row[3], new_model=row[4], total_memories=row[5],
-            processed=row[6], failed=row[7], status=row[8],
-            started_at=row[9], completed_at=row[10], error=row[11],
+            id=row[0],
+            old_provider=row[1],
+            old_model=row[2],
+            new_provider=row[3],
+            new_model=row[4],
+            total_memories=row[5],
+            processed=row[6],
+            failed=row[7],
+            status=row[8],
+            started_at=row[9],
+            completed_at=row[10],
+            error=row[11],
         )
 
     async def list_jobs(self, limit: int = 20) -> list[dict[str, Any]]:
@@ -190,10 +201,17 @@ class ReindexManager:
         rows = await cursor.fetchall()
         return [
             {
-                "id": r[0], "old_provider": r[1], "old_model": r[2],
-                "new_provider": r[3], "new_model": r[4],
-                "total_memories": r[5], "processed": r[6], "failed": r[7],
-                "status": r[8], "started_at": r[9], "completed_at": r[10],
+                "id": r[0],
+                "old_provider": r[1],
+                "old_model": r[2],
+                "new_provider": r[3],
+                "new_model": r[4],
+                "total_memories": r[5],
+                "processed": r[6],
+                "failed": r[7],
+                "status": r[8],
+                "started_at": r[9],
+                "completed_at": r[10],
             }
             for r in rows
         ]
@@ -237,7 +255,9 @@ class ReindexManager:
                     except Exception as e:
                         job.failed += 1
                         logger.warning(
-                            "Reindex failed for memory %s: %s", memory_id, e,
+                            "Reindex failed for memory %s: %s",
+                            memory_id,
+                            e,
                         )
 
                 offset += self.BATCH_SIZE
@@ -247,7 +267,9 @@ class ReindexManager:
                     await self._save_job(job)
                     logger.info(
                         "Reindex progress: %d/%d (failed=%d)",
-                        job.processed, job.total_memories, job.failed,
+                        job.processed,
+                        job.total_memories,
+                        job.failed,
                     )
 
             if job.status != "cancelled":
@@ -264,7 +286,10 @@ class ReindexManager:
             await self._save_job(job)
             logger.info(
                 "Reindex %s: processed=%d failed=%d status=%s",
-                job.id, job.processed, job.failed, job.status,
+                job.id,
+                job.processed,
+                job.failed,
+                job.status,
             )
 
     async def _fetch_batch(
@@ -311,7 +336,8 @@ class ReindexManager:
 
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         cursor = await self._db.conn.execute(
-            f"SELECT COUNT(*) FROM memories {where}", params,
+            f"SELECT COUNT(*) FROM memories {where}",
+            params,
         )
         row = await cursor.fetchone()
         return row[0] if row else 0
@@ -333,10 +359,18 @@ class ReindexManager:
                 error = excluded.error
             """,
             (
-                job.id, job.old_provider, job.old_model,
-                job.new_provider, job.new_model, job.total_memories,
-                job.processed, job.failed, job.status,
-                job.started_at, job.completed_at, job.error,
+                job.id,
+                job.old_provider,
+                job.old_model,
+                job.new_provider,
+                job.new_model,
+                job.total_memories,
+                job.processed,
+                job.failed,
+                job.status,
+                job.started_at,
+                job.completed_at,
+                job.error,
             ),
         )
         await self._db.conn.commit()

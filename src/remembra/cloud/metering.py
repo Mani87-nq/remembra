@@ -59,22 +59,18 @@ class UsageMeter:
                 ON cloud_usage_daily(user_id, date);
         """)
         await self._db.conn.commit()
-        
+
         # Migration: Add email and name columns if they don't exist
         # This handles existing databases created before these columns were added
         try:
-            await self._db.conn.execute(
-                "ALTER TABLE cloud_tenants ADD COLUMN email TEXT"
-            )
+            await self._db.conn.execute("ALTER TABLE cloud_tenants ADD COLUMN email TEXT")
             await self._db.conn.commit()
             logger.info("Added email column to cloud_tenants")
         except Exception:
             pass  # Column already exists
-        
+
         try:
-            await self._db.conn.execute(
-                "ALTER TABLE cloud_tenants ADD COLUMN name TEXT"
-            )
+            await self._db.conn.execute("ALTER TABLE cloud_tenants ADD COLUMN name TEXT")
             await self._db.conn.commit()
             logger.info("Added name column to cloud_tenants")
         except Exception:
@@ -126,7 +122,7 @@ class UsageMeter:
 
     async def get_user_email(self, user_id: str) -> str | None:
         """Get user's email from user_id.
-        
+
         Checks both the users table (auth signup) and cloud_tenants table
         (API key signup) since users can come from either flow.
         """
@@ -138,7 +134,7 @@ class UsageMeter:
         row = await cursor.fetchone()
         if row and row[0]:
             return row[0]
-        
+
         # Fall back to cloud_tenants table (API key signup flow)
         cursor = await self._db.conn.execute(
             "SELECT email FROM cloud_tenants WHERE user_id = ?",
@@ -149,7 +145,7 @@ class UsageMeter:
 
     async def get_tenant_plan(self, user_id: str) -> PlanTier:
         """Get the plan tier for a user. Returns FREE if not registered.
-        
+
         Owner emails configured via REMEMBRA_OWNER_EMAILS automatically
         get Enterprise access without requiring database entries.
         """
@@ -160,7 +156,7 @@ class UsageMeter:
             if email and email.lower() in [e.lower() for e in settings.owner_emails]:
                 logger.info(f"Owner bypass: {email} → Enterprise")
                 return PlanTier.ENTERPRISE
-        
+
         tenant = await self.get_tenant(user_id)
         if tenant is None:
             return PlanTier.FREE
@@ -174,7 +170,7 @@ class UsageMeter:
         promo_expires_at: datetime | None = None,
     ) -> None:
         """Update a tenant's plan (e.g., after Stripe webhook or promo code).
-        
+
         Args:
             user_id: The tenant's user ID
             plan: The new plan tier
@@ -183,7 +179,7 @@ class UsageMeter:
         """
         now = datetime.now(UTC).isoformat()
         promo_expires_str = promo_expires_at.isoformat() if promo_expires_at else None
-        
+
         await self._db.conn.execute(
             """
             UPDATE cloud_tenants

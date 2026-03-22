@@ -100,15 +100,14 @@ class SignupResponse(BaseModel):
 
 class BillingContextResponse(BaseModel):
     """Billing context for determining what the user should see.
-    
+
     Following industry standards (Claude Teams, Slack, Linear, GitHub):
     - Team members see team context, not individual billing
     - Only owners can manage billing
     - Members see "You're on X plan via Team Y"
     """
-    context: Literal["personal", "team"] = Field(
-        description="Whether user is viewing personal or team billing context"
-    )
+
+    context: Literal["personal", "team"] = Field(description="Whether user is viewing personal or team billing context")
     # Personal context fields
     plan: str | None = Field(None, description="Plan tier (free/pro/team/enterprise)")
     # Team context fields
@@ -116,12 +115,8 @@ class BillingContextResponse(BaseModel):
     team_name: str | None = Field(None, description="Team name for display")
     team_plan: str | None = Field(None, description="Team's plan tier")
     role: str | None = Field(None, description="User's role in team (owner/admin/member/viewer)")
-    can_manage_billing: bool = Field(
-        False, description="Whether user can access billing management"
-    )
-    owner_email: str | None = Field(
-        None, description="Team owner's email (for 'contact admin' messaging)"
-    )
+    can_manage_billing: bool = Field(False, description="Whether user can access billing management")
+    owner_email: str | None = Field(None, description="Team owner's email (for 'contact admin' messaging)")
     # Limits (from team plan or personal plan)
     limits: dict[str, Any] = Field(default_factory=dict)
     # Usage (personal contribution or team aggregate)
@@ -156,20 +151,20 @@ async def signup(
     from remembra.cloud.provisioning import TenantProvisioner
 
     key_manager = request.app.state.api_key_manager
-    
+
     # Initialize email service for welcome email
     email_service = None
     try:
         from remembra.cloud.email import EmailProvider, EmailService
+
         email_service = EmailService.create(provider=EmailProvider.RESEND)
     except Exception as e:
         import logging
-        logging.getLogger(__name__).warning(
-            "Email service not available, skipping welcome email: %s", str(e)
-        )
-    
+
+        logging.getLogger(__name__).warning("Email service not available, skipping welcome email: %s", str(e))
+
     provisioner = TenantProvisioner(
-        meter=meter, 
+        meter=meter,
         key_manager=key_manager,
         email_service=email_service,
     )
@@ -331,11 +326,11 @@ async def get_billing_context(
     team_manager: TeamManagerDep,
 ) -> BillingContextResponse:
     """Get the user's billing context — determines what they should see.
-    
+
     Following industry standards (Claude Teams, Slack, Linear, Figma, GitHub):
     - If user is on a team: Show team context, hide billing management for non-owners
     - If user is not on a team: Show personal plan and billing
-    
+
     This endpoint should be called before rendering the billing page to
     determine which view to show.
     """
@@ -346,22 +341,22 @@ async def get_billing_context(
             teams = await team_manager.list_user_teams(current_user.user_id)
         except Exception:
             teams = []
-    
+
     if teams:
         # User is on at least one team — use primary team (first one)
         team = teams[0]
         team_plan = team.get("plan", "pro")
         role = team.get("role", "member")
-        
+
         # Only owners can manage billing (industry standard)
         can_manage = role == "owner"
-        
+
         # Get team plan limits
         try:
             plan_limits = get_plan(PlanTier(team_plan))
         except ValueError:
             plan_limits = get_plan(PlanTier.PRO)
-        
+
         # Get owner email for "contact admin" messaging
         owner_email = None
         if not can_manage:
@@ -374,7 +369,7 @@ async def get_billing_context(
                         owner_email = tenant.get("email")
             except Exception:
                 pass
-        
+
         # Get user's personal usage (their contribution to team)
         try:
             monthly = await meter.get_monthly_usage(current_user.user_id)
@@ -384,7 +379,7 @@ async def get_billing_context(
             }
         except Exception:
             usage = {}
-        
+
         return BillingContextResponse(
             context="team",
             team_id=team["id"],
@@ -405,11 +400,11 @@ async def get_billing_context(
             },
             usage=usage,
         )
-    
+
     # No team — personal context
     snapshot = await meter.get_usage_snapshot(current_user.user_id)
     plan_limits = get_plan(snapshot.plan)
-    
+
     return BillingContextResponse(
         context="personal",
         plan=snapshot.plan.value,
@@ -487,12 +482,12 @@ async def create_checkout(
 
     # Get user's actual email from database
     user_email = await meter.get_user_email(current_user.user_id)
-    
+
     # Ensure customer exists
     tenant = await meter.get_tenant(current_user.user_id)
     if tenant and tenant.get("stripe_customer_id"):
         customer_id = tenant["stripe_customer_id"]
-        
+
         # Fix existing customers that have placeholder emails
         # This handles customers created before the email fix was deployed
         if user_email:
@@ -515,7 +510,7 @@ async def create_checkout(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="No email found for user. Please update your profile.",
             )
-        
+
         customer_id = await billing.create_customer(
             user_id=current_user.user_id,
             email=user_email,
@@ -644,30 +639,30 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
     # Apply the result to our system
     if result.action == "activate_subscription":
         user_id = result.user_id
-        
+
         # Payment link flow: no existing user, create from email
         if not user_id and result.customer_email:
             from remembra.cloud.provisioning import TenantProvisioner
-            
+
             key_manager = request.app.state.api_key_manager
-            
+
             # Initialize email service for welcome email
             email_service = None
             try:
                 from remembra.cloud.email import EmailProvider, EmailService
+
                 email_service = EmailService.create(provider=EmailProvider.RESEND)
             except Exception as e:
                 import logging
-                logging.getLogger(__name__).warning(
-                    "Email service not available, skipping welcome email: %s", str(e)
-                )
-            
+
+                logging.getLogger(__name__).warning("Email service not available, skipping welcome email: %s", str(e))
+
             provisioner = TenantProvisioner(
-                meter=meter, 
+                meter=meter,
                 key_manager=key_manager,
                 email_service=email_service,
             )
-            
+
             # Provision new account with their paid plan (sends welcome email)
             provision_result = await provisioner.provision(
                 email=result.customer_email,
@@ -676,15 +671,16 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
                 stripe_customer_id=result.stripe_customer_id,
             )
             user_id = provision_result.user_id
-            
+
             import logging
+
             logging.getLogger(__name__).info(
                 "New paid customer provisioned: email=%s user_id=%s plan=%s",
                 result.customer_email,
                 user_id,
                 result.plan.value if result.plan else "pro",
             )
-        
+
         if user_id:
             await meter.register_tenant(
                 user_id=user_id,
@@ -702,11 +698,12 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
                     plan=plan.value,
                     max_seats=plan_limits.max_users,
                 )
-            
+
             # Send payment receipt email
             if result.customer_email:
                 try:
                     from remembra.cloud.email import EmailService
+
                     email_svc = EmailService()
                     plan_name = (result.plan or PlanTier.PRO).value.title()
                     amount = "$49.00" if plan_name.lower() == "pro" else "$99.00"
@@ -717,11 +714,11 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
                         plan_name=f"Remembra {plan_name}",
                     )
                     import logging
-                    logging.getLogger(__name__).info(
-                        "payment_receipt_sent: email=%s plan=%s", result.customer_email, plan_name
-                    )
+
+                    logging.getLogger(__name__).info("payment_receipt_sent: email=%s plan=%s", result.customer_email, plan_name)
                 except Exception as e:
                     import logging
+
                     logging.getLogger(__name__).warning(
                         "payment_receipt_failed: email=%s error=%s", result.customer_email, str(e)
                     )
@@ -769,15 +766,14 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
     try:
         from remembra.cloud.email import EmailProvider, EmailService
         from remembra.cloud.webhook_email_integration import StripeWebhookEmailHandler
-        
+
         email_service = EmailService.create(provider=EmailProvider.RESEND)
         email_handler = StripeWebhookEmailHandler(email_service)
         await email_handler.handle_event(event)
     except Exception as e:
         import logging
-        logging.getLogger(__name__).warning(
-            "Failed to send email notification for webhook event: %s", str(e)
-        )
+
+        logging.getLogger(__name__).warning("Failed to send email notification for webhook event: %s", str(e))
 
     return {"status": "ok", "action": result.action}
 
@@ -822,10 +818,10 @@ async def validate_promo_code(
 ) -> PromoResponse:
     """Validate a promo code without redeeming it."""
     from remembra.cloud.promocodes import PromoCodeManager
-    
+
     manager = PromoCodeManager()
     result = await manager.validate(body.code, user.user_id)
-    
+
     return PromoResponse(
         success=result.success,
         error=result.error,
@@ -851,20 +847,20 @@ async def redeem_promo_code(
 ) -> PromoResponse:
     """Redeem a promo code for the current user."""
     from remembra.cloud.promocodes import PromoCodeManager
-    
+
     manager = PromoCodeManager()
-    
+
     # Get user's Stripe customer ID if they have one
     tenant_info = await meter.get_tenant(user.user_id)
     stripe_customer_id = tenant_info.get("stripe_customer_id") if tenant_info else None
-    
+
     result = await manager.redeem(
         code=body.code,
         user_id=user.user_id,
         email=user.email,
         stripe_customer_id=stripe_customer_id,
     )
-    
+
     if result.success and result.plan_tier:
         # Update user's plan in the metering system
         await meter.update_plan(
@@ -872,7 +868,7 @@ async def redeem_promo_code(
             plan=result.plan_tier,
             promo_expires_at=result.expires_at,
         )
-    
+
     return PromoResponse(
         success=result.success,
         error=result.error,
@@ -893,10 +889,10 @@ async def redeem_promo_code(
 async def list_promo_codes(request: Request) -> PromoListResponse:
     """List all active promo codes (admin only)."""
     from remembra.cloud.promocodes import PromoCodeManager
-    
+
     manager = PromoCodeManager()
     codes = manager.list_active_codes()
-    
+
     return PromoListResponse(codes=codes)
 
 
@@ -909,14 +905,14 @@ async def list_promo_codes(request: Request) -> PromoListResponse:
 async def get_promo_stats(request: Request, code: str) -> dict:
     """Get stats for a specific promo code (admin only)."""
     from remembra.cloud.promocodes import PromoCodeManager
-    
+
     manager = PromoCodeManager()
     stats = manager.get_stats(code)
-    
+
     if not stats:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Promo code '{code}' not found",
         )
-    
+
     return stats

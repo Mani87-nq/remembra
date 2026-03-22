@@ -38,9 +38,7 @@ WebhookManagerDep = Annotated[WebhookManager, Depends(get_webhook_manager)]
 
 class RegisterWebhookRequest(BaseModel):
     url: str = Field(description="Target URL for HTTP POST webhook deliveries")
-    events: list[str] = Field(
-        description=f"Event types to subscribe to: {', '.join(ALL_EVENT_TYPES)} or '*' for all"
-    )
+    events: list[str] = Field(description=f"Event types to subscribe to: {', '.join(ALL_EVENT_TYPES)} or '*' for all")
     secret: str | None = Field(
         None,
         description="Optional signing secret for HMAC-SHA256 payload verification",

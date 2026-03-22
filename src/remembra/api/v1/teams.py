@@ -62,9 +62,10 @@ class CreateTeamRequest(BaseModel):
     @classmethod
     def sanitize_html(cls, v: str) -> str:
         import re
-        clean = re.sub(r'<[^>]+>', '', v)
-        clean = re.sub(r'javascript:', '', clean, flags=re.IGNORECASE)
-        clean = re.sub(r'on\w+\s*=', '', clean, flags=re.IGNORECASE)
+
+        clean = re.sub(r"<[^>]+>", "", v)
+        clean = re.sub(r"javascript:", "", clean, flags=re.IGNORECASE)
+        clean = re.sub(r"on\w+\s*=", "", clean, flags=re.IGNORECASE)
         return clean.strip()
 
 
@@ -203,10 +204,10 @@ async def create_team(
 ) -> CreateTeamResponse:
     # Look up owner's billing plan to inherit
     from remembra.cloud.plans import PlanTier, get_plan
-    
+
     plan = "pro"  # Default fallback
     max_seats = 5
-    
+
     # Try to get the user's actual billing plan
     meter = getattr(request.app.state, "usage_meter", None)
     if meter:
@@ -219,7 +220,7 @@ async def create_team(
                 max_seats = plan_limits.max_users
         except Exception:
             pass  # Use defaults if lookup fails
-    
+
     team = await manager.create_team(
         name=body.name,
         owner_id=user.user_id,
@@ -370,7 +371,7 @@ async def update_member_role(
         for m in members:
             if m["user_id"] == member_id:
                 return MemberInfo(**m)
-        
+
         raise HTTPException(status_code=404, detail="Member not found")
     except (PermissionError, ValueError) as e:
         raise HTTPException(status_code=403, detail=str(e))
@@ -470,6 +471,7 @@ async def invite_member(
             except Exception as e:
                 # Log but don't fail - invite still created
                 import logging
+
                 logging.getLogger(__name__).warning(f"Failed to send invite email: {e}")
 
         return InviteResponse(

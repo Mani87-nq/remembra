@@ -143,9 +143,11 @@ Output: {
 # Data Classes
 # ============================================================================
 
+
 @dataclass
 class ExtractedEntity:
     """An entity extracted from text."""
+
     name: str
     type: str
     description: str
@@ -155,16 +157,18 @@ class ExtractedEntity:
 @dataclass
 class ExtractedRelationship:
     """A relationship extracted from text with optional temporal bounds."""
+
     subject: str
     predicate: str
     object: str
     valid_from: str | None = None  # ISO date string, e.g., "2020-01-01"
-    valid_to: str | None = None    # ISO date string, or None for ongoing
+    valid_to: str | None = None  # ISO date string, or None for ongoing
 
 
 @dataclass
 class ExtractionResult:
     """Result of entity extraction."""
+
     entities: list[ExtractedEntity]
     relationships: list[ExtractedRelationship]
 
@@ -173,17 +177,18 @@ class ExtractionResult:
 # Entity Extractor
 # ============================================================================
 
+
 class EntityExtractor:
     """
     Extracts entities and relationships from text using LLM.
-    
+
     Usage:
         extractor = EntityExtractor()
         result = await extractor.extract("John is the CEO of Acme Corp")
         # result.entities = [Entity(name="John", type="PERSON", ...), ...]
         # result.relationships = [Relationship(subject="John", predicate="WORKS_AT", ...)]
     """
-    
+
     def __init__(
         self,
         model: str = "gpt-4o-mini",
@@ -192,32 +197,32 @@ class EntityExtractor:
         self.model = model
         self.api_key = api_key
         self._client: AsyncOpenAI | None = None
-    
+
     def _get_client(self) -> AsyncOpenAI:
         """Get or create OpenAI client."""
         if self._client is None:
             self._client = AsyncOpenAI(api_key=self.api_key)
             log.info("entity_extractor_initialized", model=self.model)
         return self._client
-    
+
     async def extract(self, content: str) -> ExtractionResult:
         """
         Extract entities and relationships from content.
-        
+
         Args:
             content: Text to extract entities from
-            
+
         Returns:
             ExtractionResult with entities and relationships
         """
         if not content.strip() or len(content.strip()) < 10:
             return ExtractionResult(entities=[], relationships=[])
-        
+
         try:
             client = self._get_client()
-            
+
             log.debug("extracting_entities", content_length=len(content))
-            
+
             response = await client.chat.completions.create(
                 model=self.model,
                 messages=[
@@ -228,44 +233,48 @@ class EntityExtractor:
                 response_format={"type": "json_object"},
                 timeout=30.0,
             )
-            
+
             result_text = response.choices[0].message.content
             if not result_text:
                 return ExtractionResult(entities=[], relationships=[])
-            
+
             data = json.loads(result_text)
-            
+
             # Parse entities
             entities = []
             for e in data.get("entities", []):
                 if isinstance(e, dict) and e.get("name"):
-                    entities.append(ExtractedEntity(
-                        name=e.get("name", ""),
-                        type=e.get("type", "CONCEPT"),
-                        description=e.get("description", ""),
-                        aliases=e.get("aliases", []),
-                    ))
-            
+                    entities.append(
+                        ExtractedEntity(
+                            name=e.get("name", ""),
+                            type=e.get("type", "CONCEPT"),
+                            description=e.get("description", ""),
+                            aliases=e.get("aliases", []),
+                        )
+                    )
+
             # Parse relationships
             relationships = []
             for r in data.get("relationships", []):
                 if isinstance(r, dict) and r.get("subject") and r.get("object"):
-                    relationships.append(ExtractedRelationship(
-                        subject=r.get("subject", ""),
-                        predicate=r.get("predicate", "RELATED_TO"),
-                        object=r.get("object", ""),
-                        valid_from=r.get("valid_from"),
-                        valid_to=r.get("valid_to"),
-                    ))
-            
+                    relationships.append(
+                        ExtractedRelationship(
+                            subject=r.get("subject", ""),
+                            predicate=r.get("predicate", "RELATED_TO"),
+                            object=r.get("object", ""),
+                            valid_from=r.get("valid_from"),
+                            valid_to=r.get("valid_to"),
+                        )
+                    )
+
             log.info(
                 "entities_extracted",
                 entity_count=len(entities),
                 relationship_count=len(relationships),
             )
-            
+
             return ExtractionResult(entities=entities, relationships=relationships)
-            
+
         except json.JSONDecodeError as e:
             log.error("entity_extraction_json_error", error=str(e))
             return ExtractionResult(entities=[], relationships=[])
@@ -277,6 +286,7 @@ class EntityExtractor:
 # ============================================================================
 # Shared JSON Parsing Helper
 # ============================================================================
+
 
 def _parse_extraction_json(raw_text: str) -> ExtractionResult:
     """
@@ -297,24 +307,28 @@ def _parse_extraction_json(raw_text: str) -> ExtractionResult:
     entities: list[ExtractedEntity] = []
     for e in data.get("entities", []):
         if isinstance(e, dict) and e.get("name"):
-            entities.append(ExtractedEntity(
-                name=e.get("name", ""),
-                type=e.get("type", "CONCEPT"),
-                description=e.get("description", ""),
-                aliases=e.get("aliases", []),
-            ))
+            entities.append(
+                ExtractedEntity(
+                    name=e.get("name", ""),
+                    type=e.get("type", "CONCEPT"),
+                    description=e.get("description", ""),
+                    aliases=e.get("aliases", []),
+                )
+            )
 
     # Parse relationships
     relationships: list[ExtractedRelationship] = []
     for r in data.get("relationships", []):
         if isinstance(r, dict) and r.get("subject") and r.get("object"):
-            relationships.append(ExtractedRelationship(
-                subject=r.get("subject", ""),
-                predicate=r.get("predicate", "RELATED_TO"),
-                object=r.get("object", ""),
-                valid_from=r.get("valid_from"),
-                valid_to=r.get("valid_to"),
-            ))
+            relationships.append(
+                ExtractedRelationship(
+                    subject=r.get("subject", ""),
+                    predicate=r.get("predicate", "RELATED_TO"),
+                    object=r.get("object", ""),
+                    valid_from=r.get("valid_from"),
+                    valid_to=r.get("valid_to"),
+                )
+            )
 
     return ExtractionResult(entities=entities, relationships=relationships)
 
@@ -322,6 +336,7 @@ def _parse_extraction_json(raw_text: str) -> ExtractionResult:
 # ============================================================================
 # Anthropic Entity Extractor
 # ============================================================================
+
 
 class AnthropicEntityExtractor:
     """Entity extraction using Anthropic Claude."""
@@ -363,9 +378,7 @@ class AnthropicEntityExtractor:
             )
 
             # Claude returns content blocks; concatenate text blocks
-            result_text = "".join(
-                block.text for block in response.content if block.type == "text"
-            )
+            result_text = "".join(block.text for block in response.content if block.type == "text")
             if not result_text:
                 return ExtractionResult(entities=[], relationships=[])
 
@@ -390,6 +403,7 @@ class AnthropicEntityExtractor:
 # ============================================================================
 # Ollama Entity Extractor
 # ============================================================================
+
 
 class OllamaEntityExtractor:
     """Entity extraction using local Ollama models."""
@@ -434,9 +448,7 @@ class OllamaEntityExtractor:
                         {"role": "system", "content": ENTITY_EXTRACTION_PROMPT},
                         {
                             "role": "user",
-                            "content": (
-                                f"Extract entities and relationships from:\n\n{content}"
-                            ),
+                            "content": (f"Extract entities and relationships from:\n\n{content}"),
                         },
                     ],
                     "format": "json",
@@ -475,6 +487,7 @@ class OllamaEntityExtractor:
 # Factory
 # ============================================================================
 
+
 def create_entity_extractor(
     settings: Settings,
 ) -> EntityExtractor | AnthropicEntityExtractor | OllamaEntityExtractor:
@@ -507,6 +520,7 @@ def create_entity_extractor(
 # ============================================================================
 # Convenience function
 # ============================================================================
+
 
 async def extract_entities(
     content: str,

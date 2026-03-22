@@ -19,34 +19,36 @@ from remembra.extraction.entities import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-SAMPLE_EXTRACTION_JSON = json.dumps({
-    "entities": [
-        {
-            "name": "Alice",
-            "type": "PERSON",
-            "description": "CEO of Acme Corp",
-            "aliases": ["A"],
-        },
-        {
-            "name": "Acme Corp",
-            "type": "ORG",
-            "description": "Company",
-            "aliases": ["Acme"],
-        },
-    ],
-    "relationships": [
-        {
-            "subject": "Alice",
-            "predicate": "WORKS_AT",
-            "object": "Acme Corp",
-        },
-        {
-            "subject": "Alice",
-            "predicate": "ROLE",
-            "object": "CEO",
-        },
-    ],
-})
+SAMPLE_EXTRACTION_JSON = json.dumps(
+    {
+        "entities": [
+            {
+                "name": "Alice",
+                "type": "PERSON",
+                "description": "CEO of Acme Corp",
+                "aliases": ["A"],
+            },
+            {
+                "name": "Acme Corp",
+                "type": "ORG",
+                "description": "Company",
+                "aliases": ["Acme"],
+            },
+        ],
+        "relationships": [
+            {
+                "subject": "Alice",
+                "predicate": "WORKS_AT",
+                "object": "Acme Corp",
+            },
+            {
+                "subject": "Alice",
+                "predicate": "ROLE",
+                "object": "CEO",
+            },
+        ],
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -80,30 +82,36 @@ class TestParseExtractionJson:
 
     def test_parse_missing_fields_default(self):
         """Entities missing type/description get defaults."""
-        raw = json.dumps({
-            "entities": [{"name": "Bob"}],
-            "relationships": [],
-        })
+        raw = json.dumps(
+            {
+                "entities": [{"name": "Bob"}],
+                "relationships": [],
+            }
+        )
         result = _parse_extraction_json(raw)
         assert result.entities[0].type == "CONCEPT"
         assert result.entities[0].description == ""
 
     def test_parse_skips_nameless_entities(self):
-        raw = json.dumps({
-            "entities": [{"name": ""}, {"type": "PERSON"}],
-            "relationships": [],
-        })
+        raw = json.dumps(
+            {
+                "entities": [{"name": ""}, {"type": "PERSON"}],
+                "relationships": [],
+            }
+        )
         result = _parse_extraction_json(raw)
         assert len(result.entities) == 0
 
     def test_parse_skips_incomplete_relationships(self):
-        raw = json.dumps({
-            "entities": [],
-            "relationships": [
-                {"subject": "A"},
-                {"subject": "A", "object": "B"},
-            ],
-        })
+        raw = json.dumps(
+            {
+                "entities": [],
+                "relationships": [
+                    {"subject": "A"},
+                    {"subject": "A", "object": "B"},
+                ],
+            }
+        )
         result = _parse_extraction_json(raw)
         # Only the second one has both subject and object
         assert len(result.relationships) == 1
@@ -122,9 +130,7 @@ class TestParseExtractionJson:
 class TestEntityExtractor:
     async def test_extract_returns_entities(self):
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(message=MagicMock(content=SAMPLE_EXTRACTION_JSON))
-        ]
+        mock_response.choices = [MagicMock(message=MagicMock(content=SAMPLE_EXTRACTION_JSON))]
 
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
@@ -152,9 +158,7 @@ class TestEntityExtractor:
 
     async def test_extract_handles_none_response(self):
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(message=MagicMock(content=None))
-        ]
+        mock_response.choices = [MagicMock(message=MagicMock(content=None))]
 
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
@@ -167,9 +171,7 @@ class TestEntityExtractor:
 
     async def test_extract_handles_malformed_json(self):
         mock_response = MagicMock()
-        mock_response.choices = [
-            MagicMock(message=MagicMock(content="not valid json {{{"))
-        ]
+        mock_response.choices = [MagicMock(message=MagicMock(content="not valid json {{{"))]
 
         mock_client = AsyncMock()
         mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
@@ -183,9 +185,7 @@ class TestEntityExtractor:
 
     async def test_extract_handles_api_error(self):
         mock_client = AsyncMock()
-        mock_client.chat.completions.create = AsyncMock(
-            side_effect=Exception("API timeout")
-        )
+        mock_client.chat.completions.create = AsyncMock(side_effect=Exception("API timeout"))
 
         extractor = EntityExtractor(api_key="sk-test")
         extractor._client = mock_client
@@ -269,9 +269,7 @@ def _make_ollama_extractor(client=None):
 class TestOllamaEntityExtractor:
     async def test_extract_returns_entities(self):
         mock_resp = MagicMock()
-        mock_resp.json.return_value = {
-            "message": {"content": SAMPLE_EXTRACTION_JSON}
-        }
+        mock_resp.json.return_value = {"message": {"content": SAMPLE_EXTRACTION_JSON}}
         mock_resp.raise_for_status = MagicMock()
 
         mock_client = AsyncMock()

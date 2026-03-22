@@ -95,9 +95,11 @@ Output: {
 # Data Classes
 # ============================================================================
 
+
 @dataclass
 class ExistingEntity:
     """An existing entity in the database."""
+
     id: str
     name: str
     type: str
@@ -108,6 +110,7 @@ class ExistingEntity:
 @dataclass
 class MatchResult:
     """Result of entity matching."""
+
     match: bool
     matched_entity_id: str | None
     confidence: float
@@ -120,10 +123,11 @@ class MatchResult:
 # Entity Matcher
 # ============================================================================
 
+
 class EntityMatcher:
     """
     Matches new entity mentions to existing entities.
-    
+
     Usage:
         matcher = EntityMatcher()
         result = await matcher.match(
@@ -135,7 +139,7 @@ class EntityMatcher:
         else:
             # Create new entity
     """
-    
+
     def __init__(
         self,
         model: str = "gpt-4o-mini",
@@ -146,13 +150,13 @@ class EntityMatcher:
         self.api_key = api_key
         self.min_confidence = min_confidence
         self._client: AsyncOpenAI | None = None
-    
+
     def _get_client(self) -> AsyncOpenAI:
         """Get or create OpenAI client."""
         if self._client is None:
             self._client = AsyncOpenAI(api_key=self.api_key)
         return self._client
-    
+
     async def match(
         self,
         new_entity: ExtractedEntity,
@@ -160,11 +164,11 @@ class EntityMatcher:
     ) -> MatchResult:
         """
         Match a new entity mention to existing entities.
-        
+
         Args:
             new_entity: The new entity to match
             existing_entities: List of existing entities to match against
-            
+
         Returns:
             MatchResult indicating if match found and details
         """
@@ -178,7 +182,7 @@ class EntityMatcher:
                 suggested_aliases=[],
                 new_entity=new_entity,
             )
-        
+
         # Quick check: exact name match
         for existing in existing_entities:
             if new_entity.name.lower() == existing.name.lower():
@@ -201,18 +205,18 @@ class EntityMatcher:
                         suggested_aliases=[],
                         new_entity=None,
                     )
-        
+
         # Use LLM for fuzzy matching
         try:
             client = self._get_client()
-            
+
             # Format entities for prompt
             new_json = {
                 "name": new_entity.name,
                 "type": new_entity.type,
                 "description": new_entity.description,
             }
-            
+
             existing_json = [
                 {
                     "id": e.id,
@@ -223,40 +227,43 @@ class EntityMatcher:
                 }
                 for e in existing_entities[:10]  # Limit to top 10
             ]
-            
+
             log.debug(
                 "matching_entity",
                 new_entity=new_entity.name,
                 candidates=len(existing_json),
             )
-            
+
             response = await client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": ENTITY_MATCHING_PROMPT},
-                    {"role": "user", "content": f"""
+                    {
+                        "role": "user",
+                        "content": f"""
 New entity mention: {json.dumps(new_json)}
 
 Existing entities in database:
 {json.dumps(existing_json, indent=2)}
 
 Does the new mention match any existing entity?
-"""},
+""",
+                    },
                 ],
                 temperature=0.1,
                 response_format={"type": "json_object"},
                 timeout=30.0,
             )
-            
+
             result_text = response.choices[0].message.content
             if not result_text:
                 return self._create_new_entity(new_entity)
-            
+
             data = json.loads(result_text)
-            
+
             is_match = data.get("match", False)
             confidence = data.get("confidence", 0.0)
-            
+
             # Only accept matches above threshold
             if is_match and confidence >= self.min_confidence:
                 log.info(
@@ -289,11 +296,11 @@ Does the new mention match any existing entity?
                         aliases=new_entity_data.get("aliases", new_entity.aliases),
                     ),
                 )
-            
+
         except Exception as e:
             log.error("entity_matching_error", error=str(e))
             return self._create_new_entity(new_entity)
-    
+
     def _create_new_entity(self, entity: ExtractedEntity) -> MatchResult:
         """Create result for new entity."""
         return MatchResult(
