@@ -729,7 +729,8 @@ async def update_memory(
         )
 
         return result
-    except ValueError:
+    except ValueError as ve:
+        log.error("memory_update_value_error", error=str(ve), memory_id=memory_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Memory {memory_id} not found",
