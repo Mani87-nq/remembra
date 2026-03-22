@@ -1180,7 +1180,15 @@ class MemoryService:
             extracted_facts = [new_content.strip()]
 
         # 3. Generate new embedding
-        embedding = await self.embeddings.embed(new_content)
+        try:
+            embedding = await self.embeddings.embed(new_content)
+        except Exception as e:
+            log.error("embedding_failed_during_update", error=str(e), memory_id=memory_id)
+            raise ValueError(f"Failed to generate embedding: {e}") from e
+
+        if not embedding:
+            log.error("embedding_empty_during_update", memory_id=memory_id)
+            raise ValueError("Embedding returned empty result")
 
         # 4. Update vector in Qdrant
         from remembra.models.memory import Memory
