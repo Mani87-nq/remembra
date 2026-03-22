@@ -702,9 +702,9 @@ async def stripe_webhook(request: Request) -> dict[str, str]:
             # Send payment receipt email
             if result.customer_email:
                 try:
-                    from remembra.cloud.email import EmailService
+                    from remembra.cloud.email import EmailProvider, EmailService
 
-                    email_svc = EmailService()
+                    email_svc = EmailService.create(provider=EmailProvider.RESEND)
                     plan_name = (result.plan or PlanTier.PRO).value.title()
                     amount = "$49.00" if plan_name.lower() == "pro" else "$99.00"
                     await email_svc.send_payment_receipt_email(

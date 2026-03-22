@@ -50,9 +50,9 @@ async def _send_usage_warning_email(
         return  # Already warned this session
 
     try:
-        from remembra.cloud.email import EmailService
+        from remembra.cloud.email import EmailProvider, EmailService
 
-        email_service = EmailService()
+        email_service = EmailService.create(provider=EmailProvider.RESEND)
         await email_service.send_usage_warning_email(
             to=user_email,
             usage_percent=int(usage_percent),
@@ -78,9 +78,9 @@ async def _send_limit_exceeded_email(
         return  # Already notified this session
 
     try:
-        from remembra.cloud.email import EmailService
+        from remembra.cloud.email import EmailProvider, EmailService
 
-        email_service = EmailService()
+        email_service = EmailService.create(provider=EmailProvider.RESEND)
         await email_service.send_limit_exceeded_email(
             to=user_email,
             current_usage=current_usage,
