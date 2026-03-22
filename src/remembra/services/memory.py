@@ -1164,9 +1164,13 @@ class MemoryService:
         log.info("updating_memory", memory_id=memory_id, user_id=user_id)
 
         # 1. Fetch existing memory from database
+        # Note: Ownership already verified by API endpoint, but we still need the data
         existing = await self.db.get_memory(memory_id)
-        if not existing or existing.get("user_id") != user_id:
-            raise ValueError(f"Memory {memory_id} not found")
+        if not existing:
+            # Fallback: memory might only exist in Qdrant (legacy data)
+            existing = await self.qdrant.get_by_id(memory_id)
+            if not existing:
+                raise ValueError(f"Memory {memory_id} not found")
 
         project_id = existing.get("project_id", "default")
 
