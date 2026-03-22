@@ -1192,6 +1192,15 @@ class MemoryService:
 
         # 4. Update vector in Qdrant
         from remembra.models.memory import Memory
+        import json
+
+        # Parse metadata if it's a JSON string (SQLite stores as text)
+        raw_meta = existing.get("metadata") or {}
+        if isinstance(raw_meta, str):
+            try:
+                raw_meta = json.loads(raw_meta)
+            except json.JSONDecodeError:
+                raw_meta = {}
 
         memory = Memory(
             id=memory_id,
@@ -1201,7 +1210,7 @@ class MemoryService:
             extracted_facts=extracted_facts,
             entities=[],
             embedding=embedding,
-            metadata=existing.get("metadata") or {},
+            metadata=raw_meta,
         )
         await self.qdrant.upsert(memory)
 
