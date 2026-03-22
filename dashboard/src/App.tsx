@@ -79,7 +79,7 @@ function App() {
           handleLogout();
         } else {
           const user = await response.json();
-          setCurrentUser({ id: user.id, email: user.email, name: user.name });
+          setCurrentUser({ id: user.id, email: user.email, name: user.name, is_admin: user.is_admin });
           localStorage.setItem('remembra_user', JSON.stringify(user));
           // Set user ID in API client for API calls
           api.setUserId(user.id);
@@ -98,13 +98,13 @@ function App() {
     setDarkMode(!darkMode);
   };
 
-  const handleLogin = async (token: string, user: { id: string; email: string; name?: string }) => {
+  const handleLogin = async (token: string, user: { id: string; email: string; name?: string; is_admin?: boolean }) => {
     localStorage.setItem('remembra_jwt_token', token);
     localStorage.setItem('remembra_user', JSON.stringify(user));
     // Set user ID in API client for compatibility
     api.setUserId(user.id);
     api.setJwtToken(token);
-    setCurrentUser(user);
+    setCurrentUser({ ...user, is_admin: user.is_admin ?? false });
     setIsAuthenticated(true);
     
     // Check for pending invite

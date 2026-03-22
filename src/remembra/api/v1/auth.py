@@ -417,6 +417,11 @@ async def login(
                 detail="Invalid 2FA code",
             )
 
+    # Check if user is admin (in owner_emails)
+    settings = get_settings()
+    owner_emails = [e.lower() for e in settings.owner_emails] if settings.owner_emails else []
+    is_admin = user.email.lower() in owner_emails
+
     return LoginResponse(
         access_token=token,
         user={
@@ -424,6 +429,7 @@ async def login(
             "email": user.email,
             "name": user.name,
             "email_verified": user.email_verified,
+            "is_admin": is_admin,
         },
     )
 

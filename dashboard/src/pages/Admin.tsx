@@ -171,10 +171,13 @@ export function Admin() {
   };
 
   const resetUserPassword = async (userId: string) => {
+    console.log('[Admin] resetUserPassword called for user:', userId);
     if (!confirm('Reset this user\'s password? They will receive a temporary password.')) {
+      console.log('[Admin] resetUserPassword cancelled by user');
       return;
     }
 
+    console.log('[Admin] resetUserPassword confirmed, starting...');
     setActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
@@ -201,11 +204,14 @@ export function Admin() {
   };
 
   const toggleUserActive = async (userId: string, active: boolean) => {
+    console.log('[Admin] toggleUserActive called for user:', userId, 'active:', active);
     const action = active ? 'activate' : 'deactivate';
     if (!confirm(`${active ? 'Activate' : 'Deactivate'} this user account?`)) {
+      console.log('[Admin] toggleUserActive cancelled by user');
       return;
     }
 
+    console.log('[Admin] toggleUserActive confirmed, starting...');
     setActionLoading(true);
     setActionError(null);
     setActionSuccess(null);
@@ -235,11 +241,14 @@ export function Admin() {
   };
 
   const deleteUser = async (userId: string, email: string) => {
+    console.log('[Admin] deleteUser called for user:', userId, 'email:', email);
     const confirmText = prompt(`Type "${email}" to confirm permanent deletion:`);
     if (!confirmText || confirmText.trim().toLowerCase() !== email.trim().toLowerCase()) {
+      console.log('[Admin] deleteUser cancelled - email mismatch');
       setActionError('Deletion cancelled - email did not match');
       return;
     }
+    console.log('[Admin] deleteUser confirmed, starting...');
 
     setActionLoading(true);
     setActionError(null);
@@ -584,6 +593,7 @@ export function Admin() {
                 
                 <div className="flex flex-wrap gap-3">
                   <button
+                    type="button"
                     onClick={() => resetUserPassword(selectedUser.id)}
                     disabled={actionLoading}
                     className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
@@ -592,6 +602,7 @@ export function Admin() {
                     Reset Password
                   </button>
                   <button
+                    type="button"
                     onClick={() => toggleUserActive(selectedUser.id, !selectedUser.is_active)}
                     disabled={actionLoading}
                     className={`px-4 py-2 rounded-lg font-medium disabled:opacity-50 flex items-center gap-2 ${
@@ -604,6 +615,7 @@ export function Admin() {
                     {selectedUser.is_active ? 'Deactivate' : 'Activate'}
                   </button>
                   <button
+                    type="button"
                     onClick={() => deleteUser(selectedUser.id, selectedUser.email)}
                     disabled={actionLoading}
                     className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"

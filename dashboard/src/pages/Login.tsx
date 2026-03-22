@@ -3,7 +3,7 @@ import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
 import { API_V1 } from '../config';
 
 interface LoginProps {
-  onLogin: (token: string, user: { id: string; email: string; name?: string }) => void;
+  onLogin: (token: string, user: { id: string; email: string; name?: string; is_admin?: boolean }) => void;
   onSwitchToSignup: () => void;
   onForgotPassword: () => void;
 }
