@@ -35,6 +35,18 @@ interface SpaceMember {
   granted_at: string;
 }
 
+interface Team {
+  id: string;
+  name: string;
+}
+
+interface TeamMember {
+  user_id: string;
+  email: string | null;
+  name: string | null;
+  role: string;
+}
+
 function slugifyProjectId(value: string): string {
   return value
     .trim()
@@ -65,6 +77,12 @@ export function Projects() {
   const [grantPermission, setGrantPermission] = useState<'read' | 'write' | 'admin'>('read');
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  
+  // Team members for share access picker
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [teamMembersLoading, setTeamMembersLoading] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
 
   const closeCreateSpaceModal = () => {
     setShowCreateSpace(false);
@@ -98,6 +116,13 @@ export function Projects() {
       fetchMembers(selectedSpace.id);
     }
   }, [selectedSpace]);
+
+  // Fetch team members when grant access modal opens
+  useEffect(() => {
+    if (showGrantAccess) {
+      fetchTeamMembers();
+    }
+  }, [showGrantAccess]);
 
   const fetchSpaces = async () => {
     try {
@@ -167,6 +192,52 @@ export function Projects() {
       setMembers(Array.isArray(data) ? data : data.members || []);
     } catch (err) {
       console.error('Failed to fetch members:', err);
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    try {
+      setTeamMembersLoading(true);
+      // First get all teams
+      const teamsResponse = await fetch(`${API_V1}/teams`, {
+        headers: getAuthHeaders(),
+      });
+      
+      if (!teamsResponse.ok) {
+        return;
+      }
+      
+      const teams: Team[] = await teamsResponse.json();
+      
+      // Fetch members from all teams
+      const allMembers: TeamMember[] = [];
+      const seenUserIds = new Set<string>();
+      
+      for (const team of teams) {
+        try {
+          const membersResponse = await fetch(`${API_V1}/teams/${team.id}/members`, {
+            headers: getAuthHeaders(),
+          });
+          
+          if (membersResponse.ok) {
+            const members: TeamMember[] = await membersResponse.json();
+            for (const member of members) {
+              if (!seenUserIds.has(member.user_id)) {
+                seenUserIds.add(member.user_id);
+                allMembers.push(member);
+              }
+            }
+          }
+        } catch {
+          // Skip this team if members fetch fails
+        }
+      }
+      
+      setTeamMembers(allMembers);
+    } catch (err) {
+      console.error('Failed to fetch team members:', err);
+    } finally {
+      setTeamMembersLoading(false);
     }
   };
 
@@ -260,6 +331,8 @@ export function Projects() {
       setShowGrantAccess(false);
       setGrantAgentId('');
       setGrantPermission('read');
+      setMemberSearch('');
+      setShowMemberDropdown(false);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to grant access');
     } finally {
@@ -595,7 +668,11 @@ export function Projects() {
                 Share Access
               </h2>
               <button
-                onClick={() => setShowGrantAccess(false)}
+                onClick={() => {
+                  setShowGrantAccess(false);
+                  setMemberSearch('');
+                  setShowMemberDropdown(false);
+                }}
                 className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -609,18 +686,103 @@ export function Projects() {
                 </div>
               )}
 
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Agent/User ID
+                  Team Member or User ID
                 </label>
-                <input
-                  type="text"
-                  value={grantAgentId}
-                  onChange={(e) => setGrantAgentId(e.target.value)}
-                  placeholder="user_abc123 or agent_xyz"
-                  required
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]"
-                />
+                
+                {/* Search/Select Input */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={grantAgentId || memberSearch}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setMemberSearch(value);
+                      setGrantAgentId(value);
+                      setShowMemberDropdown(true);
+                    }}
+                    onFocus={() => setShowMemberDropdown(true)}
+                    placeholder={teamMembersLoading ? "Loading team members..." : "Search team members or enter user ID"}
+                    required
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#8B5CF6]"
+                  />
+                  {teamMembersLoading && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Dropdown with team members */}
+                {showMemberDropdown && teamMembers.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    {teamMembers
+                      .filter(member => {
+                        const search = memberSearch.toLowerCase();
+                        return (
+                          !search ||
+                          member.user_id.toLowerCase().includes(search) ||
+                          (member.email && member.email.toLowerCase().includes(search)) ||
+                          (member.name && member.name.toLowerCase().includes(search))
+                        );
+                      })
+                      .map((member) => (
+                        <button
+                          key={member.user_id}
+                          type="button"
+                          onClick={() => {
+                            setGrantAgentId(member.user_id);
+                            setMemberSearch('');
+                            setShowMemberDropdown(false);
+                          }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-[#8B5CF6]/20 flex items-center justify-center flex-shrink-0">
+                            <Users className="w-4 h-4 text-[#8B5CF6]" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                              {member.name || member.email || member.user_id}
+                            </p>
+                            {(member.name || member.email) && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                {member.email || member.user_id}
+                              </p>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-400 capitalize flex-shrink-0">
+                            {member.role}
+                          </span>
+                        </button>
+                      ))}
+                    {teamMembers.filter(member => {
+                      const search = memberSearch.toLowerCase();
+                      return (
+                        !search ||
+                        member.user_id.toLowerCase().includes(search) ||
+                        (member.email && member.email.toLowerCase().includes(search)) ||
+                        (member.name && member.name.toLowerCase().includes(search))
+                      );
+                    }).length === 0 && (
+                      <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                        No matching team members. Enter a user ID manually.
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Click outside to close dropdown */}
+                {showMemberDropdown && (
+                  <div 
+                    className="fixed inset-0 z-0" 
+                    onClick={() => setShowMemberDropdown(false)}
+                  />
+                )}
+                
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Select a team member or enter any user/agent ID
+                </p>
               </div>
 
               <div>
@@ -641,7 +803,11 @@ export function Projects() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowGrantAccess(false)}
+                  onClick={() => {
+                    setShowGrantAccess(false);
+                    setMemberSearch('');
+                    setShowMemberDropdown(false);
+                  }}
                   className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancel
