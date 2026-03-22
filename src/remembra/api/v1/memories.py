@@ -712,9 +712,10 @@ async def update_memory(
             new_content=sanitized_content,
             new_metadata=body.metadata,
         )
+        from remembra.security.audit import AuditAction
         await audit_logger.log(
             user_id=current_user.user_id,
-            action="memory_updated",
+            action=AuditAction.MEMORY_UPDATE,
             resource_id=memory_id,
             success=True,
         )
@@ -738,9 +739,10 @@ async def update_memory(
             detail=f"Memory {memory_id} not found",
         ) from None
     except Exception as e:
+        from remembra.security.audit import AuditAction
         await audit_logger.log(
             user_id=current_user.user_id,
-            action="memory_updated",
+            action=AuditAction.MEMORY_UPDATE,
             resource_id=memory_id,
             success=False,
             error_message=str(e),

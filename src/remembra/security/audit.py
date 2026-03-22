@@ -18,6 +18,7 @@ class AuditAction(StrEnum):
     # Memory operations
     MEMORY_STORE = "memory_store"
     MEMORY_RECALL = "memory_recall"
+    MEMORY_UPDATE = "memory_update"
     MEMORY_FORGET = "memory_forget"
     MEMORY_GET = "memory_get"
 
