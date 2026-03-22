@@ -145,6 +145,7 @@ class UserResponse(BaseModel):
     name: str | None
     email_verified: bool
     is_active: bool
+    is_admin: bool = False
     created_at: str
 
 
@@ -516,12 +517,18 @@ async def get_me(
                 detail="User not found",
             )
         
+        # Check if user is admin (in owner_emails)
+        settings = get_settings()
+        owner_emails = [e.lower() for e in settings.owner_emails] if settings.owner_emails else []
+        is_admin = user.email.lower() in owner_emails
+        
         return UserResponse(
             id=user.id,
             email=user.email,
             name=user.name,
             email_verified=bool(user.email_verified),  # Ensure boolean
             is_active=bool(user.is_active),  # Ensure boolean
+            is_admin=is_admin,
             created_at=user.created_at.isoformat() if user.created_at else datetime.utcnow().isoformat(),
         )
     except HTTPException:

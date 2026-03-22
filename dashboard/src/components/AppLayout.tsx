@@ -17,6 +17,7 @@ interface AppLayoutProps {
   userName?: string;
   onNewMemory?: () => void;
   onSearch?: () => void;
+  isAdmin?: boolean;
 }
 
 export function AppLayout({
@@ -30,6 +31,7 @@ export function AppLayout({
   userName,
   onNewMemory,
   onSearch,
+  isAdmin = false,
 }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
@@ -166,6 +168,7 @@ export function AppLayout({
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           onNewMemory={onNewMemory}
           onSearch={onSearch}
+          isAdmin={isAdmin}
         />
       </div>
 

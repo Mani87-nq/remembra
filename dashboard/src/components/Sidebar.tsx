@@ -60,6 +60,7 @@ interface SidebarProps {
   onToggleCollapse: () => void;
   onNewMemory?: () => void;
   onSearch?: () => void;
+  isAdmin?: boolean;
 }
 
 export function Sidebar({ 
@@ -68,7 +69,8 @@ export function Sidebar({
   collapsed, 
   onToggleCollapse,
   onNewMemory,
-  onSearch 
+  onSearch,
+  isAdmin = false 
 }: SidebarProps) {
   const activeItem = navItems.find((item) => item.id === activeTab);
 
@@ -203,7 +205,7 @@ export function Sidebar({
         {renderNavSection('explore', 'Explore')}
         {renderNavSection('tools', 'Dev Tools')}
         {renderNavSection('account', 'Account')}
-        {renderNavSection('admin', 'Admin')}
+        {isAdmin && renderNavSection('admin', 'Admin')}
       </div>
 
       {/* Collapse Toggle */}

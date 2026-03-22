@@ -41,7 +41,7 @@ function App() {
     if (path === '/reset-password') return 'reset-password';
     return 'login';
   });
-  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name?: string } | null>(() => {
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string; name?: string; is_admin?: boolean } | null>(() => {
     const saved = localStorage.getItem('remembra_user');
     return saved ? JSON.parse(saved) : null;
   });
@@ -306,6 +306,7 @@ function App() {
         userName={currentUser?.name || currentUser?.email}
         onNewMemory={handleNewMemory}
         onSearch={handleSearch}
+        isAdmin={currentUser?.is_admin}
       >
         <Dashboard
           activeTab={activeTab}
