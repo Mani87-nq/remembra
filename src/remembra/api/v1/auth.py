@@ -351,7 +351,7 @@ async def signup(
                 asyncio.create_task(
                     email_service.send_welcome_email(
                         to=user.email,
-                        api_key=api_key,
+                        api_key=api_key.key,  # Pass just the key string, not the full object
                         user_id=user.id,
                         plan="Free",
                     )
