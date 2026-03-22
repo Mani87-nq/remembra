@@ -4,7 +4,6 @@ These tests ensure that internal URLs, paths, and API keys
 are never leaked to clients in error responses.
 """
 
-
 from remembra.security.error_sanitizer import (
     create_safe_error_response,
     is_safe_to_expose,

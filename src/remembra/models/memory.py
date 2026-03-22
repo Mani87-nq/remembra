@@ -177,6 +177,7 @@ class RecallRequest(BaseModel):
         if not v.strip():
             raise ValueError("query must not be empty")
         return v.strip()
+
     project_id: str = "default"
     user_id: str | None = Field(
         default=None,

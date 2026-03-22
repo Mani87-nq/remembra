@@ -162,9 +162,7 @@ def sanitize_xss(content: str) -> tuple[str, list[str]]:
     )
     if remaining_tags.search(sanitized):
         removed.append("remaining_html_tags")
-        sanitized = remaining_tags.sub(
-            lambda m: html.escape(m.group(0)), sanitized
-        )
+        sanitized = remaining_tags.sub(lambda m: html.escape(m.group(0)), sanitized)
 
     # Clean up extra whitespace from removals
     sanitized = re.sub(r"\n\s*\n", "\n\n", sanitized)

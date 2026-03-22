@@ -353,9 +353,7 @@ def create_app() -> FastAPI:
 
     # Validation error handler - sanitize validation messages
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(
-        request: Request, exc: RequestValidationError
-    ) -> JSONResponse:
+    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         """
         Handle validation errors with sanitized messages.
         Prevents leaking internal details in validation error responses.
@@ -428,9 +426,7 @@ def create_app() -> FastAPI:
                     rate_limit_keys = rate_limit_info[1]  # List of keys
 
                     # Get window stats from the limiter
-                    window_stats = limiter.limiter.get_window_stats(
-                        rate_limit_item, *rate_limit_keys
-                    )
+                    window_stats = limiter.limiter.get_window_stats(rate_limit_item, *rate_limit_keys)
                     reset_time = 1 + window_stats[0]
                     remaining = window_stats[1]
 

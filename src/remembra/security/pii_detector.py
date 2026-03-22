@@ -38,10 +38,7 @@ PII_PATTERNS: dict[str, re.Pattern] = {
     "api_key": re.compile(r"\b(?:sk|pk|api|key|token|secret)[-_][A-Za-z0-9]{16,}\b", re.IGNORECASE),
     # Password values after common labels (Password: xxx, password=xxx, **Password:** xxx)
     # Matches the full pattern; password value is in group 1
-    "password": re.compile(
-        r"(?:password|passwd|pwd)\s*[:\=\*]+\s*(\S{6,})",
-        re.IGNORECASE
-    ),
+    "password": re.compile(r"(?:password|passwd|pwd)\s*[:\=\*]+\s*(\S{6,})", re.IGNORECASE),
     # AWS Access Keys
     "aws_key": re.compile(r"\b(?:AKIA|ABIA|ACCA|ASIA)[A-Z0-9]{16}\b"),
     # IP Addresses (v4)
@@ -179,7 +176,7 @@ class PIIDetector:
                 else:
                     original = match.group()
                     start, end = match.start(), match.end()
-                
+
                 severity = PII_SEVERITY.get(pii_type, "medium")
 
                 matches.append(
