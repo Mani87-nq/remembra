@@ -6,6 +6,14 @@ const API_BASE = import.meta.env.VITE_API_URL
   : '/api/v1';
 const API_ROOT = API_BASE.replace(/\/api\/v1$/, '');
 
+/**
+ * Get the API root URL for WebSocket connections.
+ * Returns empty string if using relative URLs (dev proxy mode).
+ */
+export function getApiBaseUrl(): string {
+  return API_ROOT;
+}
+
 export interface Memory {
   id: string;
   content: string;

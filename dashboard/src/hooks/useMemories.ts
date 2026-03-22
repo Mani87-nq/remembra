@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { api } from '../lib/api';
+import { api, getApiBaseUrl } from '../lib/api';
 import type { Memory, RecallResult } from '../lib/api';
 import { useWebSocket, type WebSocketEvent } from './useWebSocket';
 
@@ -68,6 +68,7 @@ export function useMemories(limit = 20, projectId?: string) {
   // Pass either API key or JWT token for authentication
   const authToken = api.getApiKey() || api.getJwtToken() || undefined;
   const { connected } = useWebSocket({
+    baseUrl: getApiBaseUrl() || undefined,  // Use API URL for WebSocket, not current origin
     namespace: projectId || 'default',
     projectId,
     apiKey: api.getApiKey() || undefined,
