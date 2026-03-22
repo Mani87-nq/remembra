@@ -12,6 +12,10 @@ import secrets
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
+import structlog
+
+log = structlog.get_logger(__name__)
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -77,6 +81,7 @@ async def require_superadmin(
     user_data = await db.get_user_by_id(current_user.user_id)
 
     if not user_data:
+        log.warning("superadmin_check_user_not_found", user_id=current_user.user_id)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User not found",
@@ -85,7 +90,10 @@ async def require_superadmin(
     user_email = user_data.get("email", "").lower()
     owner_emails = [e.lower() for e in settings.owner_emails] if settings.owner_emails else []
 
+    log.info("superadmin_check", user_id=current_user.user_id, email=user_email, owner_emails=owner_emails, is_admin=user_email in owner_emails)
+
     if user_email not in owner_emails:
+        log.warning("superadmin_access_denied", user_id=current_user.user_id, email=user_email)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Superadmin access required. Contact support@remembra.dev",
