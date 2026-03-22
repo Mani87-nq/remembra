@@ -169,7 +169,14 @@ class StoreResponse(BaseModel):
 
 
 class RecallRequest(BaseModel):
-    query: str = Field(..., max_length=10000, description="Search query (max 10,000 characters)")
+    query: str = Field(..., min_length=1, max_length=10000, description="Search query (max 10,000 characters)")
+
+    @field_validator("query")
+    @classmethod
+    def query_not_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("query must not be empty")
+        return v.strip()
     project_id: str = "default"
     user_id: str | None = Field(
         default=None,

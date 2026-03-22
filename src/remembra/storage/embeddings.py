@@ -109,6 +109,10 @@ class OpenAIEmbedder(BaseEmbedder):
         return results[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        # Validate input to prevent leaking URLs in error messages
+        if not texts or all(not t.strip() for t in texts):
+            raise ValueError("Cannot embed empty text")
+
         payload = {
             "model": self.model,
             "input": texts,
@@ -117,11 +121,25 @@ class OpenAIEmbedder(BaseEmbedder):
         if self.dimensions and self.model.startswith("text-embedding-3"):
             payload["dimensions"] = self.dimensions
 
-        response = await self._client.post(
-            f"{self.base_url}/embeddings",
-            json=payload,
-        )
-        response.raise_for_status()
+        try:
+            response = await self._client.post(
+                f"{self.base_url}/embeddings",
+                json=payload,
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            # Log full error internally, raise sanitized error
+            log.error(
+                "openai_embedding_http_error",
+                status_code=e.response.status_code,
+                model=self.model,
+            )
+            raise RuntimeError(f"Embedding service error (status {e.response.status_code})") from None
+        except httpx.RequestError as e:
+            # Connection/timeout errors - don't expose URLs
+            log.error("openai_embedding_request_error", error_type=type(e).__name__)
+            raise RuntimeError("Embedding service unavailable") from None
+
         data = response.json()
 
         embeddings = sorted(data["data"], key=lambda x: x["index"])
@@ -167,12 +185,23 @@ class AzureOpenAIEmbedder(BaseEmbedder):
         return results[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        if not texts or all(not t.strip() for t in texts):
+            raise ValueError("Cannot embed empty text")
+
         url = f"{self.endpoint}/openai/deployments/{self.deployment}/embeddings?api-version={self.api_version}"
-        response = await self._client.post(
-            url,
-            json={"input": texts},
-        )
-        response.raise_for_status()
+        try:
+            response = await self._client.post(
+                url,
+                json={"input": texts},
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            log.error("azure_embedding_http_error", status_code=e.response.status_code)
+            raise RuntimeError(f"Embedding service error (status {e.response.status_code})") from None
+        except httpx.RequestError as e:
+            log.error("azure_embedding_request_error", error_type=type(e).__name__)
+            raise RuntimeError("Embedding service unavailable") from None
+
         data = response.json()
 
         embeddings = sorted(data["data"], key=lambda x: x["index"])
@@ -196,19 +225,33 @@ class OllamaEmbedder(BaseEmbedder):
         self._client = httpx.AsyncClient(timeout=60.0)
 
     async def embed(self, text: str) -> list[float]:
-        response = await self._client.post(
-            f"{self.base_url}/api/embeddings",
-            json={
-                "model": self.model,
-                "prompt": text,
-            },
-        )
-        response.raise_for_status()
+        if not text or not text.strip():
+            raise ValueError("Cannot embed empty text")
+
+        try:
+            response = await self._client.post(
+                f"{self.base_url}/api/embeddings",
+                json={
+                    "model": self.model,
+                    "prompt": text,
+                },
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            log.error("ollama_embedding_http_error", status_code=e.response.status_code)
+            raise RuntimeError(f"Embedding service error (status {e.response.status_code})") from None
+        except httpx.RequestError as e:
+            log.error("ollama_embedding_request_error", error_type=type(e).__name__)
+            raise RuntimeError("Embedding service unavailable") from None
+
         data = response.json()
 
         return data["embedding"]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        if not texts or all(not t.strip() for t in texts):
+            raise ValueError("Cannot embed empty text")
+
         results = []
         for text in texts:
             embedding = await self.embed(text)
@@ -244,15 +287,26 @@ class CohereEmbedder(BaseEmbedder):
         return results[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        response = await self._client.post(
-            f"{self.base_url}/embed",
-            json={
-                "model": self.model,
-                "texts": texts,
-                "input_type": "search_document",
-            },
-        )
-        response.raise_for_status()
+        if not texts or all(not t.strip() for t in texts):
+            raise ValueError("Cannot embed empty text")
+
+        try:
+            response = await self._client.post(
+                f"{self.base_url}/embed",
+                json={
+                    "model": self.model,
+                    "texts": texts,
+                    "input_type": "search_document",
+                },
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            log.error("cohere_embedding_http_error", status_code=e.response.status_code)
+            raise RuntimeError(f"Embedding service error (status {e.response.status_code})") from None
+        except httpx.RequestError as e:
+            log.error("cohere_embedding_request_error", error_type=type(e).__name__)
+            raise RuntimeError("Embedding service unavailable") from None
+
         data = response.json()
 
         return data["embeddings"]
@@ -290,15 +344,26 @@ class VoyageEmbedder(BaseEmbedder):
         return results[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        response = await self._client.post(
-            f"{self.base_url}/embeddings",
-            json={
-                "model": self.model,
-                "input": texts,
-                "input_type": "document",
-            },
-        )
-        response.raise_for_status()
+        if not texts or all(not t.strip() for t in texts):
+            raise ValueError("Cannot embed empty text")
+
+        try:
+            response = await self._client.post(
+                f"{self.base_url}/embeddings",
+                json={
+                    "model": self.model,
+                    "input": texts,
+                    "input_type": "document",
+                },
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            log.error("voyage_embedding_http_error", status_code=e.response.status_code)
+            raise RuntimeError(f"Embedding service error (status {e.response.status_code})") from None
+        except httpx.RequestError as e:
+            log.error("voyage_embedding_request_error", error_type=type(e).__name__)
+            raise RuntimeError("Embedding service unavailable") from None
+
         data = response.json()
 
         embeddings = sorted(data["data"], key=lambda x: x["index"])
@@ -337,14 +402,25 @@ class JinaEmbedder(BaseEmbedder):
         return results[0]
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        response = await self._client.post(
-            f"{self.base_url}/embeddings",
-            json={
-                "model": self.model,
-                "input": texts,
-            },
-        )
-        response.raise_for_status()
+        if not texts or all(not t.strip() for t in texts):
+            raise ValueError("Cannot embed empty text")
+
+        try:
+            response = await self._client.post(
+                f"{self.base_url}/embeddings",
+                json={
+                    "model": self.model,
+                    "input": texts,
+                },
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            log.error("jina_embedding_http_error", status_code=e.response.status_code)
+            raise RuntimeError(f"Embedding service error (status {e.response.status_code})") from None
+        except httpx.RequestError as e:
+            log.error("jina_embedding_request_error", error_type=type(e).__name__)
+            raise RuntimeError("Embedding service unavailable") from None
+
         data = response.json()
 
         embeddings = sorted(data["data"], key=lambda x: x["index"])

@@ -3,7 +3,11 @@
 import logging
 from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+
+# Security: Logger for internal error details (never exposed to users)
+_internal_log = structlog.get_logger("remembra.api.errors")
 
 from remembra.auth.middleware import (
     CurrentUser,
@@ -148,9 +152,16 @@ async def list_memories(
             offset=offset,
         )
     except Exception as e:
+        # Log full error internally for debugging (never expose to users)
+        _internal_log.error(
+            "list_memories_failed",
+            user_id=current_user.user_id,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list memories: {str(e)}",
+            detail="Failed to list memories. Please try again later.",
         ) from e
 
 
@@ -218,10 +229,12 @@ async def store_memory(
                 # Redact mode: replace PII with placeholders
                 body.content = pii_result.redacted_content
 
-    # Sanitize content and compute trust score
+    # Sanitize content (XSS removal) and compute trust score
     sanitization = None
     if settings.sanitization_enabled:
         sanitization = sanitizer.analyze(body.content, source="user_input")
+        # SECURITY: Use sanitized content (XSS stripped)
+        body.content = sanitization.content
 
     try:
         result = await memory_service.store(
@@ -275,19 +288,28 @@ async def store_memory(
         return result
 
     except ValueError as e:
+        # ValueError is typically a validation error - safe to show to user
+        error_msg = str(e)
         await audit_logger.log_memory_store(
             user_id=current_user.user_id,
             memory_id="",
             api_key_id=current_user.api_key_id,
             ip_address=get_client_ip(request),
             success=False,
-            error=str(e),
+            error=error_msg,
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail=error_msg,
         ) from e
     except Exception as e:
+        # Log full error internally for debugging (never expose to users)
+        _internal_log.error(
+            "store_memory_failed",
+            user_id=current_user.user_id,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         await audit_logger.log_memory_store(
             user_id=current_user.user_id,
             memory_id="",
@@ -298,7 +320,7 @@ async def store_memory(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to store memory: {str(e)}",
+            detail="Failed to store memory. Please try again later.",
         ) from e
 
 
@@ -378,6 +400,10 @@ async def batch_store(
                         continue
                     elif pii_result.redacted_content:
                         item.content = pii_result.redacted_content
+
+            # SECURITY: XSS sanitization for batch items
+            sanitization = sanitizer.analyze(item.content, source="batch_input")
+            item.content = sanitization.content
 
             resp = await memory_service.store(item)
             results.append(BatchStoreResult(index=i, success=True, response=resp))
@@ -542,6 +568,14 @@ async def recall_memories(
         return result
 
     except Exception as e:
+        # Log full error internally for debugging (never expose to users)
+        _internal_log.error(
+            "recall_memories_failed",
+            user_id=current_user.user_id,
+            query_length=len(body.query) if body.query else 0,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         await audit_logger.log_memory_recall(
             user_id=current_user.user_id,
             api_key_id=current_user.api_key_id,
@@ -551,7 +585,7 @@ async def recall_memories(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to recall memories: {str(e)}",
+            detail="Failed to recall memories. Please try again later.",
         ) from e
 
 
@@ -631,6 +665,7 @@ async def update_memory(
     body: UpdateRequest,
     memory_service: MemoryServiceDep,
     audit_logger: AuditLoggerDep,
+    sanitizer: SanitizerDep,
     current_user: CurrentUser,
 ) -> UpdateResponse:
     """
@@ -663,11 +698,17 @@ async def update_memory(
     if existing.get("project_id"):
         resolve_project_access(current_user, existing["project_id"])
 
+    # SECURITY: XSS sanitization for update content
+    sanitized_content = body.content
+    if body.content:
+        sanitization = sanitizer.analyze(body.content, source="user_input")
+        sanitized_content = sanitization.content
+
     try:
         result = await memory_service.update(
             memory_id=memory_id,
             user_id=current_user.user_id,
-            new_content=body.content,
+            new_content=sanitized_content,
             new_metadata=body.metadata,
         )
         await audit_logger.log(
@@ -762,9 +803,16 @@ async def cleanup_expired(
         return {"deleted_count": deleted}
 
     except Exception as e:
+        # Log full error internally for debugging (never expose to users)
+        _internal_log.error(
+            "cleanup_expired_failed",
+            user_id=current_user.user_id,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to cleanup expired memories: {str(e)}",
+            detail="Failed to cleanup expired memories. Please try again later.",
         ) from e
 
 
@@ -868,6 +916,14 @@ async def forget_memories(
         return result
 
     except Exception as e:
+        # Log full error internally for debugging (never expose to users)
+        _internal_log.error(
+            "forget_memories_failed",
+            user_id=current_user.user_id,
+            memory_id=memory_id,
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         await audit_logger.log_memory_forget(
             user_id=current_user.user_id,
             resource_id=memory_id,
@@ -878,5 +934,5 @@ async def forget_memories(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to forget memories: {str(e)}",
+            detail="Failed to forget memories. Please try again later.",
         ) from e
