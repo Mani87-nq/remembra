@@ -1,12 +1,56 @@
-"""Input sanitization for memory content - defense against prompt injection."""
+"""Input sanitization for memory content - defense against prompt injection and XSS."""
 
 import hashlib
+import html
 import re
 from dataclasses import dataclass
 
 import structlog
 
 log = structlog.get_logger(__name__)
+
+# ============================================================================
+# XSS SANITIZATION PATTERNS
+# ============================================================================
+
+# HTML tags to completely remove (with content)
+DANGEROUS_TAGS_WITH_CONTENT = re.compile(
+    r"<\s*(script|style|iframe|object|embed|form|input|button|textarea|select|frame|frameset|applet|meta|link|base)\b[^>]*>.*?</\s*\1\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
+
+# Self-closing or unclosed dangerous tags
+DANGEROUS_TAGS_SELF_CLOSING = re.compile(
+    r"<\s*(script|style|iframe|object|embed|form|input|button|textarea|select|frame|frameset|applet|meta|link|base|img|svg|math)\b[^>]*/?\s*>",
+    re.IGNORECASE,
+)
+
+# Event handlers (onclick, onload, onerror, etc.)
+EVENT_HANDLERS = re.compile(
+    r"\s+on\w+\s*=\s*['\"][^'\"]*['\"]|\s+on\w+\s*=\s*\S+",
+    re.IGNORECASE,
+)
+
+# javascript: and data: URLs
+DANGEROUS_URLS = re.compile(
+    r"(href|src|action|formaction|data|poster|background)\s*=\s*['\"]?\s*(javascript|data|vbscript)\s*:",
+    re.IGNORECASE,
+)
+
+# Expression/eval patterns in CSS
+CSS_EXPRESSIONS = re.compile(
+    r"expression\s*\(|behavior\s*:|binding\s*:|moz-binding\s*:",
+    re.IGNORECASE,
+)
+
+# HTML comments (can hide XSS)
+HTML_COMMENTS = re.compile(r"<!--.*?-->", re.DOTALL)
+
+# SVG/Math with embedded scripts
+SVG_MATH_TAGS = re.compile(
+    r"<\s*(svg|math)\b[^>]*>.*?</\s*(svg|math)\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
 
 # Suspicious patterns that may indicate prompt injection attempts
 # Each pattern has a weight for trust score reduction
@@ -42,16 +86,114 @@ SUSPICIOUS_PATTERNS: list[tuple[str, float, str]] = [
 ]
 
 
+def sanitize_xss(content: str) -> tuple[str, list[str]]:
+    """
+    Remove XSS attack vectors from content.
+
+    Args:
+        content: Raw input content
+
+    Returns:
+        Tuple of (sanitized_content, list_of_removed_patterns)
+
+    Security note: This is defense-in-depth. Even though Remembra stores
+    text for AI context (not rendered as HTML), we sanitize because:
+    1. Content may be displayed in dashboards/UIs
+    2. Prevents stored XSS if content is ever rendered
+    3. Strips malicious payloads from polluting memory
+    """
+    if not content:
+        return content, []
+
+    removed: list[str] = []
+    sanitized = content
+
+    # Remove dangerous tags with their content (script, style, iframe, etc.)
+    if DANGEROUS_TAGS_WITH_CONTENT.search(sanitized):
+        removed.append("dangerous_tags_with_content")
+        sanitized = DANGEROUS_TAGS_WITH_CONTENT.sub("", sanitized)
+
+    # Remove SVG/Math tags (can contain embedded scripts)
+    if SVG_MATH_TAGS.search(sanitized):
+        removed.append("svg_math_tags")
+        sanitized = SVG_MATH_TAGS.sub("", sanitized)
+
+    # Remove self-closing dangerous tags
+    if DANGEROUS_TAGS_SELF_CLOSING.search(sanitized):
+        removed.append("dangerous_self_closing_tags")
+        sanitized = DANGEROUS_TAGS_SELF_CLOSING.sub("", sanitized)
+
+    # Remove event handlers (onclick, onload, onerror, etc.)
+    if EVENT_HANDLERS.search(sanitized):
+        removed.append("event_handlers")
+        sanitized = EVENT_HANDLERS.sub("", sanitized)
+
+    # Remove javascript:/data:/vbscript: URLs
+    if DANGEROUS_URLS.search(sanitized):
+        removed.append("dangerous_urls")
+        sanitized = DANGEROUS_URLS.sub(r"\1=''", sanitized)
+
+    # Remove CSS expressions
+    if CSS_EXPRESSIONS.search(sanitized):
+        removed.append("css_expressions")
+        sanitized = CSS_EXPRESSIONS.sub("", sanitized)
+
+    # Remove HTML comments
+    if HTML_COMMENTS.search(sanitized):
+        removed.append("html_comments")
+        sanitized = HTML_COMMENTS.sub("", sanitized)
+
+    # Escape remaining HTML-like tags, but be precise about what we escape:
+    # - Must look like an actual HTML tag: <tagname, <tagname/, </tagname
+    # - Preserve text that happens to have angle brackets like "a > b" or "<no tags>"
+    # Known dangerous tags we haven't caught yet
+    known_html_tags = (
+        r"a|abbr|address|area|article|aside|audio|b|bdi|bdo|blockquote|body|br|"
+        r"canvas|caption|cite|code|col|colgroup|data|datalist|dd|del|details|dfn|"
+        r"dialog|div|dl|dt|em|fieldset|figcaption|figure|footer|h[1-6]|head|header|"
+        r"hgroup|hr|html|i|ins|kbd|label|legend|li|main|map|mark|menu|meter|nav|"
+        r"noscript|ol|optgroup|option|output|p|picture|pre|progress|q|rp|rt|ruby|"
+        r"s|samp|section|small|source|span|strong|sub|summary|sup|table|tbody|td|"
+        r"template|tfoot|th|thead|time|title|tr|track|u|ul|var|video|wbr"
+    )
+    remaining_tags = re.compile(
+        rf"<\s*/?\s*({known_html_tags})\b[^>]*>",
+        re.IGNORECASE,
+    )
+    if remaining_tags.search(sanitized):
+        removed.append("remaining_html_tags")
+        sanitized = remaining_tags.sub(
+            lambda m: html.escape(m.group(0)), sanitized
+        )
+
+    # Clean up extra whitespace from removals
+    sanitized = re.sub(r"\n\s*\n", "\n\n", sanitized)
+    sanitized = sanitized.strip()
+
+    if removed:
+        log.warning(
+            "xss_content_sanitized",
+            removed_patterns=removed,
+            original_length=len(content),
+            sanitized_length=len(sanitized),
+        )
+
+    return sanitized, removed
+
+
 @dataclass
 class SanitizationResult:
     """Result of content sanitization."""
 
-    content: str  # Original content (we don't modify it, just flag it)
+    content: str  # Sanitized content (XSS removed)
+    original_content: str  # Original content before sanitization
     trust_score: float  # 0.0 to 1.0 (1.0 = fully trusted)
     checksum: str  # SHA-256 hash for integrity verification
     flagged_patterns: list[str]  # List of detected suspicious pattern types
+    xss_removed: list[str]  # List of XSS patterns that were removed
     is_suspicious: bool  # True if trust_score < threshold
     source: str  # Content source (user_input, agent_generated, etc.)
+    was_sanitized: bool  # True if content was modified
 
 
 class ContentSanitizer:
@@ -97,17 +239,29 @@ class ContentSanitizer:
         self,
         content: str,
         source: str = "user_input",
+        sanitize: bool = True,
     ) -> SanitizationResult:
         """
-        Analyze content for suspicious patterns and compute trust score.
+        Analyze and sanitize content for XSS and suspicious patterns.
 
         Args:
             content: The text content to analyze
             source: Origin of the content (user_input, agent_generated, external_api)
+            sanitize: Whether to sanitize XSS (default: True)
 
         Returns:
-            SanitizationResult with trust score and detected patterns
+            SanitizationResult with sanitized content, trust score, and detected patterns
         """
+        original_content = content
+
+        # Step 1: XSS sanitization (remove dangerous HTML)
+        xss_removed: list[str] = []
+        if sanitize:
+            content, xss_removed = sanitize_xss(content)
+
+        was_sanitized = bool(xss_removed)
+
+        # Step 2: Prompt injection analysis (on sanitized content)
         trust_score = 1.0
         flagged_patterns: list[str] = []
 
@@ -118,34 +272,43 @@ class ContentSanitizer:
                 if pattern_name not in flagged_patterns:
                     flagged_patterns.append(pattern_name)
 
+        # XSS content reduces trust score
+        if xss_removed:
+            trust_score -= 0.2 * len(xss_removed)
+
         # Clamp trust score to [0.0, 1.0]
         trust_score = max(0.0, min(1.0, trust_score))
 
-        # Compute checksum
+        # Compute checksum of sanitized content
         checksum = self.compute_checksum(content)
 
         # Determine if suspicious
-        is_suspicious = trust_score < self.trust_threshold
+        is_suspicious = trust_score < self.trust_threshold or was_sanitized
 
         # Log if suspicious (SECURITY: Never log content, only hash for correlation)
         if is_suspicious and self.log_suspicious:
-            content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
+            content_hash = hashlib.sha256(original_content.encode()).hexdigest()[:16]
             log.warning(
                 "suspicious_content_detected",
                 trust_score=round(trust_score, 2),
                 flagged_patterns=flagged_patterns,
-                content_length=len(content),
+                xss_removed=xss_removed,
+                content_length=len(original_content),
+                sanitized_length=len(content),
                 content_hash=content_hash,  # Safe hash instead of content preview
                 source=source,
             )
 
         return SanitizationResult(
             content=content,
+            original_content=original_content,
             trust_score=trust_score,
             checksum=checksum,
             flagged_patterns=flagged_patterns,
+            xss_removed=xss_removed,
             is_suspicious=is_suspicious,
             source=source,
+            was_sanitized=was_sanitized,
         )
 
     def verify_integrity(self, content: str, expected_checksum: str) -> bool:
