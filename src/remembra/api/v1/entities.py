@@ -306,7 +306,7 @@ async def search_relationships_by_name(
     """
     from datetime import datetime
 
-    project_id = resolve_project_access(current_user, project_id) or "default"
+    project_id = resolve_project_access(current_user, project_id)
 
     # Parse as_of date if provided
     as_of_dt = None
@@ -319,12 +319,19 @@ async def search_relationships_by_name(
                 detail=f"Invalid date format for as_of: {as_of}. Use ISO format (e.g., 2022-01-15)",
             )
 
-    # Find entity by name
-    entity = await db.find_entity_by_name(
-        name=entity_name,
-        user_id=current_user.user_id,
-        project_id=project_id,
-    )
+    # Find entity by name - if no project_id, search across all user's projects
+    if project_id:
+        entity = await db.find_entity_by_name(
+            name=entity_name,
+            user_id=current_user.user_id,
+            project_id=project_id,
+        )
+    else:
+        # Search across all projects for this user
+        entity = await db.find_entity_by_name_any_project(
+            name=entity_name,
+            user_id=current_user.user_id,
+        )
 
     if not entity:
         # Return empty list if entity not found (don't error)

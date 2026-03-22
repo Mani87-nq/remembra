@@ -1370,7 +1370,24 @@ class MemoryService:
         memory = await self.db.get_memory(memory_id)
         if memory is not None:
             return await self._serialize_memory_record(memory)
-        return await self.qdrant.get_by_id(memory_id)
+        # Fallback to Qdrant - also serialize to ensure consistent format
+        qdrant_result = await self.qdrant.get_by_id(memory_id)
+        if qdrant_result:
+            # Ensure user_id is present from Qdrant payload
+            return {
+                "id": qdrant_result.get("id", memory_id),
+                "user_id": qdrant_result.get("user_id"),
+                "project_id": qdrant_result.get("project_id", "default"),
+                "content": qdrant_result.get("content", ""),
+                "created_at": qdrant_result.get("created_at"),
+                "updated_at": qdrant_result.get("updated_at"),
+                "accessed_at": qdrant_result.get("accessed_at"),
+                "access_count": qdrant_result.get("access_count", 0),
+                "memory_type": None,
+                "entities": [],
+                "metadata": qdrant_result.get("metadata", {}),
+            }
+        return None
 
     # -----------------------------------------------------------------------
     # Temporal Features (Week 8)

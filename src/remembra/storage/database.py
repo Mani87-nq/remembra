@@ -932,6 +932,44 @@ class Database:
             updated_at=datetime.fromisoformat(row["updated_at"]),
         )
 
+    async def find_entity_by_name_any_project(self, name: str, user_id: str) -> Entity | None:
+        """Find entity by canonical name or alias across ALL projects for a user."""
+        # First try canonical name
+        cursor = await self.conn.execute(
+            """
+            SELECT * FROM entities 
+            WHERE user_id = ? AND canonical_name = ?
+            """,
+            (user_id, name),
+        )
+        row = await cursor.fetchone()
+
+        if not row:
+            # Search in aliases (JSON array)
+            cursor = await self.conn.execute(
+                """
+                SELECT * FROM entities 
+                WHERE user_id = ? 
+                AND aliases LIKE ?
+                """,
+                (user_id, f'%"{name}"%'),
+            )
+            row = await cursor.fetchone()
+
+        if not row:
+            return None
+
+        return Entity(
+            id=row["id"],
+            canonical_name=row["canonical_name"],
+            aliases=_safe_json_loads(row["aliases"], []),
+            type=row["type"],
+            attributes=_safe_json_loads(row["attributes"], {}),
+            confidence=row["confidence"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
     async def get_user_entities(self, user_id: str, project_id: str | None = None) -> list[Entity]:
         """Get all entities for a user with full details including aliases.
 
