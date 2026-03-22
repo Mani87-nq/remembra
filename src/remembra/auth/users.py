@@ -16,7 +16,7 @@ log = structlog.get_logger(__name__)
 
 # JWT settings
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
+JWT_EXPIRATION_HOURS = 24  # 24 hours (tightened from 7 days - March 22, 2026)
 PASSWORD_RESET_EXPIRATION_HOURS = 24
 
 

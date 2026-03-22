@@ -8,6 +8,7 @@ This module provides scheduled tasks for:
 """
 
 import asyncio
+import hashlib
 from datetime import datetime
 from typing import Any
 
@@ -320,10 +321,14 @@ class TemporalCleanupJob:
 
         for memory in memories:
             decay_info = calculate_memory_decay_info(memory, self.config)
+            # SECURITY: Never log content, only hash for correlation
+            content = memory.get("content", "")
+            content_hash = hashlib.sha256(content.encode()).hexdigest()[:16] if content else ""
             memory_reports.append(
                 {
                     "id": memory["id"],
-                    "content_preview": memory.get("content", "")[:100] + "...",
+                    "content_hash": content_hash,  # Safe hash instead of content preview
+                    "content_length": len(content),
                     **decay_info,
                 }
             )

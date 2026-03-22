@@ -127,14 +127,15 @@ class ContentSanitizer:
         # Determine if suspicious
         is_suspicious = trust_score < self.trust_threshold
 
-        # Log if suspicious
+        # Log if suspicious (SECURITY: Never log content, only hash for correlation)
         if is_suspicious and self.log_suspicious:
+            content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
             log.warning(
                 "suspicious_content_detected",
                 trust_score=round(trust_score, 2),
                 flagged_patterns=flagged_patterns,
                 content_length=len(content),
-                content_preview=content[:50] + "..." if len(content) > 50 else content,
+                content_hash=content_hash,  # Safe hash instead of content preview
                 source=source,
             )
 
