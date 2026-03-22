@@ -1,35 +1,40 @@
-"""Test that rate limit headers are exposed on API responses."""
+"""Test that rate limit headers are exposed on API responses.
+
+Rate limit headers are injected via custom RateLimitHeadersMiddleware,
+NOT via slowapi's built-in headers_enabled. This is because slowapi's
+header injection requires a Response parameter on endpoints, which
+our API doesn't use (we return Pydantic models directly).
+"""
 
 import pytest
 from fastapi.testclient import TestClient
 
 
-def test_rate_limit_headers_enabled():
-    """Verify headers_enabled=True is set on the limiter."""
-    from remembra.core.limiter import limiter
-    assert limiter._headers_enabled is True, "Rate limit headers should be enabled"
-
-
-def test_rate_limit_headers_on_response():
-    """Verify rate limit headers appear on rate-limited endpoint responses."""
+def test_rate_limit_middleware_configured():
+    """Verify RateLimitHeadersMiddleware is configured in the app."""
     from remembra.main import app
     
-    # Verify the limiter has headers enabled
-    from remembra.core.limiter import limiter
-    assert limiter._headers_enabled is True
+    # Verify our custom middleware is present
+    middleware_names = [str(m) for m in app.user_middleware]
+    assert any('RateLimitHeaders' in str(m) for m in middleware_names), \
+        "RateLimitHeadersMiddleware should be configured"
+
+
+def test_slowapi_middleware_configured():
+    """Verify SlowAPIMiddleware is configured in the app."""
+    from remembra.main import app
     
-    # Verify middleware is present
-    assert any('SlowAPI' in str(m) for m in app.user_middleware), \
+    # Verify SlowAPI middleware is present
+    middleware_names = [str(m) for m in app.user_middleware]
+    assert any('SlowAPI' in str(m) for m in middleware_names), \
         "SlowAPIMiddleware should be configured"
 
 
-def test_rate_limit_header_mapping_exists():
-    """Verify the header mapping is configured on the limiter."""
+def test_limiter_headers_disabled():
+    """Verify headers_enabled=False on limiter (we use custom middleware instead)."""
     from remembra.core.limiter import limiter
     
-    # Check that header mapping exists
-    assert hasattr(limiter, '_header_mapping'), "Limiter should have header mapping"
-    
-    # Verify standard rate limit headers are mapped
-    header_mapping = limiter._header_mapping
-    assert len(header_mapping) > 0, "Header mapping should not be empty"
+    # Headers should be disabled on the limiter itself
+    # because our custom middleware handles header injection
+    assert limiter._headers_enabled is False, \
+        "Limiter headers_enabled should be False (custom middleware handles this)"

@@ -411,6 +411,40 @@ def create_app() -> FastAPI:
     # Add SlowAPI middleware for rate limiting
     app.add_middleware(SlowAPIMiddleware)
 
+    # Rate limit headers middleware - adds X-RateLimit-* headers to responses
+    # This is separate from SlowAPIMiddleware because slowapi's headers_enabled
+    # requires Response parameters on endpoints which our API doesn't use.
+    from starlette.middleware.base import BaseHTTPMiddleware as BaseMiddleware
+
+    class RateLimitHeadersMiddleware(BaseMiddleware):
+        async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+            response = await call_next(request)
+
+            # Add rate limit headers if rate limiting info is available
+            if hasattr(request.state, "view_rate_limit") and request.state.view_rate_limit:
+                try:
+                    rate_limit_info = request.state.view_rate_limit
+                    rate_limit_item = rate_limit_info[0]  # RateLimitItem
+                    rate_limit_keys = rate_limit_info[1]  # List of keys
+
+                    # Get window stats from the limiter
+                    window_stats = limiter.limiter.get_window_stats(
+                        rate_limit_item, *rate_limit_keys
+                    )
+                    reset_time = 1 + window_stats[0]
+                    remaining = window_stats[1]
+
+                    response.headers["X-RateLimit-Limit"] = str(rate_limit_item.amount)
+                    response.headers["X-RateLimit-Remaining"] = str(remaining)
+                    response.headers["X-RateLimit-Reset"] = str(reset_time)
+                except Exception as e:
+                    # Don't fail the request if header injection fails
+                    log.debug("rate_limit_header_injection_failed", error=str(e))
+
+            return response
+
+    app.add_middleware(RateLimitHeadersMiddleware)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

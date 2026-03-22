@@ -27,10 +27,12 @@ def get_key_func(request):
 
 
 # Create the limiter instance
+# NOTE: headers_enabled=False because we use custom middleware for header injection.
+# Setting True here causes errors on endpoints without Response parameter.
 settings = get_settings()
 limiter = Limiter(
     key_func=get_key_func,
     enabled=settings.rate_limit_enabled,
     storage_uri=settings.rate_limit_storage if settings.rate_limit_storage != "memory" else None,
-    headers_enabled=True,  # Expose X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+    headers_enabled=False,
 )
