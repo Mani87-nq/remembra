@@ -4,7 +4,7 @@
 
 <div class="admonition tip" markdown>
 <p class="admonition-title">🚀 v0.12.0 Released!</p>
-<p>Now with <strong>User Profiles</strong>, <strong>Smart Auto-Forgetting</strong>, <strong>Event-driven Expiry</strong>, and <strong>Browser Extension</strong>. Human-like memory that naturally fades over time. <a href="https://remembra.dev/changelog/v0.12.0.html">What's New →</a></p>
+<p>Now with <strong>User Profiles</strong>, <strong>Smart Auto-Forgetting</strong>, <strong>Event-driven Expiry</strong>, and <strong>Browser Extension</strong>. Human-like memory that naturally fades over time.</p>
 </div>
 
 ---
@@ -116,16 +116,16 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
 ### 1. Start the Server
 
+=== "Docker (Recommended)"
+
+    ```bash
+    docker run -d -p 8787:8787 remembra/remembra:0.12.0
+    ```
+
 === "Quick Start (One Command)"
 
     ```bash
     curl -sSL https://raw.githubusercontent.com/remembra-ai/remembra/main/quickstart.sh | bash
-    ```
-
-=== "Docker (Recommended)"
-
-    ```bash
-    docker run -d -p 8787:8787 remembra/remembra
     ```
 
 === "From Source"
@@ -206,6 +206,52 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
 [Get Started :material-arrow-right:](getting-started/quickstart.md){ .md-button .md-button--primary }
 [View on GitHub :material-github:](https://github.com/remembra-ai/remembra){ .md-button }
+
+---
+
+## What's New in v0.12.0
+
+<div class="grid cards" markdown>
+
+-   :material-account-box:{ .lg .middle } __User Profiles API__
+
+    ---
+
+    `GET /api/v1/users/{user_id}/profile` returns aggregated user intelligence: facts, activity metrics, top topics, and memory count. Perfect for personalization dashboards.
+
+-   :material-clock-alert:{ .lg .middle } __Smart Auto-Forgetting__
+
+    ---
+
+    35+ temporal patterns automatically set TTL. "Meeting tomorrow" → 36h, "deadline in 2 hours" → 3h, "call next week" → 8 days. Zero configuration needed.
+
+-   :material-calendar-clock:{ .lg .middle } __Event-Driven Expiry__
+
+    ---
+
+    New `expires_at` parameter accepts ISO 8601 timestamps for explicit expiration control. Perfect for event-driven workflows.
+
+-   :material-google-chrome:{ .lg .middle } __Browser Extension__
+
+    ---
+
+    Chrome Manifest V3 extension for ChatGPT, Claude, and Perplexity. Auto-inject memory context into any AI chat. Available on Chrome Web Store.
+
+-   :material-alert-decagram:{ .lg .middle } __Strict Mode 410 GONE__
+
+    ---
+
+    Enable `REMEMBRA_STRICT_MODE=true` for explicit expiry handling. Expired memory requests return `410 GONE` instead of silent accept.
+
+-   :material-lightning-bolt:{ .lg .middle } __Shadow TTLs__
+
+    ---
+
+    SDK maintains local expiry cache, skipping recall for known-expired memories. Reduces API calls by up to 40%.
+
+</div>
+
+---
 
 ## What's New in v0.10.x
 
@@ -293,69 +339,29 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
 </div>
 
-### Previous Release (v0.8.x)
-
-<div class="grid cards" markdown>
-
--   :material-shield-lock:{ .lg .middle } __AES-256-GCM Encryption__
-
-    ---
-
-    Encrypt memory content at rest with OWASP-compliant key derivation (480K PBKDF2 iterations). Set `REMEMBRA_ENCRYPTION_KEY` to enable.
-
--   :material-eye-off:{ .lg .middle } __PII Detection & Redaction__
-
-    ---
-
-    Automatically detect and redact SSNs, credit cards, API keys, and more. Configure detect/redact/block modes.
-
--   :material-cube-outline:{ .lg .middle } __MCP Registry Published__
-
-    ---
-
-    Discoverable as `io.github.remembra-ai/remembra` in Claude Desktop, Cursor, and other MCP-compatible clients.
-
--   :material-docker:{ .lg .middle } __One-Command Quick Start__
-
-    ---
-
-    `curl | bash` zero-config setup with Ollama embeddings. Docker Compose with Qdrant + Ollama + Remembra in one file.
-
--   :material-swap-horizontal:{ .lg .middle } __Multi-Provider Extraction__
-
-    ---
-
-    Entity extraction now works with OpenAI, Anthropic Claude, and Ollama. Hot-swap providers without code changes.
-
--   :material-test-tube:{ .lg .middle } __272 Tests Passing__
-
-    ---
-
-    Comprehensive test coverage for embeddings, entities, conflicts, spaces, plugins, and encryption.
-
-</div>
+---
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              Your Application / AI Assistant                   │
-├──────────┬──────────────┬─────────────────────────────────────┤
-│ Python   │ JavaScript   │ MCP Server (Claude/Cursor)          │
-│ SDK      │ SDK          │ remembra-mcp                        │
-├──────────┴──────────────┴─────────────────────────────────────┤
-│                   Remembra REST API                           │
-├──────────────┬──────────────┬───────────────┬───────────────┤
-│  Extraction  │   Entities   │    Retrieval  │   Temporal    │
-│  (LLM-based) │ (Resolution) │(Hybrid Search)│  (TTL/Decay)  │
-├──────────────┼──────────────┼───────────────┼───────────────┤
-│  Ingestion   │  Sleep-Time  │  PII Detect   │   Anomaly     │
-│              │  Compute     │  (OWASP)      │   Detection   │
-├──────────────┼──────────────┼───────────────┼───────────────┤
-│  Plugins     │ Spaces (RBAC)│               │               │
-├──────────────┴──────────────┴───────────────┴───────────────┤
+│              Your Application / AI Assistant                 │
+├──────────┬──────────────┬────────────────────────────────────┤
+│ Python   │ JavaScript   │ MCP Server (Claude/Cursor)         │
+│ SDK      │ SDK          │ remembra-mcp                       │
+├──────────┴──────────────┴────────────────────────────────────┤
+│                   Remembra REST API                          │
+├──────────────┬──────────────┬───────────────┬────────────────┤
+│  Extraction  │   Entities   │   Retrieval   │   Temporal     │
+│  (LLM-based) │ (Resolution) │(Hybrid Search)│  (TTL/Decay)   │
+├──────────────┼──────────────┼───────────────┼────────────────┤
+│  Ingestion   │  Sleep-Time  │  PII Detect   │   Anomaly      │
+│              │  Compute     │  (OWASP)      │   Detection    │
+├──────────────┼──────────────┼───────────────┼────────────────┤
+│  Plugins     │ Spaces (RBAC)│               │                │
+├──────────────┴──────────────┴───────────────┴────────────────┤
 │                      Storage Layer                           │
-│         Qdrant (vectors) + SQLite (metadata/graph)          │
+│         Qdrant (vectors) + SQLite (metadata/graph)           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
