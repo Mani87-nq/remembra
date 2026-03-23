@@ -191,7 +191,7 @@ async def get_entity(
     )
 
 @router.get(
-    "/relationships",
+    "/search/relationships",
     response_model=RelationshipsListResponse,
     summary="Search relationships by entity name",
 )
