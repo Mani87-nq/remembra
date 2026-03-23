@@ -3,8 +3,8 @@
 **Persistent memory for AI applications. Self-host in minutes.**
 
 <div class="admonition tip" markdown>
-<p class="admonition-title">🚀 v0.10.1 Released!</p>
-<p>Now with <strong>Universal Agent Installer</strong>, <strong>Setup Diagnostics</strong>, <strong>Local Bridge</strong>, and <strong>Slim Recall Mode</strong>. One command configures all your AI tools. <a href="getting-started/agent-setup/">Agent Setup Guide →</a></p>
+<p class="admonition-title">🚀 v0.12.0 Released!</p>
+<p>Now with <strong>User Profiles</strong>, <strong>Smart Auto-Forgetting</strong>, <strong>Event-driven Expiry</strong>, and <strong>Browser Extension</strong>. Human-like memory that naturally fades over time. <a href="https://remembra.dev/changelog/v0.12.0.html">What's New →</a></p>
 </div>
 
 ---
