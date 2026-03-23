@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write  # For PyPI trusted publishing
 
 jobs:
   release:
@@ -28,6 +29,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
+      # PyPI Publishing
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install build tools
+        run: pip install build twine
+      
+      - name: Build package
+        run: python -m build
+      
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      
+      # Docker Publishing
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
