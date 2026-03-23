@@ -164,6 +164,14 @@ async def get_entity(
     project_id: str | None = Query(default=None, description="Filter to one project for restricted keys"),
 ) -> EntityResponse:
     """Get a specific entity by ID."""
+    # Reject reserved paths that should match other routes
+    reserved_paths = {"relationships", "search", "relationship-search", "by-name"}
+    if entity_id.lower() in reserved_paths:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity {entity_id} not found",
+        )
+    
     project_id = resolve_project_access(current_user, project_id)
     entity = await db.get_entity(entity_id, user_id=current_user.user_id, project_id=project_id)
 
