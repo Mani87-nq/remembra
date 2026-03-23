@@ -5,6 +5,12 @@ All notable changes to Remembra will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.1] - 2026-03-23
+
+### Fixed
+- **Documentation** ‚Äî Updated PyPI README to reflect v0.12.0 features
+- **CI/CD** ‚Äî Added automated PyPI publishing to release workflow
+
 ## [0.12.0] - 2026-03-22
 
 ### Added
@@ -644,3 +650,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - RELEASE-CHECKLIST.md - mandatory pre-deploy verification
+n∑Îèti˛|o]¸yØ4ﬂØm«<yÌyÂÌ∫”ç˝
