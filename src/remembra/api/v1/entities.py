@@ -190,94 +190,6 @@ async def get_entity(
         memory_count=len(memory_ids),
     )
 
-
-@router.get(
-    "/{entity_id}/relationships",
-    response_model=RelationshipsListResponse,
-    summary="Get relationships for an entity",
-)
-@limiter.limit("60/minute")
-async def get_entity_relationships(
-    request: Request,
-    entity_id: str,
-    db: DatabaseDep,
-    current_user: CurrentUser,
-    project_id: str | None = Query(default=None, description="Filter to one project for restricted keys"),
-    as_of: str | None = Query(
-        default=None,
-        description="Point-in-time query (ISO format, e.g., '2022-01-15'). Returns relationships valid at this time.",
-    ),
-    include_history: bool = Query(
-        default=False,
-        description="Include superseded/historical relationships",
-    ),
-) -> RelationshipsListResponse:
-    """
-    Get relationships involving a specific entity with temporal filtering.
-
-    Supports point-in-time queries like "Where did Alice work in January 2022?"
-
-    - **as_of**: Query relationships as they were at a specific date
-    - **include_history**: Include relationships that have been superseded
-    """
-    from datetime import datetime
-
-    project_id = resolve_project_access(current_user, project_id)
-
-    # Verify entity exists
-    entity = await db.get_entity(entity_id, user_id=current_user.user_id, project_id=project_id)
-    if not entity:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Entity {entity_id} not found",
-        )
-
-    # Parse as_of date if provided
-    as_of_dt = None
-    if as_of:
-        try:
-            as_of_dt = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid date format for as_of: {as_of}. Use ISO format (e.g., 2022-01-15)",
-            )
-
-    # Get relationships with temporal filtering
-    relationships = await db.get_entity_relationships(
-        entity_id,
-        as_of=as_of_dt,
-        include_superseded=include_history,
-    )
-
-    # Enrich with entity names
-    relationship_responses = []
-    for rel in relationships:
-        from_entity = await db.get_entity(rel.from_entity_id)
-        to_entity = await db.get_entity(rel.to_entity_id)
-
-        relationship_responses.append(
-            RelationshipResponse(
-                id=rel.id,
-                from_entity_id=rel.from_entity_id,
-                from_entity_name=from_entity.canonical_name if from_entity else "Unknown",
-                to_entity_id=rel.to_entity_id,
-                to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
-                type=rel.type,
-                confidence=rel.confidence,
-                valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
-                valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
-                is_current=rel.is_current,
-                superseded_by=rel.superseded_by,
-            )
-        )
-
-    return RelationshipsListResponse(
-        relationships=relationship_responses,
-        total=len(relationship_responses),
-    )
-
-
 @router.get(
     "/relationships",
     response_model=RelationshipsListResponse,
@@ -347,6 +259,93 @@ async def search_relationships_by_name(
     # Filter by relationship type if specified
     if relationship_type:
         relationships = [r for r in relationships if r.type.upper() == relationship_type.upper()]
+
+    # Enrich with entity names
+    relationship_responses = []
+    for rel in relationships:
+        from_entity = await db.get_entity(rel.from_entity_id)
+        to_entity = await db.get_entity(rel.to_entity_id)
+
+        relationship_responses.append(
+            RelationshipResponse(
+                id=rel.id,
+                from_entity_id=rel.from_entity_id,
+                from_entity_name=from_entity.canonical_name if from_entity else "Unknown",
+                to_entity_id=rel.to_entity_id,
+                to_entity_name=to_entity.canonical_name if to_entity else "Unknown",
+                type=rel.type,
+                confidence=rel.confidence,
+                valid_from=rel.valid_from.isoformat() if rel.valid_from else None,
+                valid_to=rel.valid_to.isoformat() if rel.valid_to else None,
+                is_current=rel.is_current,
+                superseded_by=rel.superseded_by,
+            )
+        )
+
+    return RelationshipsListResponse(
+        relationships=relationship_responses,
+        total=len(relationship_responses),
+    )
+
+
+@router.get(
+    "/{entity_id}/relationships",
+    response_model=RelationshipsListResponse,
+    summary="Get relationships for an entity",
+)
+@limiter.limit("60/minute")
+async def get_entity_relationships(
+    request: Request,
+    entity_id: str,
+    db: DatabaseDep,
+    current_user: CurrentUser,
+    project_id: str | None = Query(default=None, description="Filter to one project for restricted keys"),
+    as_of: str | None = Query(
+        default=None,
+        description="Point-in-time query (ISO format, e.g., '2022-01-15'). Returns relationships valid at this time.",
+    ),
+    include_history: bool = Query(
+        default=False,
+        description="Include superseded/historical relationships",
+    ),
+) -> RelationshipsListResponse:
+    """
+    Get relationships involving a specific entity with temporal filtering.
+
+    Supports point-in-time queries like "Where did Alice work in January 2022?"
+
+    - **as_of**: Query relationships as they were at a specific date
+    - **include_history**: Include relationships that have been superseded
+    """
+    from datetime import datetime
+
+    project_id = resolve_project_access(current_user, project_id)
+
+    # Verify entity exists
+    entity = await db.get_entity(entity_id, user_id=current_user.user_id, project_id=project_id)
+    if not entity:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Entity {entity_id} not found",
+        )
+
+    # Parse as_of date if provided
+    as_of_dt = None
+    if as_of:
+        try:
+            as_of_dt = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date format for as_of: {as_of}. Use ISO format (e.g., 2022-01-15)",
+            )
+
+    # Get relationships with temporal filtering
+    relationships = await db.get_entity_relationships(
+        entity_id,
+        as_of=as_of_dt,
+        include_superseded=include_history,
+    )
 
     # Enrich with entity names
     relationship_responses = []
