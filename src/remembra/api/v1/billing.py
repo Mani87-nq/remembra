@@ -82,6 +82,39 @@ def get_billing_provider(settings: Settings) -> str:
 # ---------------------------------------------------------------------------
 
 
+# Plan metadata (not in PlanLimits dataclass)
+PLAN_METADATA = {
+    "pro": {
+        "name": "Pro",
+        "price_monthly": 4900,  # $49 in cents
+        "price_yearly": 49900,  # $499 in cents
+        "features": [
+            "500K memories",
+            "1M recalls/month",
+            "5 team members",
+            "Webhooks",
+            "Observability",
+            "Priority support",
+        ],
+    },
+    "team": {
+        "name": "Team",
+        "price_monthly": 19900,  # $199 in cents
+        "price_yearly": 199900,  # $1999 in cents
+        "features": [
+            "2M memories",
+            "5M recalls/month",
+            "25 team members",
+            "SSO",
+            "Webhooks",
+            "Observability",
+            "Priority support",
+            "Dedicated support",
+        ],
+    },
+}
+
+
 @router.get(
     "/plans",
     response_model=PlansResponse,
@@ -105,12 +138,13 @@ async def get_plans(
         plans = []
         for tier in [PlanTier.PRO, PlanTier.TEAM]:
             plan = PLANS[tier]
+            meta = PLAN_METADATA.get(tier.value, {})
             plans.append(PlanInfo(
                 id=tier.value,
-                name=plan.name,
-                price_monthly=plan.price_monthly,
-                price_yearly=plan.price_yearly,
-                features=plan.features,
+                name=meta.get("name", tier.value.title()),
+                price_monthly=meta.get("price_monthly", 0),
+                price_yearly=meta.get("price_yearly"),
+                features=meta.get("features", []),
                 limits={
                     "max_memories": plan.max_memories,
                     "max_stores_per_month": plan.max_stores_per_month,
@@ -128,12 +162,13 @@ async def get_plans(
         plans = []
         for tier in [PlanTier.PRO, PlanTier.ENTERPRISE]:
             plan = PLANS[tier]
+            meta = PLAN_METADATA.get(tier.value, {})
             plans.append(PlanInfo(
                 id=tier.value,
-                name=plan.name,
-                price_monthly=plan.price_monthly,
-                price_yearly=getattr(plan, 'price_yearly', None),
-                features=getattr(plan, 'features', []),
+                name=meta.get("name", tier.value.title()),
+                price_monthly=meta.get("price_monthly", 0),
+                price_yearly=meta.get("price_yearly"),
+                features=meta.get("features", []),
                 limits={
                     "max_memories": plan.max_memories,
                     "max_stores_per_month": plan.max_stores_per_month,
