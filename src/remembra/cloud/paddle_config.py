@@ -90,15 +90,62 @@ PRODUCTION_CONFIG = PaddleConfig(
 )
 
 
-def get_paddle_config(env: PaddleEnvironment | str) -> PaddleConfig:
+@dataclass
+class PaddleSettings:
+    """Runtime Paddle settings from environment."""
+    
+    api_key: str
+    client_token: str | None
+    webhook_secret: str | None
+    sandbox: bool
+    config: PaddleConfig
+
+
+def get_paddle_settings() -> PaddleSettings:
+    """Get Paddle settings from environment/config.
+    
+    Reads PADDLE_API_KEY, PADDLE_CLIENT_TOKEN, PADDLE_SANDBOX, etc.
+    """
+    from remembra.config import get_settings
+    
+    settings = get_settings()
+    
+    if not settings.paddle_api_key:
+        raise ValueError("PADDLE_API_KEY not configured")
+    
+    sandbox = settings.paddle_sandbox
+    config = SANDBOX_CONFIG if sandbox else PRODUCTION_CONFIG
+    
+    return PaddleSettings(
+        api_key=settings.paddle_api_key,
+        client_token=settings.paddle_client_token,
+        webhook_secret=settings.paddle_webhook_secret,
+        sandbox=sandbox,
+        config=config,
+    )
+
+
+# Alias for backward compatibility
+def get_paddle_config(env: PaddleEnvironment | str | None = None) -> PaddleConfig:
     """Get Paddle configuration for an environment.
 
     Args:
-        env: "sandbox" or "production"
+        env: "sandbox" or "production", or None to auto-detect from settings
 
     Returns:
         PaddleConfig with all price IDs and settings.
     """
+    if env is None:
+        # Auto-detect from settings
+        try:
+            from remembra.config import get_settings
+            settings = get_settings()
+            if settings.paddle_sandbox:
+                return SANDBOX_CONFIG
+            return PRODUCTION_CONFIG
+        except Exception:
+            return PRODUCTION_CONFIG
+    
     if isinstance(env, str):
         env = PaddleEnvironment(env.lower())
 

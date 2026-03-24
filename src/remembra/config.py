@@ -194,6 +194,35 @@ class Settings(BaseSettings):
     )
 
     # -----------------------------------------------------------------------
+    # Paddle (alternative to Stripe)
+    # -----------------------------------------------------------------------
+    billing_provider: str | None = Field(
+        None,
+        description="Billing provider: 'stripe' or 'paddle'. Auto-detected if not set.",
+        validation_alias=AliasChoices("REMEMBRA_BILLING_PROVIDER", "BILLING_PROVIDER"),
+    )
+    paddle_api_key: str | None = Field(
+        None,
+        description="Paddle API key",
+        validation_alias=AliasChoices("REMEMBRA_PADDLE_API_KEY", "PADDLE_API_KEY"),
+    )
+    paddle_client_token: str | None = Field(
+        None,
+        description="Paddle client-side token for checkout overlay",
+        validation_alias=AliasChoices("REMEMBRA_PADDLE_CLIENT_TOKEN", "PADDLE_CLIENT_TOKEN"),
+    )
+    paddle_webhook_secret: str | None = Field(
+        None,
+        description="Paddle webhook signing secret",
+        validation_alias=AliasChoices("REMEMBRA_PADDLE_WEBHOOK_SECRET", "PADDLE_WEBHOOK_SECRET"),
+    )
+    paddle_sandbox: bool = Field(
+        False,
+        description="Use Paddle sandbox environment",
+        validation_alias=AliasChoices("REMEMBRA_PADDLE_SANDBOX", "PADDLE_SANDBOX"),
+    )
+
+    # -----------------------------------------------------------------------
     # Email (Resend)
     # -----------------------------------------------------------------------
     resend_api_key: str | None = Field(
