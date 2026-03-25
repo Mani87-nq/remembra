@@ -31,7 +31,7 @@
 
 ---
 
-## 🚀 What's New in v0.12.0
+## 🚀 What's New in v0.12.1
 
 - **👤 User Profiles** — Profile management with avatars, preferences, and activity tracking
 - **🧠 Smart Auto-Forgetting** — Human-like memory that naturally fades over time
