@@ -213,6 +213,14 @@ class RecallRequest(BaseModel):
         default=False,
         description="Include decay scores in response (for debugging/analytics).",
     )
+    retrieval_mode: str = Field(
+        default="balanced",
+        description=(
+            "Retrieval mode to use for ranking. "
+            "Options: 'balanced' (default), 'debug' (high recency), "
+            "'operational' (entity-heavy), 'strategic' (historical depth)."
+        ),
+    )
 
 
 class RecallResult(BaseModel):

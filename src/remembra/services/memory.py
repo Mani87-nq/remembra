@@ -924,10 +924,12 @@ class MemoryService:
                 log.warning("reranking_failed", error=str(e))
 
         # Step 6: Advanced relevance ranking (recency, entity, keyword boosts)
+        # Uses retrieval_mode to adjust ranking weights (debug/operational/strategic)
         ranked = self.relevance_ranker.rank(
             memories=hybrid_results,
             query=request.query,
             query_entities=matched_entities,
+            retrieval_mode=getattr(request, "retrieval_mode", "balanced"),
         )
 
         log.debug(

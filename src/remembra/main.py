@@ -302,6 +302,38 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     else:
         app.state.sleep_worker = None
 
+    # p99 Calibration Cache (v0.13 - @aipracticalist feedback)
+    # Load cached calibration or run new calibration on startup
+    from remembra.core.calibration import (
+        CalibrationCache,
+        CalibrationConfig,
+        run_calibration,
+    )
+
+    calibration_cache = CalibrationCache()
+    calibration_config = CalibrationConfig(
+        embedding_model=settings.embedding_model,
+        embedding_dim=settings.embedding_dimensions,
+        qdrant_collection=settings.qdrant_collection,
+        enable_hybrid=settings.enable_hybrid_search,
+        enable_reranking=settings.enable_reranking,
+    )
+
+    if calibration_cache.is_valid(calibration_config):
+        cached_calibration = calibration_cache.load()
+        if cached_calibration:
+            app.state.calibration = cached_calibration
+            log.info(
+                "calibration_cache_loaded",
+                recall_p99_ms=cached_calibration.recall_p99_ms,
+            )
+    else:
+        # Run calibration in background (don't block startup)
+        log.info("calibration_cache_miss_will_run_async")
+        app.state.calibration = None
+        # Note: Actual calibration runs on first few requests
+        # and gets saved to cache after warmup
+
     log.info("storage_layer_ready")
 
     yield

@@ -48,6 +48,57 @@ class RankingConfig:
     access_log_base: float = 10.0  # Use log scale for access counts
 
     @classmethod
+    def for_mode(cls, mode: str) -> "RankingConfig":
+        """
+        Get preset configuration for a retrieval mode.
+
+        Modes (from Marty's feedback):
+        - balanced: Default balanced weights (same as from_env)
+        - debug: High recency bias (what just happened?)
+        - operational: Stability-weighted (reliable facts, entity-heavy)
+        - strategic: Historical depth (patterns over time, low recency decay)
+
+        Args:
+            mode: One of "balanced", "debug", "operational", "strategic"
+
+        Returns:
+            RankingConfig with preset weights for the mode
+        """
+        if mode == "debug":
+            # Debug mode: Heavy recency bias for recent context
+            return cls(
+                semantic_weight=0.35,
+                recency_weight=0.45,
+                recency_decay_days=7.0,  # Fast decay
+                entity_weight=0.10,
+                keyword_weight=0.10,
+                access_weight=0.0,
+            )
+        elif mode == "operational":
+            # Operational mode: Stable, entity-focused facts
+            return cls(
+                semantic_weight=0.50,
+                recency_weight=0.10,
+                recency_decay_days=90.0,  # Slow decay
+                entity_weight=0.25,
+                keyword_weight=0.15,
+                access_weight=0.0,
+            )
+        elif mode == "strategic":
+            # Strategic mode: Historical depth for pattern analysis
+            return cls(
+                semantic_weight=0.70,
+                recency_weight=0.05,
+                recency_decay_days=365.0,  # Very slow decay
+                entity_weight=0.15,
+                keyword_weight=0.10,
+                access_weight=0.0,
+            )
+        else:
+            # Balanced (default)
+            return cls.from_env()
+
+    @classmethod
     def from_env(cls) -> "RankingConfig":
         """
         Create RankingConfig from environment variables.
@@ -123,7 +174,9 @@ class RelevanceRanker:
         """
         self.config = config or RankingConfig.from_env()
 
-    def _compute_recency_score(self, created_at: datetime | None) -> float:
+    def _compute_recency_score(
+        self, created_at: datetime | None, config: RankingConfig | None = None
+    ) -> float:
         """
         Compute recency score using exponential decay.
 
@@ -134,6 +187,7 @@ class RelevanceRanker:
         if not created_at:
             return 0.5  # Default for unknown dates
 
+        cfg = config or self.config
         now = datetime.utcnow()
 
         try:
@@ -146,7 +200,7 @@ class RelevanceRanker:
             if age_days < 0:
                 return 1.0  # Future dates get max score
 
-            decay_rate = math.log(2) / self.config.recency_decay_days
+            decay_rate = math.log(2) / cfg.recency_decay_days
             score = math.exp(-age_days * decay_rate)
 
             return min(1.0, max(0.0, score))
@@ -160,6 +214,7 @@ class RelevanceRanker:
         memory_entities: list[EntityRef] | None,
         query_entities: list[EntityRef] | None,
         query: str = "",
+        config: RankingConfig | None = None,
     ) -> float:
         """
         Compute entity match score.
@@ -169,6 +224,7 @@ class RelevanceRanker:
         if not memory_entities:
             return 0.0
 
+        cfg = config or self.config
         boost = 0.0
         query_lower = query.lower()
 
@@ -177,14 +233,14 @@ class RelevanceRanker:
             query_entity_ids = {e.id for e in query_entities}
             for entity in memory_entities:
                 if entity.id in query_entity_ids:
-                    boost += self.config.entity_boost_per_match * entity.confidence
+                    boost += cfg.entity_boost_per_match * entity.confidence
 
         # Also check entity names in query string
         for entity in memory_entities:
             if entity.canonical_name.lower() in query_lower:
-                boost += self.config.entity_boost_per_match * entity.confidence
+                boost += cfg.entity_boost_per_match * entity.confidence
 
-        return min(boost, self.config.entity_max_boost)
+        return min(boost, cfg.entity_max_boost)
 
     def _compute_access_score(self, access_count: int) -> float:
         """
@@ -209,6 +265,7 @@ class RelevanceRanker:
         memories: list[dict[str, Any]],
         query: str = "",
         query_entities: list[EntityRef] | None = None,
+        retrieval_mode: str = "balanced",
     ) -> list[RankedMemory]:
         """
         Rank memories using weighted combination of signals.
@@ -224,12 +281,29 @@ class RelevanceRanker:
                 - access_count: Access frequency (optional)
             query: Original search query
             query_entities: Entities found in the query
+            retrieval_mode: One of "balanced", "debug", "operational", "strategic"
+                - debug: High recency bias (what just happened?)
+                - operational: Stability/entity-weighted (reliable facts)
+                - strategic: Historical depth (patterns over time)
 
         Returns:
             List of RankedMemory sorted by final_score descending
         """
         if not memories:
             return []
+
+        # Select config based on retrieval mode
+        # If mode is non-default, use preset; otherwise use instance config
+        if retrieval_mode and retrieval_mode != "balanced":
+            config = RankingConfig.for_mode(retrieval_mode)
+            log.debug(
+                "using_retrieval_mode",
+                mode=retrieval_mode,
+                semantic_weight=config.semantic_weight,
+                recency_weight=config.recency_weight,
+            )
+        else:
+            config = self.config
 
         ranked: list[RankedMemory] = []
 
@@ -277,19 +351,21 @@ class RelevanceRanker:
             raw_keyword = memory.get("keyword_score", 0)
             keyword_score = raw_keyword / max_keyword if max_keyword > 0 else 0
 
-            recency_score = self._compute_recency_score(created_at)
+            recency_score = self._compute_recency_score(created_at, config)
 
-            entity_score = self._compute_entity_score(memory_entities, query_entities, query)
+            entity_score = self._compute_entity_score(
+                memory_entities, query_entities, query, config
+            )
 
             access_score = self._compute_access_score(memory.get("access_count", 0))
 
             # Compute weighted final score
             final_score = (
-                self.config.semantic_weight * semantic_score
-                + self.config.recency_weight * recency_score
-                + self.config.entity_weight * entity_score
-                + self.config.keyword_weight * keyword_score
-                + self.config.access_weight * access_score
+                config.semantic_weight * semantic_score
+                + config.recency_weight * recency_score
+                + config.entity_weight * entity_score
+                + config.keyword_weight * keyword_score
+                + config.access_weight * access_score
             )
 
             ranked.append(
