@@ -45,6 +45,7 @@ class QdrantStore:
                 url=self.settings.qdrant_url,
                 api_key=self.settings.qdrant_api_key,
                 timeout=30.0,
+                prefer_grpc=True,  # gRPC is faster than HTTP for high throughput
             )
         return self._client
 

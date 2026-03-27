@@ -275,11 +275,19 @@ class Database:
         self._connection: aiosqlite.Connection | None = None
 
     async def connect(self) -> None:
-        """Open database connection."""
+        """Open database connection with optimized settings."""
         self._connection = await aiosqlite.connect(self.db_path)
         self._connection.row_factory = aiosqlite.Row
+        
+        # Performance optimizations for concurrent access
         await self._connection.execute("PRAGMA foreign_keys = ON")
-        log.info("database_connected", path=self.db_path)
+        await self._connection.execute("PRAGMA journal_mode = WAL")  # Better concurrency
+        await self._connection.execute("PRAGMA synchronous = NORMAL")  # Balance durability/speed
+        await self._connection.execute("PRAGMA cache_size = -64000")  # 64MB cache
+        await self._connection.execute("PRAGMA temp_store = MEMORY")  # Temp tables in RAM
+        await self._connection.execute("PRAGMA mmap_size = 268435456")  # 256MB mmap
+        
+        log.info("database_connected", path=self.db_path, journal_mode="WAL")
 
     async def close(self) -> None:
         """Close database connection."""
