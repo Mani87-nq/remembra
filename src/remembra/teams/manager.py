@@ -242,7 +242,7 @@ class TeamManager:
         cursor = await self._db.conn.execute("DELETE FROM teams WHERE id = ?", (team_id,))
         await self._db.conn.commit()
 
-        deleted = cursor.rowcount > 0
+        deleted: bool = cursor.rowcount > 0
         if deleted:
             logger.info("Team deleted: id=%s by=%s", team_id, user_id)
         return deleted
@@ -821,7 +821,8 @@ class TeamManager:
             (team_id, space_id),
         )
         await self._db.conn.commit()
-        return cursor.rowcount > 0
+        deleted: bool = cursor.rowcount > 0
+        return deleted
 
     async def list_team_spaces(self, team_id: str) -> list[str]:
         """List all space IDs linked to a team."""

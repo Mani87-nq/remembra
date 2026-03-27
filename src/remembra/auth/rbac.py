@@ -199,7 +199,8 @@ class RoleManager:
             (api_key_id,),
         )
         await self._db.conn.commit()
-        return cursor.rowcount > 0
+        deleted: bool = cursor.rowcount > 0
+        return deleted
 
     async def list_roles(self, user_id: str) -> list[dict[str, Any]]:
         """List role assignments for all keys owned by a user."""

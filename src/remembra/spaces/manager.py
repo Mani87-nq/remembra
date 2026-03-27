@@ -209,7 +209,7 @@ class SpaceManager:
         cursor = await self._db.conn.execute("DELETE FROM memory_spaces WHERE id = ?", (space_id,))
         await self._db.conn.commit()
 
-        deleted = cursor.rowcount > 0
+        deleted: bool = cursor.rowcount > 0
         if deleted:
             logger.info("Space deleted: id=%s by=%s", space_id, user_id)
         return deleted
@@ -272,7 +272,8 @@ class SpaceManager:
             (space_id, agent_id),
         )
         await self._db.conn.commit()
-        return cursor.rowcount > 0
+        deleted: bool = cursor.rowcount > 0
+        return deleted
 
     async def list_members(self, space_id: str) -> list[dict[str, Any]]:
         """List all agents with access to a space."""
@@ -329,7 +330,8 @@ class SpaceManager:
             (memory_id, space_id),
         )
         await self._db.conn.commit()
-        return cursor.rowcount > 0
+        deleted: bool = cursor.rowcount > 0
+        return deleted
 
     async def get_space_memory_ids(self, space_id: str, limit: int = 1000) -> list[str]:
         """Get all memory IDs in a space."""

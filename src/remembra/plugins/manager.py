@@ -87,7 +87,7 @@ class PluginManager:
         Does **not** instantiate or activate the plugin — call ``register()``
         with an instance for that.
         """
-        name = cls.name  # type: ignore[attr-defined]
+        name = cls.name
         self._registry[name] = cls
         logger.debug("Plugin class registered in marketplace: %s", name)
 
@@ -110,10 +110,10 @@ class PluginManager:
         """List all registered plugin classes (marketplace catalog)."""
         return [
             {
-                "name": cls.name,  # type: ignore[attr-defined]
-                "version": cls.version,  # type: ignore[attr-defined]
-                "description": cls.description,  # type: ignore[attr-defined]
-                "author": cls.author,  # type: ignore[attr-defined]
+                "name": cls.name,
+                "version": cls.version,
+                "description": cls.description,
+                "author": cls.author,
             }
             for cls in self._registry.values()
         ]

@@ -124,6 +124,7 @@ dev = [
     "mypy>=1.13.0",
     "build>=1.0.0",
     "twine>=5.0.0",
+    "types-dateparser>=1.2.0",
 ]
 
 # All dependencies (SDK + Server + Rerank + MCP + Integrations + Cloud)
@@ -208,7 +209,7 @@ files = ["src/remembra"]
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["qdrant_client.*", "structlog.*"]
+module = ["qdrant_client.*", "structlog.*", "dateparser.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------------------

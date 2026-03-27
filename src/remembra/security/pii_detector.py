@@ -23,7 +23,7 @@ log = structlog.get_logger(__name__)
 # PII Patterns
 # ============================================================================
 
-PII_PATTERNS: dict[str, re.Pattern] = {
+PII_PATTERNS: dict[str, re.Pattern[str]] = {
     # US Social Security Number
     "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
     # Credit Card Numbers (major formats)

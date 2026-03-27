@@ -36,8 +36,8 @@ class TemporalCleanupJob:
 
     def __init__(
         self,
-        database,  # Database instance
-        qdrant_store,  # QdrantStore instance
+        database: Any,  # Database instance
+        qdrant_store: Any,  # QdrantStore instance
         config: DecayConfig | None = None,
         auto_delete_expired: bool = True,
         auto_prune_decayed: bool = False,  # Conservative default
@@ -87,17 +87,13 @@ class TemporalCleanupJob:
         self._run_count += 1
         start_time = datetime.utcnow()
 
-        results = {
-            "run_id": self._run_count,
-            "started_at": start_time.isoformat(),
-            "dry_run": dry_run,
-            "expired_found": 0,
-            "expired_deleted": 0,
-            "decayed_found": 0,
-            "decayed_pruned": 0,
-            "decayed_archived": 0,
-            "errors": [],
-        }
+        # Track errors separately for proper typing
+        errors: list[str] = []
+        expired_found = 0
+        expired_deleted = 0
+        decayed_found = 0
+        decayed_pruned = 0
+        decayed_archived = 0
 
         try:
             # 1. Handle TTL-expired memories
@@ -107,9 +103,9 @@ class TemporalCleanupJob:
                     project_id=project_id,
                     dry_run=dry_run,
                 )
-                results["expired_found"] = expired_result["found"]
-                results["expired_deleted"] = expired_result["deleted"]
-                results["errors"].extend(expired_result.get("errors", []))
+                expired_found = expired_result["found"]
+                expired_deleted = expired_result["deleted"]
+                errors.extend(expired_result.get("errors", []))
 
             # 2. Handle decayed memories (soft prune)
             if self.auto_prune_decayed:
@@ -118,32 +114,41 @@ class TemporalCleanupJob:
                     project_id=project_id,
                     dry_run=dry_run,
                 )
-                results["decayed_found"] = decayed_result["found"]
-                results["decayed_pruned"] = decayed_result["pruned"]
-                results["decayed_archived"] = decayed_result.get("archived", 0)
-                results["errors"].extend(decayed_result.get("errors", []))
+                decayed_found = decayed_result["found"]
+                decayed_pruned = decayed_result["pruned"]
+                decayed_archived = decayed_result.get("archived", 0)
+                errors.extend(decayed_result.get("errors", []))
 
             # Update metrics
             self._last_run = start_time
-            self._total_expired_deleted += results["expired_deleted"]
-            self._total_decayed_pruned += results["decayed_pruned"]
-
-            results["completed_at"] = datetime.utcnow().isoformat()
-            results["duration_ms"] = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            self._total_expired_deleted += expired_deleted
+            self._total_decayed_pruned += decayed_pruned
 
             log.info(
                 "cleanup_completed",
-                expired_deleted=results["expired_deleted"],
-                decayed_pruned=results["decayed_pruned"],
-                duration_ms=results["duration_ms"],
+                expired_deleted=expired_deleted,
+                decayed_pruned=decayed_pruned,
+                duration_ms=int((datetime.utcnow() - start_time).total_seconds() * 1000),
                 dry_run=dry_run,
             )
 
         except Exception as e:
             log.error("cleanup_failed", error=str(e))
-            results["errors"].append(str(e))
+            errors.append(str(e))
 
-        return results
+        return {
+            "run_id": self._run_count,
+            "started_at": start_time.isoformat(),
+            "dry_run": dry_run,
+            "expired_found": expired_found,
+            "expired_deleted": expired_deleted,
+            "decayed_found": decayed_found,
+            "decayed_pruned": decayed_pruned,
+            "decayed_archived": decayed_archived,
+            "errors": errors,
+            "completed_at": datetime.utcnow().isoformat(),
+            "duration_ms": int((datetime.utcnow() - start_time).total_seconds() * 1000),
+        }
 
     async def _cleanup_expired(
         self,
@@ -152,7 +157,9 @@ class TemporalCleanupJob:
         dry_run: bool,
     ) -> dict[str, Any]:
         """Delete memories past their TTL expiration."""
-        result = {"found": 0, "deleted": 0, "errors": []}
+        found = 0
+        deleted = 0
+        errors: list[str] = []
 
         try:
             # Get expired memory IDs
@@ -160,11 +167,11 @@ class TemporalCleanupJob:
                 user_id=user_id,
                 project_id=project_id or "default",
             )
-            result["found"] = len(expired_ids)
+            found = len(expired_ids)
 
             if dry_run:
                 log.info("dry_run_expired", count=len(expired_ids), ids=expired_ids[:10])
-                return result
+                return {"found": found, "deleted": deleted, "errors": errors}
 
             # Delete each expired memory
             for memory_id in expired_ids:
@@ -179,19 +186,19 @@ class TemporalCleanupJob:
                     # Delete from FTS index
                     await self.db.delete_memory_fts(memory_id)
 
-                    result["deleted"] += 1
+                    deleted += 1
 
                 except Exception as e:
                     log.warning("delete_expired_failed", memory_id=memory_id, error=str(e))
-                    result["errors"].append(f"Failed to delete {memory_id}: {e}")
+                    errors.append(f"Failed to delete {memory_id}: {e}")
 
-            log.info("expired_cleanup_done", found=result["found"], deleted=result["deleted"])
+            log.info("expired_cleanup_done", found=found, deleted=deleted)
 
         except Exception as e:
             log.error("expired_cleanup_error", error=str(e))
-            result["errors"].append(str(e))
+            errors.append(str(e))
 
-        return result
+        return {"found": found, "deleted": deleted, "errors": errors}
 
     async def _cleanup_decayed(
         self,
@@ -200,7 +207,10 @@ class TemporalCleanupJob:
         dry_run: bool,
     ) -> dict[str, Any]:
         """Handle memories that have decayed below threshold."""
-        result = {"found": 0, "pruned": 0, "archived": 0, "errors": []}
+        found = 0
+        pruned = 0
+        archived = 0
+        errors: list[str] = []
 
         try:
             # Get all memories with decay info
@@ -211,7 +221,7 @@ class TemporalCleanupJob:
             )
 
             # Calculate decay and find candidates for pruning
-            prune_candidates = []
+            prune_candidates: list[dict[str, Any]] = []
             for memory in memories:
                 decay_info = calculate_memory_decay_info(memory, self.config)
                 if decay_info["should_prune"] and not decay_info["is_expired"]:
@@ -224,7 +234,7 @@ class TemporalCleanupJob:
                         }
                     )
 
-            result["found"] = len(prune_candidates)
+            found = len(prune_candidates)
 
             if dry_run:
                 log.info(
@@ -232,7 +242,7 @@ class TemporalCleanupJob:
                     count=len(prune_candidates),
                     samples=prune_candidates[:5],
                 )
-                return result
+                return {"found": found, "pruned": pruned, "archived": archived, "errors": errors}
 
             # Handle decayed memories
             for candidate in prune_candidates:
@@ -243,31 +253,31 @@ class TemporalCleanupJob:
                         # Archive instead of delete (future: move to cold storage)
                         # For now, just mark as archived in metadata
                         await self._archive_memory(memory_id)
-                        result["archived"] += 1
+                        archived += 1
                     else:
                         # Hard delete
                         await self.db.delete_memory(memory_id)
                         if self.qdrant:
                             await self.qdrant.delete(memory_id)
                         await self.db.delete_memory_fts(memory_id)
-                        result["pruned"] += 1
+                        pruned += 1
 
                 except Exception as e:
                     log.warning("prune_decayed_failed", memory_id=memory_id, error=str(e))
-                    result["errors"].append(f"Failed to prune {memory_id}: {e}")
+                    errors.append(f"Failed to prune {memory_id}: {e}")
 
             log.info(
                 "decayed_cleanup_done",
-                found=result["found"],
-                pruned=result["pruned"],
-                archived=result["archived"],
+                found=found,
+                pruned=pruned,
+                archived=archived,
             )
 
         except Exception as e:
             log.error("decayed_cleanup_error", error=str(e))
-            result["errors"].append(str(e))
+            errors.append(str(e))
 
-        return result
+        return {"found": found, "pruned": pruned, "archived": archived, "errors": errors}
 
     async def _archive_memory(self, memory_id: str) -> None:
         """

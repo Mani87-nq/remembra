@@ -3826,6 +3826,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
     { name = "twine" },
+    { name = "types-dateparser" },
 ]
 encryption = [
     { name = "cryptography" },
@@ -3912,6 +3913,7 @@ requires-dist = [
     { name = "structlog", marker = "extra == 'server'", specifier = ">=24.4.0" },
     { name = "tiktoken", marker = "extra == 'server'", specifier = ">=0.7.0" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0.0" },
+    { name = "types-dateparser", marker = "extra == 'dev'", specifier = ">=1.2.0" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.32.0" },
 ]
 provides-extras = ["server", "mcp", "langchain", "crewai", "anthropic", "encryption", "cloud", "rerank", "tracing", "dev", "all"]
@@ -4695,6 +4697,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/fd/07/b822e1b307d40e263e8253d2384cf98c51aa2368cc7ba9a07e523a1d964b/typer-0.23.1.tar.gz", hash = "sha256:2070374e4d31c83e7b61362fd859aa683576432fd5b026b060ad6b4cd3b86134", size = 120047, upload-time = "2026-02-13T10:04:30.984Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d5/91/9b286ab899c008c2cb05e8be99814807e7fbbd33f0c0c960470826e5ac82/typer-0.23.1-py3-none-any.whl", hash = "sha256:3291ad0d3c701cbf522012faccfbb29352ff16ad262db2139e6b01f15781f14e", size = 56813, upload-time = "2026-02-13T10:04:32.008Z" },
+]
+
+[[package]]
+name = "types-dateparser"
+version = "1.3.0.20260323"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/38/9ec759a044b8f0cad872b01b267af60030c218501bdea039e9a78db17d23/types_dateparser-1.3.0.20260323.tar.gz", hash = "sha256:3918dd41c9a69681e14f0e7796efa819897b0b3510a7c837e7da3f9354c333fe", size = 17515, upload-time = "2026-03-23T04:15:24.237Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e0/ad/2037c07d3257924d8938c9aa87f20b1aad50275c998e07418723a5381c1e/types_dateparser-1.3.0.20260323-py3-none-any.whl", hash = "sha256:898bccc5fe82957d22cee34edc781cca3442d43828ca90d8cda9625198e652cb", size = 24927, upload-time = "2026-03-23T04:15:23.071Z" },
 ]
 
 [[package]]

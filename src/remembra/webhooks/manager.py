@@ -240,7 +240,7 @@ class WebhookManager:
             (webhook_id, user_id),
         )
         await self._db.conn.commit()
-        deleted = cursor.rowcount > 0
+        deleted: bool = cursor.rowcount > 0
         if deleted:
             logger.info("Webhook deleted: id=%s user=%s", webhook_id, user_id)
         return deleted

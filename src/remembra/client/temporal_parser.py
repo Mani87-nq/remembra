@@ -25,6 +25,7 @@ optional dateparser fallback for complex cases.
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -75,7 +76,9 @@ class TemporalDetection:
 # Pre-compiled regex patterns for efficiency
 # Order matters - more specific patterns first
 
-TEMPORAL_PATTERNS: list[tuple[re.Pattern[str], int, TemporalGranularity, float, str]] = [
+TtlCalculator = int | Callable[[re.Match[str]], int]
+
+TEMPORAL_PATTERNS: list[tuple[re.Pattern[str], TtlCalculator, TemporalGranularity, float, str]] = [
     # Explicit "remember for X" patterns - highest confidence
     (
         re.compile(r"\bremember\s+(?:this\s+)?for\s+(\d+)\s*(?:min(?:ute)?s?)\b", re.I),

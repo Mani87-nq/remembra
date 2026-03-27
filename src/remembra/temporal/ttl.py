@@ -99,6 +99,9 @@ def calculate_expires_at(
 
     delta = parse_ttl(ttl_string) if ttl_string else ttl_delta
 
+    if delta is None:
+        return None
+
     return base_time + delta
 
 

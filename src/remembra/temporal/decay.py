@@ -257,17 +257,29 @@ def calculate_memory_decay_info(memory_data: dict[str, Any], config: DecayConfig
     now = datetime.utcnow()
 
     # Parse dates
-    created_at = memory_data.get("created_at")
-    if isinstance(created_at, str):
-        created_at = datetime.fromisoformat(created_at)
+    created_at_raw = memory_data.get("created_at")
+    if isinstance(created_at_raw, str):
+        created_at = datetime.fromisoformat(created_at_raw)
+    elif isinstance(created_at_raw, datetime):
+        created_at = created_at_raw
+    else:
+        created_at = now  # Fallback to now if not provided
 
-    last_accessed = memory_data.get("last_accessed")
-    if isinstance(last_accessed, str):
-        last_accessed = datetime.fromisoformat(last_accessed)
+    last_accessed_raw = memory_data.get("last_accessed")
+    if isinstance(last_accessed_raw, str):
+        last_accessed: datetime | None = datetime.fromisoformat(last_accessed_raw)
+    elif isinstance(last_accessed_raw, datetime):
+        last_accessed = last_accessed_raw
+    else:
+        last_accessed = None
 
-    expires_at = memory_data.get("expires_at")
-    if isinstance(expires_at, str):
-        expires_at = datetime.fromisoformat(expires_at)
+    expires_at_raw = memory_data.get("expires_at")
+    if isinstance(expires_at_raw, str):
+        expires_at: datetime | None = datetime.fromisoformat(expires_at_raw)
+    elif isinstance(expires_at_raw, datetime):
+        expires_at = expires_at_raw
+    else:
+        expires_at = None
 
     access_count = memory_data.get("access_count", 0) or 0
     importance = memory_data.get("importance_score", 0.5) or 0.5

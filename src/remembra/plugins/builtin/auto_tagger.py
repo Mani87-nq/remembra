@@ -64,7 +64,7 @@ class AutoTaggerPlugin(RemembraPlugin):
         self._enable_topic = self.config.get("enable_topic", True)
 
         # Compile custom rules
-        self._custom_rules: list[tuple[re.Pattern, str]] = []
+        self._custom_rules: list[tuple[re.Pattern[str], str]] = []
         for rule in self.config.get("custom_rules", []):
             try:
                 self._custom_rules.append(
