@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { User, Lock, AlertTriangle, Loader2, Shield, Smartphone, CheckCircle, XCircle, Key, Database, Globe, FolderOpen, Activity, Gauge, FileText, Clock, Download } from 'lucide-react';
+import { User, Lock, AlertTriangle, Loader2, Shield, Smartphone, CheckCircle, XCircle, Key, Database, Globe, FolderOpen, Activity, Gauge, FileText, Clock, Download, Sliders, Search, Zap, GitBranch } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
 import { API_V1 } from '../config';
 import type { UserResponse } from '../lib/api';
 
-type SettingsTab = 'profile' | 'password' | 'security' | 'workspace' | 'diagnostics' | 'account';
+type SettingsTab = 'profile' | 'password' | 'security' | 'workspace' | 'retrieval' | 'diagnostics' | 'account';
 
 interface SettingsProps {
   onLogout: () => void;
@@ -210,6 +210,18 @@ export function Settings({ onLogout }: SettingsProps) {
             Workspace
           </button>
           <button
+            onClick={() => setActiveTab('retrieval')}
+            className={clsx(
+              'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
+              activeTab === 'retrieval'
+                ? 'border-[#8B5CF6] text-[#8B5CF6] dark:text-[#A78BFA]'
+                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            )}
+          >
+            <Sliders className="w-4 h-4" />
+            Retrieval
+          </button>
+          <button
             onClick={() => setActiveTab('diagnostics')}
             className={clsx(
               'py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors',
@@ -248,6 +260,9 @@ export function Settings({ onLogout }: SettingsProps) {
       )}
       {activeTab === 'workspace' && (
         <WorkspaceSettings />
+      )}
+      {activeTab === 'retrieval' && (
+        <RetrievalSettings />
       )}
       {activeTab === 'diagnostics' && (
         <DiagnosticsSettings />
@@ -1450,6 +1465,268 @@ function WorkspaceSettings() {
           <li>• Projects help organize memories by topic or application</li>
           <li>• Memories in different projects are isolated from each other</li>
           <li>• Use Teams to share projects with collaborators</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Retrieval Settings Component
+// ---------------------------------------------------------------------------
+
+interface RetrievalConfig {
+  hybrid_alpha: number;
+  enable_reranking: boolean;
+  enable_graph_retrieval: boolean;
+  embedding_model: string;
+  embedding_dim: number;
+  default_threshold: number;
+}
+
+function RetrievalSettings() {
+  const [config, setConfig] = useState<RetrievalConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('remembra_jwt_token');
+    if (token) {
+      return { 'Authorization': `Bearer ${token}` };
+    }
+    const apiKey = localStorage.getItem('remembra_api_key');
+    if (apiKey) {
+      return { 'X-API-Key': apiKey };
+    }
+    return {};
+  };
+
+  useEffect(() => {
+    fetchRetrievalConfig();
+  }, []);
+
+  const fetchRetrievalConfig = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch from debug/analytics which includes config info
+      const response = await fetch(`${API_V1}/debug/analytics`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Extract retrieval config from analytics response
+        setConfig({
+          hybrid_alpha: data.config?.hybrid_alpha ?? 0.4,
+          enable_reranking: data.config?.enable_reranking ?? true,
+          enable_graph_retrieval: data.config?.enable_graph ?? true,
+          embedding_model: data.config?.embedding_model ?? 'text-embedding-3-small',
+          embedding_dim: data.config?.embedding_dim ?? 1536,
+          default_threshold: 0.4,
+        });
+      } else {
+        // Fallback to defaults if API not accessible
+        setConfig({
+          hybrid_alpha: 0.4,
+          enable_reranking: true,
+          enable_graph_retrieval: true,
+          embedding_model: 'text-embedding-3-small',
+          embedding_dim: 1536,
+          default_threshold: 0.4,
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load config');
+      // Set defaults on error
+      setConfig({
+        hybrid_alpha: 0.4,
+        enable_reranking: true,
+        enable_graph_retrieval: true,
+        embedding_model: 'text-embedding-3-small',
+        embedding_dim: 1536,
+        default_threshold: 0.4,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm">
+          {error} — Showing default configuration.
+        </div>
+      )}
+
+      {/* Hybrid Search */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+            <Search className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Hybrid Search
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Combines semantic (vector) and keyword (BM25) search
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                Hybrid Alpha (BM25 Weight)
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                0 = pure semantic, 1 = pure keyword. Default: 0.4
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full"
+                  style={{ width: `${(config?.hybrid_alpha ?? 0.4) * 100}%` }}
+                />
+              </div>
+              <span className="text-sm font-mono text-gray-700 dark:text-gray-300 w-12 text-right">
+                {config?.hybrid_alpha?.toFixed(2) ?? '0.40'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                Default Relevance Threshold
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Minimum score for results (0.0-1.0)
+              </p>
+            </div>
+            <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
+              {config?.default_threshold?.toFixed(2) ?? '0.40'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+            <Zap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Retrieval Features
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Advanced retrieval optimizations
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+            <div className="flex items-center gap-3">
+              <Zap className="w-4 h-4 text-purple-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  CrossEncoder Reranking
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Improves accuracy with second-stage ranking
+                </p>
+              </div>
+            </div>
+            <span className={clsx(
+              'px-2 py-1 rounded-full text-xs font-medium',
+              config?.enable_reranking
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+            )}>
+              {config?.enable_reranking ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+            <div className="flex items-center gap-3">
+              <GitBranch className="w-4 h-4 text-green-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  Graph Retrieval
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Traverses entity relationships for better context
+                </p>
+              </div>
+            </div>
+            <span className={clsx(
+              'px-2 py-1 rounded-full text-xs font-medium',
+              config?.enable_graph_retrieval
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+            )}>
+              {config?.enable_graph_retrieval ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Embedding Model */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
+            <Database className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Embedding Model
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Vector representation for semantic search
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Model</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={config?.embedding_model}>
+              {config?.embedding_model ?? 'text-embedding-3-small'}
+            </p>
+          </div>
+          <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-900">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Dimensions</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {config?.embedding_dim?.toLocaleString() ?? '1,536'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          About Retrieval Settings
+        </h4>
+        <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+          <li>• These settings are configured at the server level</li>
+          <li>• Contact your admin to adjust retrieval parameters</li>
+          <li>• Use the Debugger to test different threshold values</li>
         </ul>
       </div>
     </div>
