@@ -310,6 +310,42 @@ class UpdateResponse(BaseModel):
     updated_entities: list[EntityRef]
 
 
+# ---------------------------------------------------------------------------
+# Supersession Models (v0.13 - Explicit Belief Updates)
+# ---------------------------------------------------------------------------
+
+
+class SupersedeRequest(BaseModel):
+    """Request to explicitly supersede an existing memory with new information."""
+
+    new_content: str = Field(
+        ...,
+        min_length=1,
+        description="The new content that supersedes the old memory",
+    )
+    reason: str = Field(
+        ...,
+        min_length=1,
+        description="Why this supersession is happening (e.g., 'Updated based on new information')",
+    )
+    metadata: dict[str, Any] | None = Field(
+        default=None,
+        description="Optional metadata to attach to the new memory",
+    )
+
+
+class SupersedeResponse(BaseModel):
+    """Response from supersession operation."""
+
+    old_memory_id: str = Field(description="ID of the memory that was superseded")
+    new_memory_id: str = Field(description="ID of the newly created memory")
+    reason: str = Field(description="The reason provided for supersession")
+    supersession_recorded: bool = Field(
+        default=True,
+        description="Whether the supersession edge was recorded for audit",
+    )
+
+
 class ForgetResponse(BaseModel):
     deleted_memories: int
     deleted_entities: int

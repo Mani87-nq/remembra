@@ -35,6 +35,7 @@ from remembra.models.memory import (
     Relationship,
     StoreRequest,
     StoreResponse,
+    SupersedeResponse,
     UpdateResponse,
 )
 from remembra.retrieval.context import ContextOptimizer
@@ -1346,6 +1347,124 @@ class MemoryService:
         )
 
         return UpdateResponse(id=memory_id, updated_entities=entity_refs)
+
+    # -----------------------------------------------------------------------
+    # Supersede (v0.13 - Explicit Belief Updates)
+    # -----------------------------------------------------------------------
+
+    async def supersede(
+        self,
+        old_memory_id: str,
+        user_id: str,
+        new_content: str,
+        reason: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> "SupersedeResponse":
+        """
+        Explicitly supersede a memory with new information.
+
+        This creates a clear audit trail of belief updates:
+        1. Old memory is marked as superseded (not deleted)
+        2. New memory is created with reference to old
+        3. Supersession reason is recorded for audit
+
+        Args:
+            old_memory_id: ID of memory to supersede
+            user_id: User ID (must own the memory)
+            new_content: New content that replaces the old
+            reason: Why this supersession is happening
+
+        Returns:
+            SupersedeResponse with old/new IDs and audit confirmation
+        """
+        log.info(
+            "superseding_memory",
+            old_memory_id=old_memory_id,
+            user_id=user_id,
+            reason=reason[:50],
+        )
+
+        # 1. Fetch and verify ownership of old memory
+        old_memory = await self.db.get_memory(old_memory_id)
+        if not old_memory:
+            raise ValueError(f"Memory {old_memory_id} not found")
+        if old_memory.get("user_id") != user_id:
+            raise ValueError(f"Memory {old_memory_id} not found")  # Don't reveal it exists
+
+        project_id = old_memory.get("project_id", "default")
+
+        # 2. Create the new memory with supersession metadata
+        store_metadata = metadata or {}
+        store_metadata["supersedes"] = old_memory_id
+        store_metadata["supersession_reason"] = reason
+
+        from remembra.models.memory import StoreRequest
+
+        store_request = StoreRequest(
+            content=new_content,
+            user_id=user_id,
+            project_id=project_id,
+            metadata=store_metadata,
+        )
+
+        store_result = await self.store(
+            store_request,
+            source="supersession",
+            trust_score=1.0,
+        )
+        new_memory_id = store_result.id
+
+        # 3. Mark old memory as superseded (update metadata, don't delete)
+        old_meta = old_memory.get("metadata") or {}
+        if isinstance(old_meta, str):
+            import json
+            try:
+                old_meta = json.loads(old_meta)
+            except json.JSONDecodeError:
+                old_meta = {}
+
+        old_meta["superseded_by"] = new_memory_id
+        old_meta["superseded_at"] = datetime.utcnow().isoformat()
+        old_meta["supersession_reason"] = reason
+
+        await self.db.update_memory(
+            memory_id=old_memory_id,
+            content=old_memory.get("content", ""),  # Keep original content
+            extracted_facts=old_memory.get("extracted_facts", []),
+            metadata=old_meta,
+        )
+
+        # 4. Record conflict/supersession in conflict manager if enabled
+        if self.conflict_manager:
+            try:
+                conflict = MemoryConflict(
+                    user_id=user_id,
+                    project_id=project_id,
+                    new_fact=new_content,
+                    existing_memory_id=old_memory_id,
+                    existing_content=old_memory.get("content", ""),
+                    similarity_score=1.0,
+                    reason=f"Explicit supersession: {reason}",
+                    strategy_applied=ConflictStrategy.VERSION,
+                    status=ConflictStatus.RESOLVED,
+                )
+                await self.conflict_manager.record(conflict)
+            except Exception as e:
+                log.warning("supersession_conflict_recording_failed", error=str(e))
+
+        log.info(
+            "memory_superseded",
+            old_memory_id=old_memory_id,
+            new_memory_id=new_memory_id,
+            reason=reason,
+        )
+
+        return SupersedeResponse(
+            old_memory_id=old_memory_id,
+            new_memory_id=new_memory_id,
+            reason=reason,
+            supersession_recorded=True,
+        )
 
     # -----------------------------------------------------------------------
     # Forget

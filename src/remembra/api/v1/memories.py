@@ -59,6 +59,8 @@ from remembra.models.memory import (
     RecallResponse,
     StoreRequest,
     StoreResponse,
+    SupersedeRequest,
+    SupersedeResponse,
     UpdateRequest,
     UpdateResponse,
 )
@@ -825,6 +827,106 @@ async def update_memory(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update memory",
+        ) from e
+
+
+# ---------------------------------------------------------------------------
+# Supersede (v0.13 - Explicit Belief Updates)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/{memory_id}/supersede",
+    response_model=SupersedeResponse,
+    summary="Supersede a memory with new information",
+)
+@limiter.limit("20/minute")
+async def supersede_memory(
+    request: Request,
+    memory_id: str,
+    body: SupersedeRequest,
+    memory_service: MemoryServiceDep,
+    audit_logger: AuditLoggerDep,
+    sanitizer: SanitizerDep,
+    current_user: CurrentUser,
+) -> SupersedeResponse:
+    """
+    Explicitly supersede a memory with new information.
+
+    This is for when you know that old information is now outdated
+    and want to create a clear audit trail of the belief update.
+
+    - **new_content**: The updated information
+    - **reason**: Why this supersession is happening
+
+    The old memory is NOT deleted - it's marked as superseded.
+    This creates a full audit trail of how beliefs evolved over time.
+
+    Example:
+    ```json
+    {
+        "new_content": "Alice now works at NewCorp",
+        "reason": "She changed jobs in March 2026"
+    }
+    ```
+
+    Rate limit: 20 requests/minute.
+    """
+    # RBAC: Check permission (supersede requires store permission)
+    if not has_permission(current_user, "memory:store"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied: memory:store required",
+        )
+
+    # SECURITY: XSS sanitization for new content
+    sanitization = sanitizer.analyze(body.new_content, source="user_input")
+    sanitized_content = sanitization.content
+
+    try:
+        result = await memory_service.supersede(
+            old_memory_id=memory_id,
+            user_id=current_user.user_id,
+            new_content=sanitized_content,
+            reason=body.reason,
+            metadata=body.metadata,
+        )
+
+        # Audit log
+        from remembra.security.audit import AuditAction
+        await audit_logger.log(
+            user_id=current_user.user_id,
+            action=AuditAction.MEMORY_UPDATE,  # Or create MEMORY_SUPERSEDE
+            resource_id=memory_id,
+            success=True,
+            details={"new_memory_id": result.new_memory_id, "reason": body.reason},
+        )
+
+        # Broadcast to WebSocket
+        await _broadcast_websocket(
+            event_type="memory.superseded",
+            data={
+                "old_memory_id": memory_id,
+                "new_memory_id": result.new_memory_id,
+                "user_id": current_user.user_id,
+                "reason": body.reason,
+            },
+            project_id="default",
+        )
+
+        return result
+
+    except ValueError as ve:
+        log.error("supersede_memory_value_error", error=str(ve), memory_id=memory_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Memory {memory_id} not found",
+        ) from None
+    except Exception as e:
+        log.error("supersede_memory_error", error=str(e), memory_id=memory_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to supersede memory",
         ) from e
 
 
