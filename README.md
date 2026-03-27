@@ -31,22 +31,28 @@
 
 ---
 
-## 🚀 What's New in v0.12.1
+## 🚀 What's New in v0.13.0
 
-- **👤 User Profiles** — Profile management with avatars, preferences, and activity tracking
-- **🧠 Smart Auto-Forgetting** — Human-like memory that naturally fades over time
-- **⏰ Event-driven Expiry** — `expires_at` field for precise memory lifecycle control
-- **🔒 Strict Mode 410 GONE** — Expired memories return proper HTTP 410 status
-- **🌐 Browser Extension** — Access your memories from any webpage
-- **👻 Shadow TTLs** — Client-side memory decay visualization
+### Dashboard v2.0
+- **🔐 Two-Factor Authentication** — TOTP-based 2FA with authenticator apps
+- **👥 Team Collaboration** — Shared memory spaces with role-based access
+- **🛠️ Admin Dashboard** — Full user management (delete/deactivate/reset)
+- **📊 Activity Log** — Security audit trail with JSON export
+- **🕵️ Entity Browser** — Visual exploration of people, places, concepts
+- **⏰ Timeline Fix** — Proper timezone handling with local time display
+
+### Core API
+- **📦 npm Package** — `npm install remembra` with full TypeScript support
+- **🔒 Security Fixes** — RBAC enforcement, SSRF protection, error sanitization
 
 ### Supported Agents (6+)
 Claude Desktop • Claude Code • Codex CLI • Cursor • Windsurf • Gemini
 
-### Previous (v0.10.1)
-- 🤖 Universal Agent Installer with `remembra-install --all`
-- 🔍 Setup Diagnostics via `remembra-doctor`
-- 🌉 Local Bridge for sandboxed agents
+### Previous (v0.12.x)
+- 👤 User Profiles API with activity metrics
+- 🧠 Smart Auto-Forgetting (35+ temporal patterns)
+- ⏰ Event-driven expiry with `expires_at`
+- 🌐 Browser Extension for AI chat interfaces
 
 ---
 

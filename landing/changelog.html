@@ -104,13 +104,58 @@
                 <!-- Timeline line -->
                 <div class="absolute left-0 md:left-8 top-0 bottom-0 w-px bg-gradient-to-b from-primary via-primary/50 to-transparent"></div>
 
+                <!-- v0.13.0 -->
+                <article class="relative pl-8 md:pl-24 pb-16">
+                    <div class="absolute left-0 md:left-8 top-0 w-4 h-4 -translate-x-1/2 rounded-full bg-primary version-dot"></div>
+                    <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
+                        <time class="text-sm text-gray-500 font-medium">March 27, 2026</time>
+                        <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-semibold w-fit">v0.13.0</span>
+                        <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-medium w-fit">Latest</span>
+                    </div>
+                    
+                    <h2 class="text-2xl font-bold mb-4">Dashboard v2.0 & Team Collaboration</h2>
+                    <p class="text-gray-400 mb-6">Two-Factor Authentication, Team Collaboration, Admin Dashboard, Activity Logs, Entity Browser, and npm package.</p>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-dark-card border border-white/10 rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="tag-added px-2 py-0.5 rounded text-xs font-medium">Added</span>
+                                <span class="text-sm text-gray-500">Dashboard v2.0 & Security</span>
+                            </div>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Two-Factor Authentication</strong> — TOTP-based 2FA with any authenticator app</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Team Collaboration</strong> — Shared memory spaces with Viewer/Member/Admin roles</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Admin Dashboard</strong> — Full user management (delete, deactivate, reset password)</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Activity Log</strong> — Security audit trail with JSON export</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Entity Browser</strong> — Visual exploration of people, places, concepts</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Timeline Fix</strong> — Proper timezone handling with local time display</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>npm Package</strong> — <code class="bg-white/10 px-1.5 py-0.5 rounded text-xs">npm install remembra</code> with TypeScript support</span></li>
+                            </ul>
+                        </div>
+                        <div class="bg-dark-card border border-white/10 rounded-xl p-5">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="tag-fixed px-2 py-0.5 rounded text-xs font-medium">Fixed</span>
+                                <span class="text-sm text-gray-500">Security & Performance</span>
+                            </div>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>RBAC Enforcement</strong> — Viewer role properly restricted from store/delete</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>SSRF Protection</strong> — Webhooks block private IP ranges</span></li>
+                                <li class="flex gap-2"><span class="text-gray-500">•</span><span><strong>Error Sanitization</strong> — No Python exceptions leaked to clients</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <a href="/changelog/v0.13.0" class="inline-flex items-center gap-2 text-primary hover:text-primary-dark mt-4 text-sm font-medium">
+                        Full release notes →
+                    </a>
+                </article>
+
                 <!-- v0.12.0 -->
                 <article class="relative pl-8 md:pl-24 pb-16">
                     <div class="absolute left-0 md:left-8 top-0 w-4 h-4 -translate-x-1/2 rounded-full bg-primary version-dot"></div>
                     <div class="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4">
                         <time class="text-sm text-gray-500 font-medium">March 22, 2026</time>
                         <span class="px-3 py-1 bg-primary/20 text-primary rounded-full text-sm font-semibold w-fit">v0.12.0</span>
-                        <span class="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs font-medium w-fit">Latest</span>
                     </div>
                     
                     <h2 class="text-2xl font-bold mb-4">User Profiles, Smart Auto-Forgetting & Browser Extension</h2>

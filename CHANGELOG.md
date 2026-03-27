@@ -5,6 +5,72 @@ All notable changes to Remembra will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-03-27
+
+### Added
+
+#### Dashboard v2.0
+- **Admin Dashboard** ‚Äî Full user management panel
+  - View all users with plan, memory count, API keys, status
+  - Delete, deactivate, or reset user passwords
+  - Change user plans (Free/Pro/Team/Enterprise)
+  - Search and filter users
+
+- **Two-Factor Authentication** ‚Äî TOTP-based 2FA
+  - Enable via Settings > Security
+  - Works with any authenticator app (Google, Authy, 1Password)
+  - Backup codes for account recovery
+
+- **Activity Log** ‚Äî Security audit trail
+  - Track account and API activity
+  - Color-coded by event type
+  - JSON export for compliance
+
+- **Team Collaboration** ‚Äî Shared memory spaces
+  - Create teams with role-based access (Viewer/Member/Admin)
+  - Invite members with role picker
+  - Link projects to teams
+  - Shared memory across team members
+
+- **Entity Browser** ‚Äî Visual entity exploration
+  - Browse extracted people, organizations, places, concepts
+  - Click to see related memories
+  - Entity counts and distribution
+
+- **Timeline Timezone Fix** ‚Äî Proper local time display
+  - Dates now show in user's local timezone
+  - "Today" header for current day
+  - Times in 12-hour format (e.g., 09:57 AM)
+
+- **Knowledge Graph** ‚Äî Visualize entity relationships
+  - Interactive graph view
+  - Bi-temporal relationship queries
+
+- **Settings Rebuild** ‚Äî Complete settings overhaul
+  - Profile, Password, Security, Workspace, Retrieval, Diagnostics, Account tabs
+  - Calibration API for retrieval tuning
+  - Diagnostics for system health
+
+#### TypeScript SDK (npm)
+- **npm package** ‚Äî `npm install remembra`
+  - Full TypeScript support with types
+  - Browser and Node.js compatible
+  - Async/await API
+
+### Fixed
+- **RBAC Enforcement** ‚Äî Viewer role properly restricted from store/delete
+- **SSRF Protection** ‚Äî Webhooks block private IP ranges
+- **Error Sanitization** ‚Äî No Python exceptions leaked to clients
+- **Bcrypt Performance** ‚Äî SHA256 cache mitigates O(n) timing
+
+### Stats
+- 2,700+ PyPI downloads/month
+- 700+ Docker pulls
+- 400 unique cloners
+- Indexed on 8 platforms including npm
+
+---
+
 ## [0.12.1] - 2026-03-23
 
 ### Fixed
@@ -650,4 +716,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - RELEASE-CHECKLIST.md - mandatory pre-deploy verification
-n∑Îèti˛|o]¸yØ4ﬂØm«<yÌyÂÌ∫”ç˝
+nÔøΩÔøΩtiÔøΩ|o]ÔøΩyÔøΩ4ﬂØmÔøΩ<yÔøΩyÔøΩÔøΩÔøΩ”çÔøΩ
