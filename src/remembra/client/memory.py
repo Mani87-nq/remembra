@@ -721,7 +721,7 @@ class Memory:
             "granularity": detection.granularity.value,
         }
 
-    def __enter__(self) -> "Memory":
+    def __enter__(self) -> Memory:
         return self
 
     def __exit__(self, *args: Any) -> None:

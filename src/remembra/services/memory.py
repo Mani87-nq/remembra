@@ -1261,8 +1261,9 @@ class MemoryService:
             raise ValueError("Embedding returned empty result")
 
         # 4. Update vector in Qdrant
-        from remembra.models.memory import Memory
         import json
+
+        from remembra.models.memory import Memory
 
         # Parse metadata if it's a JSON string (SQLite stores as text)
         raw_meta = existing.get("metadata") or {}

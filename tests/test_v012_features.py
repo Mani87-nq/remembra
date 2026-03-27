@@ -1,10 +1,9 @@
 """Tests for v0.12 features: User Profiles, Strict Mode, Event-Driven Expiry."""
 
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime, timedelta, UTC
+from unittest.mock import patch
 
 import pytest
-from fastapi import HTTPException
 
 from remembra.api.v1.memories import _is_memory_expired
 from remembra.api.v1.users import (
@@ -24,7 +23,7 @@ class TestIsMemoryExpired:
     def test_expired_memory_returns_true(self):
         """Expired memories should return True."""
         # Memory expired 1 hour ago
-        expired_time = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        expired_time = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
         memory = {"expires_at": expired_time}
         
         assert _is_memory_expired(memory) is True
@@ -32,7 +31,7 @@ class TestIsMemoryExpired:
     def test_not_expired_memory_returns_false(self):
         """Non-expired memories should return False."""
         # Memory expires in 1 hour
-        future_time = (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()
+        future_time = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
         memory = {"expires_at": future_time}
         
         assert _is_memory_expired(memory) is False
@@ -47,7 +46,7 @@ class TestIsMemoryExpired:
 
     def test_handles_z_suffix(self):
         """Should handle ISO timestamps with Z suffix."""
-        expired_time = (datetime.now(timezone.utc) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        expired_time = (datetime.now(UTC) - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
         memory = {"expires_at": expired_time}
         
         assert _is_memory_expired(memory) is True
@@ -55,12 +54,12 @@ class TestIsMemoryExpired:
     def test_handles_datetime_object(self):
         """Should handle datetime objects directly."""
         # Expired
-        expired_dt = datetime.now(timezone.utc) - timedelta(hours=1)
+        expired_dt = datetime.now(UTC) - timedelta(hours=1)
         memory = {"expires_at": expired_dt}
         assert _is_memory_expired(memory) is True
         
         # Not expired
-        future_dt = datetime.now(timezone.utc) + timedelta(hours=1)
+        future_dt = datetime.now(UTC) + timedelta(hours=1)
         memory_future = {"expires_at": future_dt}
         assert _is_memory_expired(memory_future) is False
 
@@ -90,13 +89,13 @@ class TestStoreRequestExpiresAt:
 
     def test_expires_at_accepts_datetime(self):
         """expires_at should accept datetime objects."""
-        future = datetime.now(timezone.utc) + timedelta(days=7)
+        future = datetime.now(UTC) + timedelta(days=7)
         req = StoreRequest(content="test content", expires_at=future)
         assert req.expires_at == future
 
     def test_expires_at_with_ttl_coexist(self):
         """Both expires_at and ttl can be provided (expires_at takes precedence)."""
-        future = datetime.now(timezone.utc) + timedelta(days=7)
+        future = datetime.now(UTC) + timedelta(days=7)
         req = StoreRequest(content="test content", expires_at=future, ttl="30d")
         
         assert req.expires_at == future
@@ -133,7 +132,7 @@ class TestUserProfileModels:
         topic = TopTopic(
             topic="python",
             count=10,
-            last_mentioned=datetime.now(timezone.utc),
+            last_mentioned=datetime.now(UTC),
         )
         assert topic.topic == "python"
         assert topic.count == 10

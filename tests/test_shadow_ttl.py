@@ -1,7 +1,6 @@
 """Tests for Shadow TTL Cache (v0.12)."""
 
 import time
-from unittest.mock import patch
 
 import pytest
 

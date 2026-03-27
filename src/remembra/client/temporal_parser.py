@@ -136,7 +136,11 @@ TEMPORAL_PATTERNS: list[tuple[re.Pattern[str], int, TemporalGranularity, float, 
         "expires after tomorrow",
     ),
     (
-        re.compile(r"\buntil\s+(?:next\s+)?(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b", re.I),
+        re.compile(
+            r"\buntil\s+(?:next\s+)?(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|"
+            r"thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b",
+            re.I,
+        ),
         lambda m: 7 * 86400 + 43200,  # ~7.5 days
         TemporalGranularity.WEEKS,
         0.85,
@@ -231,14 +235,22 @@ TEMPORAL_PATTERNS: list[tuple[re.Pattern[str], int, TemporalGranularity, float, 
         "reference to this week",
     ),
     (
-        re.compile(r"\bnext\s+(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b", re.I),
+        re.compile(
+            r"\bnext\s+(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|"
+            r"thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b",
+            re.I,
+        ),
         lambda m: 10 * 86400,  # 10 days
         TemporalGranularity.WEEKS,
         0.75,
         "reference to next weekday",
     ),
     (
-        re.compile(r"\bthis\s+(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b", re.I),
+        re.compile(
+            r"\bthis\s+(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|"
+            r"thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b",
+            re.I,
+        ),
         lambda m: 5 * 86400,  # 5 days
         TemporalGranularity.DAYS,
         0.70,
@@ -303,7 +315,11 @@ TEMPORAL_PATTERNS: list[tuple[re.Pattern[str], int, TemporalGranularity, float, 
         "deadline tomorrow",
     ),
     (
-        re.compile(r"\b(?:deadline|due)\s+(?:is\s+)?(?:next\s+)?(?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b", re.I),
+        re.compile(
+            r"\b(?:deadline|due)\s+(?:is\s+)?(?:next\s+)?(?:mon(?:day)?|tue(?:sday)?|"
+            r"wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b",
+            re.I,
+        ),
         lambda m: 10 * 86400,
         TemporalGranularity.WEEKS,
         0.75,
@@ -349,7 +365,12 @@ TEMPORAL_PATTERNS: list[tuple[re.Pattern[str], int, TemporalGranularity, float, 
     
     # Specific date patterns (MM/DD or Month Day)
     (
-        re.compile(r"\bon\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\b", re.I),
+        re.compile(
+            r"\bon\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|"
+            r"jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|"
+            r"oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\b",
+            re.I,
+        ),
         lambda m: 365 * 86400,  # 1 year (could be this or next year)
         TemporalGranularity.YEARS,
         0.55,

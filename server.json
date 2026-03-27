@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.remembra-ai/remembra",
   "title": "Remembra — AI Memory Layer",
-  "description": "Persistent AI memory with hybrid search, entity resolution, and temporal decay.",
+  "description": "Persistent AI memory with entity resolution, temporal knowledge graph & 11 MCP tools.",
   "repository": {
     "url": "https://github.com/remembra-ai/remembra",
     "source": "github"
   },
   "websiteUrl": "https://remembra.dev",
-  "version": "0.10.0",
+  "version": "0.12.1",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "remembra",
-      "version": "0.10.0",
+      "version": "0.12.1",
       "transport": {
         "type": "stdio"
       },

@@ -15,14 +15,11 @@ Run with:
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import hmac
-import json
 import os
 import time
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -38,7 +35,6 @@ from remembra.cloud.paddle_config import (
     get_price_id_for_plan,
 )
 from remembra.cloud.plans_paddle import (
-    PLANS,
     PlanTier,
     UsageSnapshot,
     get_plan,
