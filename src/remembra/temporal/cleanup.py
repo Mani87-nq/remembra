@@ -4,7 +4,9 @@ Background cleanup job for expired and decayed memories.
 This module provides scheduled tasks for:
 1. Hard TTL expiration (delete memories past expires_at)
 2. Soft decay pruning (mark/archive low-relevance memories)
-3. Cleanup metrics and logging
+3. Adaptive threshold calibration
+4. Cold archive management
+5. Cleanup metrics and logging
 """
 
 import asyncio
@@ -14,6 +16,7 @@ from typing import Any
 
 import structlog
 
+from remembra.temporal.adaptive import AdaptiveThresholdManager
 from remembra.temporal.decay import (
     DEFAULT_CONFIG,
     DecayConfig,
@@ -42,6 +45,8 @@ class TemporalCleanupJob:
         auto_delete_expired: bool = True,
         auto_prune_decayed: bool = False,  # Conservative default
         prune_to_archive: bool = True,  # Archive instead of delete
+        adaptive_manager: AdaptiveThresholdManager | None = None,
+        use_adaptive_thresholds: bool = True,  # Use adaptive when available
     ) -> None:
         """
         Initialize cleanup job.
@@ -53,11 +58,15 @@ class TemporalCleanupJob:
             auto_delete_expired: Auto-delete memories past TTL
             auto_prune_decayed: Auto-prune decayed memories (careful!)
             prune_to_archive: Archive decayed memories instead of deleting
+            adaptive_manager: Adaptive threshold manager for dynamic thresholds
+            use_adaptive_thresholds: Whether to use adaptive thresholds
         """
         self.db = database
         self.qdrant = qdrant_store
         self.config = config or DEFAULT_CONFIG
         self.auto_delete_expired = auto_delete_expired
+        self.adaptive_manager = adaptive_manager
+        self.use_adaptive_thresholds = use_adaptive_thresholds
         self.auto_prune_decayed = auto_prune_decayed
         self.prune_to_archive = prune_to_archive
 
@@ -206,7 +215,11 @@ class TemporalCleanupJob:
         project_id: str | None,
         dry_run: bool,
     ) -> dict[str, Any]:
-        """Handle memories that have decayed below threshold."""
+        """Handle memories that have decayed below threshold.
+        
+        Uses adaptive thresholds when available for smarter pruning
+        based on session context and user behavior.
+        """
         found = 0
         pruned = 0
         archived = 0
@@ -220,17 +233,38 @@ class TemporalCleanupJob:
                 limit=1000,  # Process in batches
             )
 
+            # Determine prune threshold
+            # Use adaptive threshold if available, otherwise static config
+            prune_threshold = self.config.prune_threshold
+            if self.use_adaptive_thresholds and self.adaptive_manager and user_id:
+                adaptive_threshold = self.adaptive_manager.calculate_threshold(
+                    user_id=user_id,
+                    project_id=project_id or "default",
+                    memory_count=len(memories),
+                )
+                prune_threshold = adaptive_threshold
+                log.debug(
+                    "using_adaptive_threshold",
+                    user_id=user_id,
+                    static_threshold=self.config.prune_threshold,
+                    adaptive_threshold=adaptive_threshold,
+                )
+
             # Calculate decay and find candidates for pruning
             prune_candidates: list[dict[str, Any]] = []
             for memory in memories:
                 decay_info = calculate_memory_decay_info(memory, self.config)
-                if decay_info["should_prune"] and not decay_info["is_expired"]:
+                # Use our adaptive threshold instead of the static should_prune
+                relevance = decay_info["relevance_score"]
+                is_below_threshold = relevance < prune_threshold
+                if is_below_threshold and not decay_info["is_expired"]:
                     # Decayed but not TTL-expired
                     prune_candidates.append(
                         {
                             "id": memory["id"],
-                            "relevance": decay_info["relevance_score"],
+                            "relevance": relevance,
                             "days_since_access": decay_info["days_since_access"],
+                            "threshold_used": prune_threshold,
                         }
                     )
 
@@ -279,34 +313,43 @@ class TemporalCleanupJob:
 
         return {"found": found, "pruned": pruned, "archived": archived, "errors": errors}
 
-    async def _archive_memory(self, memory_id: str) -> None:
+    async def _archive_memory(self, memory_id: str, reason: str = "decay_threshold") -> None:
         """
-        Archive a memory (soft delete).
+        Archive a memory to cold storage.
 
-        For now, this updates metadata to mark as archived.
-        Future: Move to cold storage / separate archive table.
+        Moves the memory to archived_memories table, removing it from
+        active storage but keeping it queryable in the archive tier.
         """
-        # Get current memory
+        # Calculate final relevance score before archiving
         memory = await self.db.get_memory(memory_id)
         if not memory:
             return
 
-        # Update metadata to mark as archived
-        import json
+        decay_info = calculate_memory_decay_info(memory, self.config)
+        final_relevance = decay_info["relevance_score"]
 
-        metadata = json.loads(memory.get("metadata", "{}") or "{}")
-        metadata["_archived"] = True
-        metadata["_archived_at"] = datetime.utcnow().isoformat()
-        metadata["_archive_reason"] = "decay_threshold"
-
-        # Update in database
-        await self.db.conn.execute(
-            "UPDATE memories SET metadata = ? WHERE id = ?",
-            (json.dumps(metadata), memory_id),
+        # Move to cold archive
+        success = await self.db.archive_memory(
+            memory_id=memory_id,
+            reason=reason,
+            final_relevance=final_relevance,
         )
-        await self.db.conn.commit()
 
-        log.debug("memory_archived", memory_id=memory_id)
+        if success:
+            # Also remove from Qdrant (archived memories don't get vector search)
+            if self.qdrant:
+                try:
+                    await self.qdrant.delete(memory_id)
+                except Exception as e:
+                    log.warning("qdrant_archive_delete_failed", memory_id=memory_id, error=str(e))
+
+            # Remove from FTS index
+            try:
+                await self.db.delete_memory_fts(memory_id)
+            except Exception as e:
+                log.warning("fts_archive_delete_failed", memory_id=memory_id, error=str(e))
+
+            log.debug("memory_archived_to_cold_storage", memory_id=memory_id, reason=reason)
 
     async def get_decay_report(
         self,

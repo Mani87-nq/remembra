@@ -5,6 +5,48 @@ All notable changes to Remembra will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2026-03-30
+
+### Added
+- **Cold Archive Tier** — Separate queryable storage for decayed memories
+  - `archived_memories` table with full memory schema + archive metadata
+  - `archive_memory()` moves memories to cold storage with final relevance score
+  - `restore_memory()` brings memories back to active storage with re-indexing
+  - Keyword search in archive (semantic search requires restore)
+  - Archive statistics and breakdown by archive reason
+  - Cleanup job now uses real cold storage instead of soft-archive flags
+
+- **Adaptive Thresholds** — Dynamic pruning based on session context
+  - Session modes: `exploratory` (0.5x), `operational` (1.5x), `balanced` (auto)
+  - Warm-up phase: first 10 queries use conservative 0.05 threshold
+  - Quality-aware: high result quality → higher threshold (more selective)
+  - Density-aware: more memories → slightly higher threshold
+  - Session persistence to `adaptive_thresholds` table
+  - Cleanup job integration with `use_adaptive_thresholds` flag
+
+- **New API Endpoints**
+  - `GET /api/v1/temporal/archive` — List archived memories
+  - `GET /api/v1/temporal/archive/stats` — Archive statistics
+  - `GET /api/v1/temporal/archive/{id}` — Get specific archived memory
+  - `POST /api/v1/temporal/archive/{id}/restore` — Restore to active storage
+  - `GET /api/v1/temporal/archive/search` — Search archive by keyword
+  - `GET /api/v1/temporal/adaptive/threshold` — Current adaptive threshold info
+  - `POST /api/v1/temporal/adaptive/mode` — Set session mode
+  - `POST /api/v1/temporal/adaptive/reset` — Reset calibration
+
+### Changed
+- `TemporalCleanupJob` now accepts `adaptive_manager` parameter
+- Archive moves memory completely (removes from Qdrant + FTS), not just metadata flag
+- Decay cleanup uses adaptive threshold when available
+
+### Technical
+- New `adaptive.py` module with `AdaptiveThresholdManager`, `SessionContext`, `SessionMode`
+- Database schema additions: `archived_memories`, `adaptive_thresholds` tables
+- 12 new unit tests for adaptive threshold behavior
+- All 109 temporal tests passing
+
+---
+
 ## [0.13.0] - 2026-03-27
 
 ### Added

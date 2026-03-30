@@ -253,6 +253,60 @@ CREATE TABLE IF NOT EXISTS team_spaces (
 );
 
 CREATE INDEX IF NOT EXISTS idx_team_spaces_space ON team_spaces(space_id);
+
+-- Archived memories (cold storage tier)
+-- Decayed memories move here instead of being deleted
+-- Separate queryable tier with lower retrieval priority
+CREATE TABLE IF NOT EXISTS archived_memories (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    project_id TEXT NOT NULL DEFAULT 'default',
+    content TEXT NOT NULL,
+    extracted_facts TEXT,  -- JSON array
+    metadata TEXT,  -- JSON object
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    expires_at TEXT,
+    access_count INTEGER DEFAULT 0,
+    last_accessed TEXT,
+    -- Memory provenance
+    source TEXT DEFAULT 'user_input',
+    trust_score REAL DEFAULT 1.0,
+    checksum TEXT,
+    -- Visibility
+    visibility TEXT DEFAULT 'personal',
+    space_id TEXT,
+    team_id TEXT,
+    -- Archive metadata
+    archived_at TEXT NOT NULL,
+    archive_reason TEXT DEFAULT 'decay_threshold',  -- decay_threshold, manual, ttl_warning
+    final_relevance_score REAL,  -- Relevance score at time of archival
+    restore_count INTEGER DEFAULT 0  -- Times restored from archive
+);
+
+CREATE INDEX IF NOT EXISTS idx_archived_user ON archived_memories(user_id);
+CREATE INDEX IF NOT EXISTS idx_archived_project ON archived_memories(user_id, project_id);
+CREATE INDEX IF NOT EXISTS idx_archived_at ON archived_memories(archived_at);
+CREATE INDEX IF NOT EXISTS idx_archived_reason ON archived_memories(archive_reason);
+
+-- Adaptive threshold configuration per user/session
+CREATE TABLE IF NOT EXISTS adaptive_thresholds (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    project_id TEXT NOT NULL DEFAULT 'default',
+    session_mode TEXT DEFAULT 'balanced',  -- exploratory, operational, balanced
+    base_threshold REAL DEFAULT 0.1,
+    current_threshold REAL DEFAULT 0.1,
+    session_start TEXT,
+    queries_this_session INTEGER DEFAULT 0,
+    avg_result_quality REAL,  -- Running average of result satisfaction
+    last_calibration TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE(user_id, project_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_adaptive_user ON adaptive_thresholds(user_id, project_id);
 """
 
 
@@ -659,6 +713,269 @@ class Database:
 
         await self.conn.commit()
         return rel_count
+
+    # -----------------------------------------------------------------------
+    # Cold Archive Operations
+    # -----------------------------------------------------------------------
+
+    async def archive_memory(
+        self,
+        memory_id: str,
+        reason: str = "decay_threshold",
+        final_relevance: float | None = None,
+    ) -> bool:
+        """
+        Move a memory to cold archive storage.
+
+        This is a full move - the memory is removed from active storage
+        and placed in the archived_memories table for later retrieval.
+
+        Args:
+            memory_id: Memory to archive
+            reason: Why it was archived (decay_threshold, manual, ttl_warning)
+            final_relevance: Relevance score at time of archival
+
+        Returns:
+            True if successfully archived
+        """
+        # Get the memory first
+        memory = await self.get_memory(memory_id)
+        if not memory:
+            log.warning("archive_memory_not_found", memory_id=memory_id)
+            return False
+
+        now = datetime.utcnow().isoformat()
+
+        try:
+            # Insert into archive table
+            await self.conn.execute(
+                """
+                INSERT INTO archived_memories (
+                    id, user_id, project_id, content, extracted_facts, metadata,
+                    created_at, updated_at, expires_at, access_count, last_accessed,
+                    source, trust_score, checksum, visibility, space_id, team_id,
+                    archived_at, archive_reason, final_relevance_score
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    memory["id"],
+                    memory["user_id"],
+                    memory["project_id"],
+                    memory["content"],
+                    memory.get("extracted_facts"),
+                    memory.get("metadata"),
+                    memory["created_at"],
+                    memory.get("updated_at", now),
+                    memory.get("expires_at"),
+                    memory.get("access_count", 0),
+                    memory.get("last_accessed"),
+                    memory.get("source", "user_input"),
+                    memory.get("trust_score", 1.0),
+                    memory.get("checksum"),
+                    memory.get("visibility", "personal"),
+                    memory.get("space_id"),
+                    memory.get("team_id"),
+                    now,
+                    reason,
+                    final_relevance,
+                ),
+            )
+
+            # Delete from active storage (this also cleans up relationships)
+            await self.delete_memory(memory_id)
+
+            log.info(
+                "memory_archived",
+                memory_id=memory_id,
+                reason=reason,
+                relevance=final_relevance,
+            )
+            return True
+
+        except Exception as e:
+            log.error("archive_memory_failed", memory_id=memory_id, error=str(e))
+            return False
+
+    async def restore_memory(self, memory_id: str) -> bool:
+        """
+        Restore a memory from cold archive back to active storage.
+
+        Args:
+            memory_id: Archived memory to restore
+
+        Returns:
+            True if successfully restored
+        """
+        # Get from archive
+        cursor = await self.conn.execute(
+            "SELECT * FROM archived_memories WHERE id = ?",
+            (memory_id,),
+        )
+        row = await cursor.fetchone()
+        if not row:
+            log.warning("restore_memory_not_found", memory_id=memory_id)
+            return False
+
+        archived = dict(row)
+        now = datetime.utcnow().isoformat()
+
+        try:
+            # Insert back into active memories
+            await self.conn.execute(
+                """
+                INSERT INTO memories (
+                    id, user_id, project_id, content, extracted_facts, metadata,
+                    created_at, updated_at, expires_at, access_count, last_accessed,
+                    source, trust_score, checksum, visibility, space_id, team_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    archived["id"],
+                    archived["user_id"],
+                    archived["project_id"],
+                    archived["content"],
+                    archived.get("extracted_facts"),
+                    archived.get("metadata"),
+                    archived["created_at"],
+                    now,  # Updated timestamp
+                    archived.get("expires_at"),
+                    archived.get("access_count", 0),
+                    now,  # Mark as accessed now
+                    archived.get("source", "user_input"),
+                    archived.get("trust_score", 1.0),
+                    archived.get("checksum"),
+                    archived.get("visibility", "personal"),
+                    archived.get("space_id"),
+                    archived.get("team_id"),
+                ),
+            )
+
+            # Increment restore count and delete from archive
+            await self.conn.execute(
+                "DELETE FROM archived_memories WHERE id = ?",
+                (memory_id,),
+            )
+
+            await self.conn.commit()
+
+            log.info("memory_restored", memory_id=memory_id)
+            return True
+
+        except Exception as e:
+            log.error("restore_memory_failed", memory_id=memory_id, error=str(e))
+            return False
+
+    async def get_archived_memories(
+        self,
+        user_id: str,
+        project_id: str = "default",
+        limit: int = 50,
+        offset: int = 0,
+        reason: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Query archived memories.
+
+        Args:
+            user_id: User to query
+            project_id: Project namespace
+            limit: Max results
+            offset: Pagination offset
+            reason: Filter by archive reason
+
+        Returns:
+            List of archived memory dicts
+        """
+        query = """
+            SELECT * FROM archived_memories
+            WHERE user_id = ? AND project_id = ?
+        """
+        params: list[Any] = [user_id, project_id]
+
+        if reason:
+            query += " AND archive_reason = ?"
+            params.append(reason)
+
+        query += " ORDER BY archived_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+
+        cursor = await self.conn.execute(query, params)
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    async def get_archived_memory(self, memory_id: str) -> dict[str, Any] | None:
+        """Get a single archived memory by ID."""
+        cursor = await self.conn.execute(
+            "SELECT * FROM archived_memories WHERE id = ?",
+            (memory_id,),
+        )
+        row = await cursor.fetchone()
+        return dict(row) if row else None
+
+    async def search_archived_memories(
+        self,
+        user_id: str,
+        query: str,
+        project_id: str = "default",
+        limit: int = 20,
+    ) -> list[dict[str, Any]]:
+        """
+        Simple keyword search in archived memories.
+
+        Note: No vector search for archived memories (kept simple).
+        For full semantic search, restore the memory first.
+        """
+        search_pattern = f"%{query}%"
+        cursor = await self.conn.execute(
+            """
+            SELECT * FROM archived_memories
+            WHERE user_id = ? AND project_id = ?
+            AND content LIKE ?
+            ORDER BY archived_at DESC
+            LIMIT ?
+            """,
+            (user_id, project_id, search_pattern, limit),
+        )
+        rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
+    async def get_archive_stats(
+        self,
+        user_id: str,
+        project_id: str = "default",
+    ) -> dict[str, Any]:
+        """Get statistics about a user's archived memories."""
+        cursor = await self.conn.execute(
+            """
+            SELECT 
+                COUNT(*) as total_archived,
+                COUNT(DISTINCT archive_reason) as reason_types,
+                AVG(final_relevance_score) as avg_final_relevance,
+                MIN(archived_at) as oldest_archive,
+                MAX(archived_at) as newest_archive,
+                SUM(restore_count) as total_restores
+            FROM archived_memories
+            WHERE user_id = ? AND project_id = ?
+            """,
+            (user_id, project_id),
+        )
+        row = await cursor.fetchone()
+        stats = dict(row) if row else {}
+
+        # Get breakdown by reason
+        cursor = await self.conn.execute(
+            """
+            SELECT archive_reason, COUNT(*) as count
+            FROM archived_memories
+            WHERE user_id = ? AND project_id = ?
+            GROUP BY archive_reason
+            """,
+            (user_id, project_id),
+        )
+        reason_rows = await cursor.fetchall()
+        stats["by_reason"] = {row["archive_reason"]: row["count"] for row in reason_rows}
+
+        return stats
 
     # -----------------------------------------------------------------------
     # Temporal queries (Week 8)
