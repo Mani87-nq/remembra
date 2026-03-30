@@ -534,14 +534,16 @@ class ApiClient {
   }
 
   async createCheckout(plan: string): Promise<CheckoutResponse> {
-    return this.fetchApi<CheckoutResponse>('/cloud/checkout', {
+    // Use /billing/checkout for Paddle, falls back to /cloud/checkout for Stripe
+    return this.fetchApi<CheckoutResponse>('/billing/checkout', {
       method: 'POST',
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, billing_cycle: 'monthly' }),
     });
   }
 
   async createPortalSession(): Promise<PortalResponse> {
-    return this.fetchApi<PortalResponse>('/cloud/portal', {
+    // Use /billing/portal for Paddle, falls back to /cloud/portal for Stripe
+    return this.fetchApi<PortalResponse>('/billing/portal', {
       method: 'POST',
     });
   }
@@ -759,7 +761,10 @@ export interface PlanInfoResponse {
 }
 
 export interface CheckoutResponse {
-  checkout_url: string;
+  checkout_url?: string;  // Stripe redirect URL
+  client_token?: string;  // Paddle overlay checkout token
+  transaction_id?: string;  // Paddle transaction ID
+  provider: string;  // 'stripe' or 'paddle'
 }
 
 export interface PortalResponse {

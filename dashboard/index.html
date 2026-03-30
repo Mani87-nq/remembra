@@ -10,6 +10,16 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Paddle.js for billing checkout -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <script>
+      // Initialize Paddle (production mode)
+      if (typeof Paddle !== 'undefined') {
+        Paddle.Initialize({ 
+          token: 'live_5d05508ad75c2fe0d5621718dbd'  // Paddle client-side token
+        });
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

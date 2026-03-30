@@ -367,8 +367,28 @@ export function Billing() {
   const handleUpgrade = async (plan: string) => {
     setCheckoutLoading(true);
     try {
-      const { checkout_url } = await api.createCheckout(plan);
-      window.location.href = checkout_url;
+      const response = await api.createCheckout(plan);
+      
+      if (response.provider === 'paddle' && response.transaction_id) {
+        // Paddle overlay checkout
+        // @ts-expect-error Paddle is loaded via script tag
+        if (typeof window.Paddle !== 'undefined') {
+          // @ts-expect-error Paddle global
+          window.Paddle.Checkout.open({
+            transactionId: response.transaction_id,
+          });
+        } else if (response.checkout_url) {
+          // Fallback to redirect if Paddle.js not loaded
+          window.location.href = response.checkout_url;
+        } else {
+          throw new Error('Paddle checkout not available');
+        }
+      } else if (response.checkout_url) {
+        // Stripe redirect checkout
+        window.location.href = response.checkout_url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create checkout session');
     } finally {

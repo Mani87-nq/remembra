@@ -195,6 +195,28 @@ class PaddleBillingManager:
             "checkout_url": data.get("checkout", {}).get("url"),
         }
 
+    async def create_checkout_session(
+        self,
+        customer_id: str | None,
+        plan: PlanTier,
+        user_id: str,
+        email: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a checkout session (alias for create_checkout_transaction).
+
+        Returns dict with:
+          - transaction_id: For Paddle.js overlay checkout
+          - checkout_url: For redirect-based checkout (fallback)
+          - client_token: Not used by Paddle v2, but included for compatibility
+        """
+        result = await self.create_checkout_transaction(
+            paddle_customer_id=customer_id,
+            plan=plan,
+            user_id=user_id,
+            customer_email=email,
+        )
+        return result
+
     # -----------------------------------------------------------------------
     # Portal - Customer portal URL
     # -----------------------------------------------------------------------
