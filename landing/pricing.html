@@ -12,8 +12,8 @@
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     
-    <!-- Stripe -->
-    <script src="https://js.stripe.com/v3/"></script>
+    <!-- Paddle Checkout -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -329,29 +329,67 @@
         </div>
     </footer>
 
-    <!-- Checkout Script -->
+    <!-- Paddle Checkout Script -->
     <script>
-        // Redirect to dashboard signup - the proper flow for account creation + billing
-        async function subscribePro() {
+        // Initialize Paddle with client-side token (safe to expose)
+        Paddle.Initialize({
+            token: 'live_5d05508ad75c2fe0d5621718dbd'
+        });
+        
+        // Paddle Price IDs (from Paddle dashboard)
+        const PADDLE_PRICES = {
+            pro: 'pri_01kmepby4nfy150jbfjkpkev5h',   // $49/mo
+            team: 'pri_01kmepewmfpqdz413hc4f4fr3r'  // $199/mo
+        };
+        
+        function subscribePro() {
             const button = document.getElementById('proButton');
             button.textContent = 'Loading...';
             button.disabled = true;
-            // Redirect to dashboard signup - user creates account, then upgrades from Billing page
-            window.location.href = 'https://app.remembra.dev/signup?plan=pro';
+            
+            Paddle.Checkout.open({
+                items: [{ priceId: PADDLE_PRICES.pro, quantity: 1 }],
+                successUrl: 'https://app.remembra.dev/billing?success=true',
+                settings: {
+                    displayMode: 'overlay',
+                    theme: 'dark',
+                    locale: 'en'
+                }
+            });
+            
+            // Reset button after checkout closes
+            setTimeout(() => {
+                button.textContent = 'Subscribe →';
+                button.disabled = false;
+            }, 1000);
         }
         
-        async function subscribeTeam() {
+        function subscribeTeam() {
             const button = document.getElementById('teamButton');
             button.textContent = 'Loading...';
             button.disabled = true;
-            // Redirect to dashboard signup - user creates account, then upgrades from Billing page
-            window.location.href = 'https://app.remembra.dev/signup?plan=team';
+            
+            Paddle.Checkout.open({
+                items: [{ priceId: PADDLE_PRICES.team, quantity: 1 }],
+                successUrl: 'https://app.remembra.dev/billing?success=true',
+                settings: {
+                    displayMode: 'overlay',
+                    theme: 'dark',
+                    locale: 'en'
+                }
+            });
+            
+            // Reset button after checkout closes
+            setTimeout(() => {
+                button.textContent = 'Subscribe →';
+                button.disabled = false;
+            }, 1000);
         }
         
-        // Check for cancelled checkout
+        // Check for success/cancelled states
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('checkout') === 'cancelled') {
-            console.log('Checkout was cancelled');
+        if (urlParams.get('checkout') === 'success') {
+            console.log('Payment successful!');
         }
     </script>
 </body>
