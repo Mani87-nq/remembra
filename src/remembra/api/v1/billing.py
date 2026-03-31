@@ -217,14 +217,14 @@ async def create_checkout(
 
     if provider == "paddle":
         from remembra.cloud.billing_paddle import PaddleBillingManager
-        from remembra.cloud.paddle_config import get_paddle_config
+        from remembra.cloud.paddle_config import get_paddle_settings
         from remembra.cloud.plans_paddle import PlanTier
 
-        config = get_paddle_config()
+        paddle_settings = get_paddle_settings()
         billing = PaddleBillingManager(
-            api_key=config.api_key,
-            webhook_secret=config.webhook_secret or "",
-            sandbox=config.sandbox,
+            api_key=paddle_settings.api_key,
+            webhook_secret=paddle_settings.webhook_secret or "",
+            sandbox=paddle_settings.sandbox,
         )
 
         try:
@@ -283,19 +283,20 @@ async def get_portal(
 
     if provider == "paddle":
         from remembra.cloud.billing_paddle import PaddleBillingManager
-        from remembra.cloud.paddle_config import get_paddle_config
+        from remembra.cloud.paddle_config import get_paddle_settings
 
-        config = get_paddle_config()
+        paddle_settings = get_paddle_settings()
         billing = PaddleBillingManager(
-            api_key=config.api_key,
-            webhook_secret=config.webhook_secret or "",
-            sandbox=config.sandbox,
+            api_key=paddle_settings.api_key,
+            webhook_secret=paddle_settings.webhook_secret or "",
+            sandbox=paddle_settings.sandbox,
         )
 
         # Get customer ID from user profile
-        # For now, return the Paddle customer portal URL
+        # TODO: Look up actual Paddle customer ID from user's subscription
+        # For now, this will fail if user doesn't have a Paddle customer ID
         url = await billing.create_portal_session(
-            customer_id=current_user.user_id,  # We'd need to look this up
+            paddle_customer_id=current_user.user_id,  # We'd need to look this up
         )
 
         return PortalResponse(portal_url=url)
