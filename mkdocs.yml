@@ -112,6 +112,7 @@ nav:
   - Concepts:
     - How It Works: concepts/how-it-works.md
     - Memory Model: concepts/memory-model.md
+    - Scope & Boundaries: concepts/scope.md
     - Entity Graph: concepts/entity-graph.md
     - Durability & Recovery: concepts/durability.md
   - Examples:
