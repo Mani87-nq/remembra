@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Key, 
   Plus, 
@@ -257,12 +258,17 @@ export function ApiKeyManager() {
 // ---------------------------------------------------------
 
 function ModalOverlay({ children, onClose }: { children: React.ReactNode, onClose?: () => void }) {
-  return (
+  // Use portal to render at document body level, escaping all parent CSS constraints
+  return createPortal(
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }} 
-      className="modal-backdrop fixed inset-0 z-[100] flex items-start justify-center p-4 pt-20 overflow-y-auto"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(8px)',
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget && onClose) onClose();
       }}
@@ -272,11 +278,12 @@ function ModalOverlay({ children, onClose }: { children: React.ReactNode, onClos
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.95, opacity: 0, y: 10 }}
         transition={{ type: "spring", duration: 0.4 }}
-        className="modal-surface w-full max-w-md rounded-2xl overflow-hidden relative z-[101] my-4"
+        className="modal-surface w-full max-w-md max-h-[90vh] rounded-2xl overflow-y-auto relative"
       >
         {children}
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }
 
