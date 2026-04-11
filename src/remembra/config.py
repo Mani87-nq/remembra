@@ -115,6 +115,8 @@ class Settings(BaseSettings):
     # Graph-Aware Retrieval
     enable_graph_retrieval: bool = Field(True, description="Enable entity graph traversal during recall")
     graph_max_depth: int = Field(2, description="Maximum depth for entity relationship traversal")
+    graph_max_entities: int = Field(100, description="Maximum related entities to return from graph traversal")
+    graph_max_memories: int = Field(500, description="Maximum memory IDs to collect from graph traversal")
 
     # Context Optimization
     context_max_tokens: int = Field(4000, description="Maximum tokens in recall context output")

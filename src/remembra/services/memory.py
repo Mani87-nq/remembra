@@ -150,6 +150,8 @@ class MemoryService:
         self.graph_retriever = GraphRetriever(
             db=db,
             max_depth=settings.graph_max_depth,
+            max_entities=settings.graph_max_entities,
+            max_memories=settings.graph_max_memories,
         )
 
         # Context window optimization for LLM output
