@@ -363,7 +363,7 @@ async def store_memory(
     status_code=status.HTTP_201_CREATED,
     summary="Store multiple memories in one request",
 )
-@limiter.limit("5/minute")
+@limiter.limit("30/minute")
 async def batch_store(
     request: Request,
     body: BatchStoreRequest,
@@ -433,7 +433,7 @@ async def batch_store(
             sanitization = sanitizer.analyze(item.content, source="batch_input")
             item.content = sanitization.content
 
-            resp = await memory_service.store(item)
+            resp = await memory_service.store(item, skip_extraction=body.skip_extraction)
             results.append(BatchStoreResult(index=i, success=True, response=resp))
             succeeded += 1
         except Exception as e:

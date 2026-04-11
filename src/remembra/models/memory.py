@@ -368,6 +368,12 @@ class BatchStoreRequest(BaseModel):
     """Request to store multiple memories in one call."""
 
     items: list[StoreRequest] = Field(..., min_length=1, max_length=100)
+    skip_extraction: bool = Field(
+        default=False,
+        description="Skip entity/fact extraction for pre-structured data. "
+        "Embeddings are still generated for semantic search. "
+        "Use when your data already has structured metadata.",
+    )
 
 
 class BatchStoreResult(BaseModel):

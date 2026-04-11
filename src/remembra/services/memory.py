@@ -185,12 +185,13 @@ class MemoryService:
         source: str = "user_input",
         trust_score: float = 1.0,
         checksum: str | None = None,
+        skip_extraction: bool = False,
     ) -> StoreResponse:
         """
         Store a new memory with intelligent extraction and consolidation.
 
         Steps:
-        1. Extract atomic facts from content (LLM-powered)
+        1. Extract atomic facts from content (LLM-powered) - skipped if skip_extraction=True
         2. For each fact, check for similar existing memories
         3. Consolidate: ADD new, UPDATE existing, or skip duplicates
         4. Store in Qdrant (vector) + SQLite (metadata)
@@ -200,6 +201,8 @@ class MemoryService:
             source: Content provenance (user_input, agent_generated, external_api)
             trust_score: Security trust score (0.0-1.0)
             checksum: SHA-256 hash for integrity verification
+            skip_extraction: If True, skip LLM extraction and store content as-is.
+                           Embeddings are still generated. Useful for pre-structured data.
         """
         log.info(
             "storing_memory",
@@ -226,14 +229,17 @@ class MemoryService:
             # Fall back to server default
             expires_at = now + timedelta(days=self.settings.default_ttl_days)
 
-        # Step 1: Extract atomic facts using LLM
-        extracted_facts = await self.extractor.extract(request.content)
-
-        if not extracted_facts:
-            # If no facts extracted, store raw content
+        # Step 1: Extract atomic facts using LLM (skip if skip_extraction=True)
+        if skip_extraction:
+            # Skip LLM extraction - store content as single fact
             extracted_facts = [request.content.strip()]
-
-        log.debug("facts_extracted", count=len(extracted_facts))
+            log.debug("extraction_skipped", content_length=len(request.content))
+        else:
+            extracted_facts = await self.extractor.extract(request.content)
+            if not extracted_facts:
+                # If no facts extracted, store raw content
+                extracted_facts = [request.content.strip()]
+            log.debug("facts_extracted", count=len(extracted_facts))
 
         # Step 2 & 3: Process each fact with consolidation
         stored_facts: list[str] = []
