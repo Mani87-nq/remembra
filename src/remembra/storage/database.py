@@ -22,8 +22,8 @@ def _safe_json_loads(data: str | None, default: Any = None) -> Any:
         return default if default is not None else []
     try:
         return json.loads(data)
-    except json.JSONDecodeError as e:
-        log.warning("json_parse_error", data_preview=data[:100] if data else None, error=str(e))
+    except json.JSONDecodeError:
+        # Don't log - this is expected for bulk-imported data without entities
         return default if default is not None else []
 
 
