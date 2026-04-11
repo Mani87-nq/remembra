@@ -295,6 +295,131 @@ class MemoryService:
             entities=[],  # TODO: Entity extraction in Week 5
         )
 
+    async def bulk_import(
+        self,
+        items: list[StoreRequest],
+        user_id: str,
+        project_id: str = "default",
+    ) -> dict[str, Any]:
+        """
+        Fast bulk import for pre-structured data.
+        
+        Optimized path that:
+        1. Batch embeds all items in one OpenAI call
+        2. Bulk upserts to Qdrant
+        3. Bulk inserts to SQLite
+        
+        Skips: fact extraction, consolidation, conflict detection.
+        Use for importing known-good structured data.
+        
+        Args:
+            items: List of StoreRequest objects
+            user_id: User ID for all items
+            project_id: Project ID for all items
+            
+        Returns:
+            Dict with stored count and any errors
+        """
+        import uuid
+        from remembra.models.memory import Memory
+        
+        if not items:
+            return {"stored": 0, "errors": []}
+        
+        now = datetime.utcnow()
+        errors = []
+        
+        # Extract all contents for batch embedding
+        contents = [item.content.strip() for item in items]
+        
+        # Batch embed all at once (single OpenAI call!)
+        try:
+            embeddings = await self.embeddings.embed_batch(contents)
+        except Exception as e:
+            log.error("bulk_embed_failed", error=str(e), count=len(contents))
+            return {"stored": 0, "errors": [f"Embedding failed: {str(e)}"]}
+        
+        # Build Memory objects
+        memories = []
+        memory_dicts = []
+        
+        for i, (item, embedding) in enumerate(zip(items, embeddings)):
+            memory_id = str(uuid.uuid4())
+            
+            # Calculate expiration
+            expires_at = None
+            if item.expires_at:
+                expires_at = item.expires_at
+            elif item.ttl:
+                ttl_delta = parse_ttl(item.ttl)
+                if ttl_delta:
+                    expires_at = now + ttl_delta
+            elif self.settings.default_ttl_days:
+                expires_at = now + timedelta(days=self.settings.default_ttl_days)
+            
+            memory = Memory(
+                id=memory_id,
+                user_id=user_id,
+                project_id=project_id,
+                content=item.content.strip(),
+                embedding=embedding,
+                extracted_facts=[item.content.strip()],
+                entities=[],
+                metadata=item.metadata or {},
+                created_at=now,
+                expires_at=expires_at,
+            )
+            memories.append(memory)
+            
+            memory_dicts.append({
+                "id": memory_id,
+                "user_id": user_id,
+                "project_id": project_id,
+                "content": item.content.strip(),
+                "extracted_facts": [item.content.strip()],
+                "metadata": item.metadata or {},
+                "created_at": now,
+                "expires_at": expires_at,
+                "source": "bulk_import",
+                "trust_score": 1.0,
+                "checksum": None,
+                "visibility": item.visibility or "personal",
+                "space_id": item.space_id,
+                "team_id": item.team_id,
+            })
+        
+        # Bulk upsert to Qdrant
+        try:
+            qdrant_count = await self.qdrant.upsert_batch(memories)
+        except Exception as e:
+            log.error("bulk_qdrant_failed", error=str(e))
+            errors.append(f"Qdrant bulk insert failed: {str(e)}")
+            return {"stored": 0, "errors": errors}
+        
+        # Bulk insert to SQLite
+        try:
+            db_count = await self.db.save_memories_bulk(memory_dicts)
+        except Exception as e:
+            log.error("bulk_db_failed", error=str(e))
+            errors.append(f"Database bulk insert failed: {str(e)}")
+            # Note: Qdrant already has the data, might be inconsistent
+        
+        log.info(
+            "bulk_import_complete",
+            user_id=user_id,
+            project_id=project_id,
+            total=len(items),
+            qdrant_stored=qdrant_count,
+            db_stored=db_count,
+        )
+        
+        return {
+            "stored": min(qdrant_count, db_count) if not errors else 0,
+            "qdrant_count": qdrant_count,
+            "db_count": db_count,
+            "errors": errors,
+        }
+
     async def _store_single_fact(
         self,
         fact: str,

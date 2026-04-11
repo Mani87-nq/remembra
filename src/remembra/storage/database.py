@@ -471,6 +471,61 @@ class Database:
         )
         await self.conn.commit()
 
+    async def save_memories_bulk(
+        self,
+        memories: list[dict[str, Any]],
+    ) -> int:
+        """Bulk save multiple memories to SQLite.
+        
+        Args:
+            memories: List of memory dicts with keys:
+                id, user_id, project_id, content, extracted_facts,
+                metadata, created_at, expires_at, source, trust_score,
+                checksum, visibility, space_id, team_id
+                
+        Returns:
+            Number of memories saved
+        """
+        if not memories:
+            return 0
+            
+        values = []
+        for m in memories:
+            values.append((
+                m["id"],
+                m["user_id"],
+                m["project_id"],
+                m["content"],
+                json.dumps(m.get("extracted_facts", [])),
+                json.dumps(m.get("metadata", {})),
+                m["created_at"].isoformat() if hasattr(m["created_at"], "isoformat") else m["created_at"],
+                datetime.utcnow().isoformat(),
+                m["expires_at"].isoformat() if m.get("expires_at") and hasattr(m["expires_at"], "isoformat") else m.get("expires_at"),
+                m.get("source", "bulk_import"),
+                m.get("trust_score", 1.0),
+                m.get("checksum"),
+                m.get("visibility", "personal"),
+                m.get("space_id"),
+                m.get("team_id"),
+            ))
+        
+        await self.conn.executemany(
+            """
+            INSERT INTO memories (id, user_id, project_id, content, extracted_facts, 
+                                  metadata, created_at, updated_at, expires_at,
+                                  source, trust_score, checksum, visibility, space_id, team_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                content = excluded.content,
+                extracted_facts = excluded.extracted_facts,
+                metadata = excluded.metadata,
+                updated_at = excluded.updated_at
+            """,
+            values,
+        )
+        await self.conn.commit()
+        return len(memories)
+
     async def get_memory(self, memory_id: str) -> dict[str, Any] | None:
         """Get memory metadata by ID."""
         cursor = await self.conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,))

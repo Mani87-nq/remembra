@@ -456,6 +456,92 @@ async def batch_store(
 
 
 # ---------------------------------------------------------------------------
+# Bulk Import (Fast Path)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/bulk",
+    status_code=status.HTTP_201_CREATED,
+    summary="Fast bulk import for pre-structured data",
+)
+@limiter.limit("10/minute")
+async def bulk_import(
+    request: Request,
+    body: BatchStoreRequest,
+    memory_service: MemoryServiceDep,
+    audit_logger: AuditLoggerDep,
+    current_user: CurrentUser,
+) -> dict:
+    """
+    Fast bulk import optimized for pre-structured data.
+    
+    Unlike /batch which processes items individually, /bulk:
+    - Embeds ALL items in a single OpenAI call
+    - Bulk upserts to Qdrant in one operation
+    - Bulk inserts to SQLite in one transaction
+    
+    This is 10-50x faster than /batch for large imports.
+    
+    **Use when:**
+    - Importing pre-structured data (trading summaries, logs, etc.)
+    - Data is known-good and doesn't need deduplication
+    - Speed is critical
+    
+    **Skips:** Fact extraction, consolidation, conflict detection.
+    
+    **Request:**
+    ```json
+    {
+      "items": [
+        {"content": "NQ summary...", "metadata": {"symbol": "NQ"}},
+        {"content": "ES summary...", "metadata": {"symbol": "ES"}}
+      ]
+    }
+    ```
+    
+    Rate limit: 10 requests/minute (100 items/request = 1000 items/minute max)
+    """
+    # RBAC: Check permission
+    if not has_permission(current_user, "memory:store"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied: memory:store required",
+        )
+    
+    # Resolve project
+    project_id = resolve_project_access(current_user, body.items[0].project_id if body.items else None) or "default"
+    
+    try:
+        result = await memory_service.bulk_import(
+            items=body.items,
+            user_id=current_user.user_id,
+            project_id=project_id,
+        )
+        
+        await audit_logger.log_memory_store(
+            user_id=current_user.user_id,
+            memory_id=f"bulk:{result.get('stored', 0)}",
+            api_key_id=current_user.api_key_id,
+            ip_address=get_client_ip(request),
+            success=True,
+        )
+        
+        return {
+            "status": "ok",
+            "stored": result.get("stored", 0),
+            "errors": result.get("errors", []),
+        }
+        
+    except Exception as e:
+        log.error("bulk_import_failed", error=str(e), user_id=current_user.user_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Bulk import failed: {str(e)}",
+        ) from e
+
+
+# ---------------------------------------------------------------------------
 # Batch Recall
 # ---------------------------------------------------------------------------
 

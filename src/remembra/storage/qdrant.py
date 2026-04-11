@@ -139,6 +139,58 @@ class QdrantStore:
 
         log.debug("qdrant_upserted", memory_id=memory.id, user_id=memory.user_id)
 
+    async def upsert_batch(self, memories: list[Memory]) -> int:
+        """
+        Bulk insert/update multiple memories in one call.
+        
+        Args:
+            memories: List of Memory objects with embeddings already computed
+            
+        Returns:
+            Number of memories upserted
+        """
+        if not memories:
+            return 0
+            
+        client = await self._get_client()
+        
+        points = []
+        for memory in memories:
+            if not memory.embedding:
+                log.warning("bulk_skip_no_embedding", memory_id=memory.id)
+                continue
+                
+            payload: dict[str, Any] = {
+                FIELD_USER_ID: memory.user_id,
+                FIELD_PROJECT_ID: memory.project_id,
+                FIELD_CONTENT: self._encryptor.encrypt(memory.content),
+                FIELD_CREATED_AT: memory.created_at.isoformat(),
+                FIELD_METADATA: self._encryptor.encrypt_dict(memory.metadata),
+            }
+            
+            if memory.expires_at:
+                payload[FIELD_EXPIRES_AT] = memory.expires_at.isoformat()
+                
+            payload["extracted_facts"] = memory.extracted_facts or []
+            payload["entities"] = [e.model_dump() for e in (memory.entities or [])]
+            
+            points.append(
+                qmodels.PointStruct(
+                    id=memory.id,
+                    vector=memory.embedding,
+                    payload=payload,
+                )
+            )
+        
+        if points:
+            await client.upsert(
+                collection_name=self.collection_name,
+                points=points,
+            )
+            
+        log.info("qdrant_bulk_upserted", count=len(points))
+        return len(points)
+
     async def upsert_vector(self, memory_id: str, vector: list[float]) -> None:
         """Update only the vector for an existing point (used by re-indexer).
 
