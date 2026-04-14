@@ -45,8 +45,9 @@ PII_PATTERNS: dict[str, re.Pattern[str]] = {
     ),
     # AWS Access Keys
     "aws_key": re.compile(r"\b(?:AKIA|ABIA|ACCA|ASIA)[A-Z0-9]{16}\b"),
-    # IP Addresses (v4)
-    "ip_address": re.compile(r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b"),
+    # NOTE: IPv4 address detection removed — too many false positives for legitimate
+    # user-owned infra config (deploy IPs, server addresses) which Remembra must
+    # preserve verbatim for recall. Passwords/SSN/keys/etc. are still redacted.
     # US Passport
     "passport_us": re.compile(r"\b[A-Z]\d{8}\b"),
     # Driver's License (generic patterns)
@@ -70,7 +71,6 @@ PII_SEVERITY: dict[str, str] = {
     "email": "medium",
     "phone_us": "medium",
     "phone_intl": "medium",
-    "ip_address": "low",
     "dob": "medium",
 }
 
