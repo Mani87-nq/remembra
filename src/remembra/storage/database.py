@@ -1277,11 +1277,15 @@ class Database:
         self,
         query: str,
         user_id: str,
-        project_id: str = "default",
+        project_id: str | None = None,
         limit: int = 20,
     ) -> list[tuple[str, float]]:
         """
         Perform FTS5 BM25 search.
+
+        When project_id is None, searches across all projects owned by
+        the user (cross-project recall). Otherwise scopes to the given
+        project.
 
         Returns list of (memory_id, bm25_score) tuples, sorted by relevance.
         BM25 scores are negative (closer to 0 = more relevant).
@@ -1289,17 +1293,30 @@ class Database:
         # Escape special FTS5 characters
         safe_query = query.replace('"', '""')
 
-        cursor = await self.conn.execute(
-            """
-            SELECT id, bm25(memories_fts) as score
-            FROM memories_fts
-            WHERE user_id = ? AND project_id = ? 
-              AND memories_fts MATCH ?
-            ORDER BY score
-            LIMIT ?
-            """,
-            (user_id, project_id, safe_query, limit),
-        )
+        if project_id is None:
+            cursor = await self.conn.execute(
+                """
+                SELECT id, bm25(memories_fts) as score
+                FROM memories_fts
+                WHERE user_id = ?
+                  AND memories_fts MATCH ?
+                ORDER BY score
+                LIMIT ?
+                """,
+                (user_id, safe_query, limit),
+            )
+        else:
+            cursor = await self.conn.execute(
+                """
+                SELECT id, bm25(memories_fts) as score
+                FROM memories_fts
+                WHERE user_id = ? AND project_id = ?
+                  AND memories_fts MATCH ?
+                ORDER BY score
+                LIMIT ?
+                """,
+                (user_id, project_id, safe_query, limit),
+            )
         rows = await cursor.fetchall()
 
         # Convert negative BM25 scores to positive (negate them)

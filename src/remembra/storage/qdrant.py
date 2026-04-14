@@ -213,7 +213,7 @@ class QdrantStore:
         self,
         query_vector: list[float],
         user_id: str,
-        project_id: str = "default",
+        project_id: str | None = None,
         limit: int = 5,
         score_threshold: float = 0.70,
     ) -> list[tuple[str, float, dict[str, Any]]]:
@@ -222,8 +222,9 @@ class QdrantStore:
 
         Args:
             query_vector: Embedding of the search query
-            user_id: Filter to this user's memories
-            project_id: Filter to this project
+            user_id: Filter to this user's memories (always required)
+            project_id: Filter to this project. If None, search across
+                all projects owned by the user (cross-project recall).
             limit: Max results to return
             score_threshold: Minimum similarity score
 
@@ -232,17 +233,20 @@ class QdrantStore:
         """
         client = await self._get_client()
 
-        # Build filter: user_id AND project_id match
-        must_conditions = [
+        # Build filter: always scope to user_id; project_id only when provided
+        must_conditions: list[Any] = [
             qmodels.FieldCondition(
                 key=FIELD_USER_ID,
                 match=qmodels.MatchValue(value=user_id),
             ),
-            qmodels.FieldCondition(
-                key=FIELD_PROJECT_ID,
-                match=qmodels.MatchValue(value=project_id),
-            ),
         ]
+        if project_id is not None:
+            must_conditions.append(
+                qmodels.FieldCondition(
+                    key=FIELD_PROJECT_ID,
+                    match=qmodels.MatchValue(value=project_id),
+                )
+            )
 
         results = await client.query_points(
             collection_name=self.collection_name,

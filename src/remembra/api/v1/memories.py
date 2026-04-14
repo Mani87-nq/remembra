@@ -602,7 +602,11 @@ async def batch_recall(
     for query in body.queries:
         # Enforce authenticated user
         query.user_id = current_user.user_id
-        query.project_id = resolve_project_access(current_user, query.project_id) or "default"
+        # Recall: when client doesn't pass a project_id, let None flow through so
+        # the service performs cross-project recall across all of the user's data.
+        # Restricted API keys still resolve to their allowed project(s) via
+        # resolve_project_access (may raise 403 or pin to a specific project).
+        query.project_id = resolve_project_access(current_user, query.project_id)
 
         resp = await memory_service.recall(query)
         results.append(resp)
@@ -659,7 +663,11 @@ async def recall_memories(
 
     # Override user_id with authenticated user
     body.user_id = current_user.user_id
-    body.project_id = resolve_project_access(current_user, body.project_id) or "default"
+    # Recall: when client doesn't pass a project_id, let None flow through so
+    # the service performs cross-project recall across all of the user's data.
+    # Restricted API keys still resolve to their allowed project(s) via
+    # resolve_project_access (may raise 403 or pin to a specific project).
+    body.project_id = resolve_project_access(current_user, body.project_id)
 
     try:
         result = await memory_service.recall(body)

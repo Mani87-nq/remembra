@@ -184,7 +184,13 @@ class RecallRequest(BaseModel):
             raise ValueError("query must not be empty")
         return v.strip()
 
-    project_id: str = "default"
+    project_id: str | None = Field(
+        default=None,
+        description=(
+            "Optional project namespace to scope recall to. "
+            "When omitted/null, recall spans all projects owned by the user."
+        ),
+    )
     user_id: str | None = Field(
         default=None,
         description="Deprecated: user_id is determined from API key. This field is ignored.",

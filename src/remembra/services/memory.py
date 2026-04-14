@@ -847,6 +847,7 @@ class MemoryService:
             "recalling_memories_v2",
             user_id=request.user_id,
             project_id=request.project_id,
+            cross_project=request.project_id is None,
             query_length=len(request.query),
             hybrid_enabled=use_hybrid,
             graph_enabled=self.settings.enable_graph_retrieval,
@@ -873,7 +874,10 @@ class MemoryService:
         matched_entities: list[EntityRef] = []
         related_entities: list[EntityRef] = []
 
-        if self.settings.enable_graph_retrieval:
+        # Graph retrieval requires a concrete project_id. When the caller
+        # requested cross-project recall (project_id=None) we skip this
+        # branch; semantic + FTS already span all projects in that case.
+        if self.settings.enable_graph_retrieval and request.project_id is not None:
             try:
                 graph_result = await self.graph_retriever.search(
                     query=request.query,
