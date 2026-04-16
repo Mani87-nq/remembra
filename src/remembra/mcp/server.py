@@ -149,7 +149,7 @@ def recall_memories(
     query: str,
     limit: int = 5,
     threshold: float = 0.4,
-    slim: bool = False,
+    slim: bool = True,
     filters: dict[str, str] | None = None,
 ) -> str:
     """Search persistent memory for relevant information.
@@ -165,8 +165,8 @@ def recall_memories(
         limit: Maximum number of memories to return (1-50, default: 5).
         threshold: Minimum relevance score 0.0-1.0 (default: 0.4).
                    Lower = more results but less relevant.
-        slim: If True, returns only the synthesized context string (90% smaller payload).
-              Use slim=True when you only need the context, not individual memories.
+        slim: If True (default), returns only the synthesized context string (90% smaller payload).
+              Set slim=False when you need individual memory IDs, scores, or metadata.
         filters: Optional metadata filters (AND-combined exact match). Applied
                  after retrieval, before ranking. Example:
                  {"project": "trademind", "type": "deploy-config"}.

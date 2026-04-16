@@ -1,10 +1,28 @@
 """Core domain models for memories, entities, and relationships."""
 
 from datetime import datetime
-from typing import Any
+from enum import Enum
+from typing import Any, Literal
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
+
+
+# ---------------------------------------------------------------------------
+# Enumerations
+# ---------------------------------------------------------------------------
+
+
+class MemoryType(str, Enum):
+    """Semantic type of a memory, set at store time."""
+
+    observation = "observation"  # Raw observed fact ("Alice said X")
+    fact = "fact"  # Derived or confirmed fact ("Alice works at Acme")
+    inference = "inference"  # LLM-inferred belief ("Alice probably prefers Y")
+    task = "task"  # Action item or TODO ("Follow up with Alice on Monday")
+
+
+ContextScope = Literal["session", "project", "global"]
 
 
 def _new_id() -> str:
@@ -85,6 +103,14 @@ class Memory(BaseModel):
     user_id: str
     project_id: str = "default"
     content: str
+    memory_type: MemoryType = Field(
+        default=MemoryType.observation,
+        description="Semantic type: observation | fact | inference | task",
+    )
+    context_scope: ContextScope = Field(
+        default="global",
+        description="Visibility scope: session | project | global",
+    )
     extracted_facts: list[str] = Field(default_factory=list)
     entities: list[EntityRef] = Field(default_factory=list)
     embedding: list[float] = Field(default_factory=list, exclude=True)
@@ -94,6 +120,15 @@ class Memory(BaseModel):
     expires_at: datetime | None = None
     access_count: int = 0
     last_accessed: datetime | None = None
+    # Supersession / conflict tracking
+    superseded_by: str | None = Field(
+        default=None,
+        description="ID of the memory that supersedes this one (None = still current)",
+    )
+    conflict_ids: list[str] = Field(
+        default_factory=list,
+        description="IDs of memories that conflict with this one",
+    )
 
     @field_validator("content")
     @classmethod
@@ -114,6 +149,14 @@ class StoreRequest(BaseModel):
     user_id: str | None = Field(
         default=None,
         description="Deprecated: user_id is determined from API key. This field is ignored.",
+    )
+    memory_type: MemoryType = Field(
+        default=MemoryType.observation,
+        description="Semantic type: observation | fact | inference | task",
+    )
+    context_scope: ContextScope = Field(
+        default="global",
+        description="Scope for recall: session (this session only) | project (this project) | global (all contexts)",
     )
     # Visibility control for team collaboration
     visibility: str = Field(
@@ -235,6 +278,14 @@ class RecallRequest(BaseModel):
             "ranking. Example: {\"project\": \"trademind\", \"type\": \"deploy-config\"}."
         ),
     )
+    memory_type: MemoryType | None = Field(
+        default=None,
+        description="Filter recall to a specific memory type (observation | fact | inference | task). Omit for all types.",
+    )
+    context_scope: ContextScope | None = Field(
+        default=None,
+        description="Filter by context scope. Omit to recall across all scopes.",
+    )
 
 
 class RecallResult(BaseModel):
@@ -242,6 +293,10 @@ class RecallResult(BaseModel):
     relevance: float
     content: str
     created_at: datetime
+    memory_type: MemoryType = Field(
+        default=MemoryType.observation,
+        description="Semantic type of this memory",
+    )
     # Freshness scoring (v0.13)
     freshness_score: float = Field(
         default=1.0,
@@ -257,14 +312,22 @@ class RecallResult(BaseModel):
         default=False,
         description="True if memory is older than staleness threshold (default 30 days)",
     )
-    # Signal decomposition for divergence detection
+    # Full signal decomposition (Phase 0)
     semantic_score: float = Field(
         default=0.0,
-        description="Raw semantic similarity score",
+        description="Semantic similarity component of relevance",
     )
     recency_score: float = Field(
         default=0.0,
-        description="Raw recency-based score",
+        description="Recency (freshness) component of relevance",
+    )
+    entity_score: float = Field(
+        default=0.0,
+        description="Entity match component of relevance",
+    )
+    keyword_score: float = Field(
+        default=0.0,
+        description="Keyword (BM25) component of relevance",
     )
 
 
@@ -316,7 +379,8 @@ class MemorySummary(BaseModel):
     updated_at: str | None = None
     accessed_at: str | None = None
     access_count: int = 0
-    memory_type: str | None = None
+    memory_type: MemoryType | None = None
+    context_scope: ContextScope = "global"
     entities: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -562,3 +626,41 @@ class ConsolidationReport(BaseModel):
     importance_rescored: int = 0
     memories_decayed: int = 0
     errors: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Feedback Models (Phase 0)
+# ---------------------------------------------------------------------------
+
+
+class FeedbackRequest(BaseModel):
+    """Feedback on a recalled or stored memory."""
+
+    rating: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="1–5 star rating (1 = not useful, 5 = very useful)",
+    )
+    signal: Literal["relevant", "irrelevant", "outdated", "incorrect", "duplicate"] | None = Field(
+        default=None,
+        description="Structured signal: what was wrong (or right) about this memory",
+    )
+    comment: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Optional free-text comment",
+    )
+    query: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="The query that surfaced this memory (for training signal)",
+    )
+
+
+class FeedbackResponse(BaseModel):
+    """Response after recording feedback."""
+
+    memory_id: str
+    recorded: bool = True
+    message: str = "Feedback recorded"

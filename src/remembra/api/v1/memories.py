@@ -28,6 +28,8 @@ from remembra.models.memory import (
     BatchStoreRequest,
     BatchStoreResponse,
     BatchStoreResult,
+    FeedbackRequest,
+    FeedbackResponse,
     ForgetResponse,
     MemorySummary,
     RecallRequest,
@@ -1038,6 +1040,90 @@ async def supersede_memory(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to supersede memory",
         ) from e
+
+
+# ---------------------------------------------------------------------------
+# Feedback (Phase 0)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/{memory_id}/feedback",
+    response_model=FeedbackResponse,
+    summary="Submit feedback on a memory",
+)
+@limiter.limit("30/minute")
+async def submit_feedback(
+    request: Request,
+    memory_id: str,
+    body: FeedbackRequest,
+    memory_service: MemoryServiceDep,
+    audit_logger: AuditLoggerDep,
+    current_user: CurrentUser,
+) -> FeedbackResponse:
+    """
+    Record relevance feedback for a recalled memory.
+
+    Feedback is persisted as metadata on the memory and used to
+    improve future retrieval ranking (training signal).
+
+    - **rating**: 1–5 stars
+    - **signal**: Structured label (relevant | irrelevant | outdated | incorrect | duplicate)
+    - **comment**: Optional free-text
+    - **query**: The query that surfaced this memory
+
+    Rate limit: 30 requests/minute.
+    """
+    if not has_permission(current_user, "memory:recall"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Permission denied: memory:recall required",
+        )
+
+    existing = await memory_service.get(memory_id)
+    if not existing or existing.get("user_id") != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Memory {memory_id} not found",
+        )
+
+    # Persist feedback as metadata on the memory
+    feedback_entry = {
+        "rating": body.rating,
+        "signal": body.signal,
+        "comment": body.comment,
+        "query": body.query,
+        "recorded_at": datetime.utcnow().isoformat(),
+        "user_id": current_user.user_id,
+    }
+    existing_meta = existing.get("metadata") or {}
+    feedback_history = existing_meta.get("_feedback", [])
+    feedback_history.append(feedback_entry)
+    new_meta = {**existing_meta, "_feedback": feedback_history}
+
+    try:
+        await memory_service.update(
+            memory_id=memory_id,
+            user_id=current_user.user_id,
+            new_content=existing.get("content", ""),
+            new_metadata=new_meta,
+        )
+    except Exception as e:
+        _internal_log.error("feedback_update_failed", memory_id=memory_id, error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to record feedback",
+        ) from e
+
+    log.info(
+        "memory_feedback_recorded",
+        memory_id=memory_id,
+        rating=body.rating,
+        signal=body.signal,
+        user_id=current_user.user_id,
+    )
+
+    return FeedbackResponse(memory_id=memory_id)
 
 
 # ---------------------------------------------------------------------------
