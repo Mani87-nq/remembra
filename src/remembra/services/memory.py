@@ -857,6 +857,10 @@ class MemoryService:
         slim_mode = getattr(request, "slim", False)
         max_tokens = 800 if slim_mode else (request.max_tokens or self.settings.context_max_tokens)
 
+        # ----- Filter-only recall (no semantic query) -----
+        if not request.query:
+            return await self._recall_by_filters(request, max_tokens=max_tokens, slim_mode=slim_mode)
+
         log.info(
             "recalling_memories_v2",
             user_id=request.user_id,
@@ -1283,6 +1287,106 @@ class MemoryService:
             context_budget_used=optimized.total_tokens,
             divergence_detected=divergence_detected,
             divergence_details=divergence_details,
+        )
+
+    # -----------------------------------------------------------------------
+    # Filter-only Recall (no semantic query)
+    # -----------------------------------------------------------------------
+
+    async def _recall_by_filters(
+        self,
+        request: RecallRequest,
+        *,
+        max_tokens: int,
+        slim_mode: bool,
+    ) -> RecallResponse:
+        """Retrieve memories by metadata filters only, sorted by created_at DESC.
+
+        Used when the caller omits ``query`` but supplies ``filters``.
+        Skips embedding, semantic search, graph retrieval, and reranking —
+        returns a chronological list of matching memories.
+        """
+        import json as _json
+
+        log.info(
+            "recall_by_filters_only",
+            user_id=request.user_id,
+            project_id=request.project_id,
+            filters=request.filters,
+            limit=request.limit,
+        )
+
+        # Fetch recent memories from SQLite
+        rows = await self.db.list_memories(
+            user_id=request.user_id,
+            project_id=request.project_id,
+            limit=request.limit * 3,  # over-fetch to allow for filter narrowing
+            offset=0,
+        )
+
+        # Apply metadata filters in Python (SQLite stores metadata as JSON TEXT)
+        filters = request.filters or {}
+        matched: list[dict] = []
+        for row in rows:
+            raw_meta = row.get("metadata")
+            if isinstance(raw_meta, str):
+                try:
+                    meta = _json.loads(raw_meta)
+                except (ValueError, TypeError):
+                    meta = {}
+            elif isinstance(raw_meta, dict):
+                meta = raw_meta
+            else:
+                meta = {}
+
+            if all(str(meta.get(k)) == str(v) for k, v in filters.items()):
+                matched.append({**row, "_parsed_metadata": meta})
+                if len(matched) >= request.limit:
+                    break
+
+        # Build RecallResult objects
+        memories: list[RecallResult] = []
+        context_parts: list[str] = []
+        for row in matched:
+            created = row.get("created_at", "")
+            if isinstance(created, str):
+                try:
+                    from datetime import datetime
+                    created_dt = datetime.fromisoformat(created)
+                except (ValueError, TypeError):
+                    created_dt = datetime.utcnow()
+            else:
+                created_dt = created
+
+            meta = row.get("_parsed_metadata", {})
+            content = row.get("content", "")
+
+            memories.append(
+                RecallResult(
+                    id=row["id"],
+                    relevance=1.0,  # filter-only = exact match
+                    content=content,
+                    created_at=created_dt,
+                    freshness_score=1.0,
+                    age_days=0,
+                    staleness_warning=False,
+                    semantic_score=0.0,
+                    recency_score=1.0,
+                    why_relevant="matched metadata filters",
+                    memory_type=meta.get("memory_type"),
+                    scope=meta.get("scope"),
+                    metadata=meta,
+                )
+            )
+            date_str = created_dt.strftime("%Y-%m-%d") if hasattr(created_dt, "strftime") else str(created_dt)[:10]
+            context_parts.append(f"[{date_str}] {content}")
+
+        context = "\n---\n".join(context_parts) if context_parts else ""
+
+        return RecallResponse(
+            context=context,
+            memories=memories,
+            entities=[],
         )
 
     # -----------------------------------------------------------------------

@@ -146,7 +146,7 @@ def store_memory(
     )
 )
 def recall_memories(
-    query: str,
+    query: str | None = None,
     limit: int = 5,
     threshold: float = 0.4,
     slim: bool = False,
@@ -162,6 +162,8 @@ def recall_memories(
         query: Natural language query. Can be a question or keywords.
                Examples: "What did we decide about the API design?",
                "Alice project preferences", "meeting notes from last week".
+               Optional when filters is provided — omit to retrieve
+               memories matching filters sorted by created_at DESC.
         limit: Maximum number of memories to return (1-50, default: 5).
         threshold: Minimum relevance score 0.0-1.0 (default: 0.4).
                    Lower = more results but less relevant.
@@ -175,6 +177,9 @@ def recall_memories(
         JSON string with synthesized context, matching memories, and entities.
         In slim mode, returns only: {"status": "ok", "context": "...", "count": N}
     """
+    if not query and not filters:
+        return json.dumps({"status": "error", "error": "Either query or filters (or both) must be provided."})
+
     try:
         client = _get_client()
         result = client.recall(query=query, limit=limit, threshold=threshold, filters=filters)

@@ -307,19 +307,23 @@ class Memory:
 
     def recall(
         self,
-        query: str,
+        query: str | None = None,
         limit: int = 5,
         threshold: float = 0.70,
         filters: dict[str, str] | None = None,
     ) -> RecallResult:
         """
-        Recall memories relevant to a query.
+        Recall memories relevant to a query and/or metadata filters.
 
         Performs semantic search across stored memories and returns
         the most relevant results along with a synthesized context string.
 
+        When ``query`` is omitted and ``filters`` is provided, returns
+        memories matching the filters sorted by ``created_at DESC``
+        (no semantic scoring).
+
         Args:
-            query: Natural language query
+            query: Natural language query (optional when filters provided)
             limit: Maximum number of memories to return (1-50)
             threshold: Minimum relevance score (0.0-1.0)
             filters: Optional metadata filters (AND-combined exact-match),
@@ -332,16 +336,21 @@ class Memory:
             >>> result = memory.recall("What do I know about John?")
             >>> print(result.context)
             'John is the CEO of Acme Corp since 2024.'
+            >>> result = memory.recall(filters={"kind": "trade_closed"})
             >>> print(len(result.memories))
-            3
+            5
         """
-        payload = {
+        if not query and not filters:
+            raise MemoryError("Either query or filters (or both) must be provided.")
+
+        payload: dict[str, Any] = {
             "user_id": self.user_id,
             "project_id": self.project,
-            "query": query,
             "limit": limit,
             "threshold": threshold,
         }
+        if query:
+            payload["query"] = query
         if filters:
             payload["filters"] = filters
 

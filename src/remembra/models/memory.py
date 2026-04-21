@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 MEMORY_TYPES = Literal["observation", "fact", "inference", "task"]
 
@@ -185,14 +185,24 @@ class StoreResponse(BaseModel):
 
 
 class RecallRequest(BaseModel):
-    query: str = Field(..., min_length=1, max_length=10000, description="Search query (max 10,000 characters)")
+    query: str | None = Field(
+        default=None,
+        max_length=10000,
+        description=(
+            "Search query (max 10,000 characters). "
+            "Optional when `filters` is provided — omit to retrieve "
+            "memories matching filters sorted by created_at DESC."
+        ),
+    )
 
     @field_validator("query")
     @classmethod
-    def query_not_empty(cls, v: str) -> str:
-        if not v.strip():
-            raise ValueError("query must not be empty")
-        return v.strip()
+    def query_not_empty(cls, v: str | None) -> str | None:
+        if v is not None:
+            v = v.strip()
+            if not v:
+                raise ValueError("query must not be empty when provided")
+        return v
 
     project_id: str | None = Field(
         default=None,
@@ -257,6 +267,13 @@ class RecallRequest(BaseModel):
         default=False,
         description="Slim mode: cap context output at 800 tokens. Overrides max_tokens when True.",
     )
+
+    @model_validator(mode="after")
+    def require_query_or_filters(self) -> "RecallRequest":
+        """At least one of query or filters must be provided."""
+        if not self.query and not self.filters:
+            raise ValueError("Either 'query' or 'filters' (or both) must be provided.")
+        return self
 
 
 class RecallResult(BaseModel):
