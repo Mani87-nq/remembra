@@ -142,7 +142,7 @@ Codex should not talk directly to the public Remembra cloud endpoint from inside
 
 It should connect like this:
 
-1. A user-level local bridge daemon runs outside the sandbox on `127.0.0.1:8765`.
+1. A user-level local bridge daemon runs outside the sandbox on `127.0.0.1:9819`.
 2. Codex MCP connects only to the local bridge.
 3. The local bridge owns outbound cloud connectivity, retries, DNS workarounds, auth, and health checks.
 4. Codex config only contains local connection details plus non-secret identifiers like project and user id.
@@ -206,7 +206,7 @@ chmod +x "$HOME/.local/bin/remembra-bridge"
 cat > "$HOME/.local/bin/remembra-codex-mcp" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-export REMEMBRA_URL="${REMEMBRA_URL:-http://127.0.0.1:8765}"
+export REMEMBRA_URL="${REMEMBRA_URL:-http://127.0.0.1:9819}"
 export REMEMBRA_PROJECT="${REMEMBRA_PROJECT:?REMEMBRA_PROJECT is required}"
 export REMEMBRA_USER_ID="${REMEMBRA_USER_ID:?REMEMBRA_USER_ID is required}"
 exec "$HOME/.local/bin/remembra-mcp" "$@"
@@ -273,7 +273,7 @@ class Proxy(BaseHTTPRequestHandler):
     do_DELETE = _forward
 
 if __name__ == "__main__":
-    ThreadingHTTPServer(("127.0.0.1", 8765), Proxy).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", 9819), Proxy).serve_forever()
 EOF
 chmod +x "$HOME/.remembra/remembra_bridge.py"
 
@@ -291,7 +291,7 @@ block = f'''
 command = "{Path.home() / ".local/bin/remembra-codex-mcp"}"
 
 [mcp_servers.remembra.env]
-REMEMBRA_URL = "http://127.0.0.1:8765"
+REMEMBRA_URL = "http://127.0.0.1:9819"
 REMEMBRA_PROJECT = "{os.environ["REMEMBRA_PROJECT"]}"
 REMEMBRA_USER_ID = "{os.environ["REMEMBRA_USER_ID"]}"
 '''.strip()
@@ -334,7 +334,7 @@ EOF
 fi
 
 echo "Remembra Codex setup complete."
-echo "Bridge: http://127.0.0.1:8765"
+echo "Bridge: http://127.0.0.1:9819"
 echo "Project: $REMEMBRA_PROJECT"
 echo "User: $REMEMBRA_USER_ID"
 ```
@@ -348,7 +348,7 @@ This is what Codex should end up with:
 command = "/Users/your-user/.local/bin/remembra-codex-mcp"
 
 [mcp_servers.remembra.env]
-REMEMBRA_URL = "http://127.0.0.1:8765"
+REMEMBRA_URL = "http://127.0.0.1:9819"
 REMEMBRA_PROJECT = "clawdbot"
 REMEMBRA_USER_ID = "user_XdEOi0CkNGvePP8tS4MZ6w"
 ```

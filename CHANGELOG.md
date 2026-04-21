@@ -233,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Reduces recall response from ~2KB to ~200 bytes
 
 - **Local Bridge** — Proxy for sandboxed agents (Codex CLI)
-  - `remembra-bridge` runs local HTTP proxy on 127.0.0.1:8765
+  - `remembra-bridge` runs local HTTP proxy on 127.0.0.1:9819
   - Forwards requests to remote Remembra API
   - Auto-configured by installer for sandboxed environments
   - `remembra-bridge --stop` gracefully stops running bridge
