@@ -12,6 +12,7 @@ from remembra.api.v1 import (
     debug,
     embeddings,
     entities,
+    inbox,
     ingest,
     keys,
     meetings,
@@ -48,3 +49,4 @@ api_router.include_router(plugins.router, prefix="/v1")
 api_router.include_router(websocket.router, prefix="/v1")
 api_router.include_router(meetings.router, prefix="/v1")
 api_router.include_router(audio.router, prefix="/v1")
+api_router.include_router(inbox.router, prefix="/v1")

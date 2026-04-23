@@ -39,6 +39,8 @@ REMEMBRA_API_KEY = os.environ.get("REMEMBRA_API_KEY", "")
 REMEMBRA_USER_ID = os.environ.get("REMEMBRA_USER_ID", "default")
 REMEMBRA_PROJECT = os.environ.get("REMEMBRA_PROJECT", "default")
 REMEMBRA_MCP_TRANSPORT = os.environ.get("REMEMBRA_MCP_TRANSPORT", "stdio")
+# Logical agent id used when the agent_id arg is omitted on inbox tools (issue #9).
+REMEMBRA_AGENT_ID = os.environ.get("REMEMBRA_AGENT_ID", "")
 
 # ---------------------------------------------------------------------------
 # Memory client (lazy-initialized)
@@ -808,6 +810,188 @@ def relationships_at(
         return json.dumps({"status": "error", "error": sanitize_error_message(e), "code": e.status_code})
     except Exception as e:
         return json.dumps({"status": "error", "error": sanitize_error_message(e)})
+
+
+# ---------------------------------------------------------------------------
+# Agent inbox tools (issue #9 — targeted agent-to-agent delivery)
+# ---------------------------------------------------------------------------
+
+
+def _resolve_agent_id(agent_id: str | None) -> str:
+    """Resolve the agent_id to use: explicit arg > REMEMBRA_AGENT_ID env."""
+    aid = (agent_id or REMEMBRA_AGENT_ID or "").strip()
+    if not aid:
+        raise ValueError(
+            "agent_id is required. Pass it explicitly or set REMEMBRA_AGENT_ID "
+            "in the environment so this agent can be addressed."
+        )
+    return aid
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Send To Agent Inbox",
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=False,
+        openWorldHint=False,
+    )
+)
+def send_to_inbox(
+    to_agent: str,
+    subject: str,
+    body: str,
+    metadata: dict[str, Any] | None = None,
+    from_agent: str | None = None,
+) -> str:
+    """Send a targeted message to another agent's inbox.
+
+    Use this when THIS agent wants another agent (identified by a logical
+    name like 'trademind-trading' or 'charthustle-holding') to pick up a
+    directive on its next session start. The receiving agent retrieves the
+    row via ``get_inbox`` and calls ``ack_inbox`` after acting.
+
+    Args:
+        to_agent: Logical recipient id (free-form string).
+        subject: One-line subject.
+        body: Message body with full context.
+        metadata: Optional key/value metadata.
+        from_agent: Optional sender id; defaults to REMEMBRA_AGENT_ID env,
+                    then "unknown".
+
+    Returns:
+        JSON with ``inbox_id``, ``status``, ``created_at``.
+    """
+    try:
+        client = _get_client()
+        sender = (from_agent or REMEMBRA_AGENT_ID or "unknown").strip() or "unknown"
+        result = client.send_to_inbox(
+            to_agent=to_agent,
+            subject=subject,
+            body=body,
+            metadata=metadata,
+            from_agent=sender,
+        )
+        return json.dumps(
+            {
+                "ok": True,
+                "inbox_id": result.get("inbox_id"),
+                "delivery_status": "sent",
+                "row_status": result.get("status"),
+                "created_at": result.get("created_at"),
+                "to_agent": to_agent,
+                "from_agent": sender,
+            },
+            indent=2,
+        )
+    except MemoryError as e:
+        return json.dumps({"ok": False, "error": sanitize_error_message(e), "code": e.status_code})
+    except Exception as e:
+        return json.dumps({"ok": False, "error": sanitize_error_message(e)})
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get Agent Inbox",
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
+def get_inbox(
+    agent_id: str | None = None,
+    status: str = "unread",
+    limit: int = 20,
+) -> str:
+    """Read inbox rows addressed to this agent.
+
+    Run at session start to pick up directives sent by other agents.
+    Returns newest-first.
+
+    Args:
+        agent_id: Logical recipient. If omitted, uses REMEMBRA_AGENT_ID env.
+        status: "unread" (default) or "all".
+        limit: Max rows (1-200).
+
+    Returns:
+        JSON with ``count`` and ``items`` (each item has ``inbox_id``,
+        ``from_agent``, ``subject``, ``body``, ``metadata``, ``status``,
+        ``created_at``).
+    """
+    try:
+        aid = _resolve_agent_id(agent_id)
+        client = _get_client()
+        rows = client.get_inbox(agent_id=aid, status=status, limit=limit)
+
+        items = [
+            {
+                "inbox_id": r.get("inbox_id"),
+                "from_agent": r.get("from_agent"),
+                "to_agent": r.get("to_agent"),
+                "subject": r.get("subject"),
+                "body": r.get("body"),
+                "metadata": r.get("metadata", {}),
+                "status": r.get("status"),
+                "created_at": r.get("created_at"),
+            }
+            for r in rows
+        ]
+        return json.dumps(
+            {"ok": True, "agent_id": aid, "count": len(items), "items": items},
+            indent=2,
+        )
+    except ValueError as e:
+        return json.dumps({"ok": False, "error": str(e)})
+    except MemoryError as e:
+        return json.dumps({"ok": False, "error": sanitize_error_message(e), "code": e.status_code})
+    except Exception as e:
+        return json.dumps({"ok": False, "error": sanitize_error_message(e)})
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Ack Agent Inbox Item",
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+)
+def ack_inbox(
+    inbox_id: str,
+    result: str | None = None,
+    note: str | None = None,
+) -> str:
+    """Acknowledge an inbox item after acting on it.
+
+    Args:
+        inbox_id: The inbox row id (from ``get_inbox``).
+        result: Optional terminal status — "done", "blocked", or "rejected".
+                Omit to mark the row as simply "read".
+        note: Optional free-text note (what was done, why it was blocked, etc.).
+
+    Returns:
+        JSON with the updated row (``status``, ``ack_at``, ``ack_result``, ``ack_note``).
+    """
+    try:
+        client = _get_client()
+        updated = client.ack_inbox(inbox_id=inbox_id, result=result, note=note)
+        return json.dumps(
+            {
+                "ok": True,
+                "inbox_id": updated.get("inbox_id"),
+                "row_status": updated.get("status"),
+                "ack_at": updated.get("ack_at"),
+                "ack_result": updated.get("ack_result"),
+                "ack_note": updated.get("ack_note"),
+            },
+            indent=2,
+        )
+    except MemoryError as e:
+        return json.dumps({"ok": False, "error": sanitize_error_message(e), "code": e.status_code})
+    except Exception as e:
+        return json.dumps({"ok": False, "error": sanitize_error_message(e)})
 
 
 # ---------------------------------------------------------------------------

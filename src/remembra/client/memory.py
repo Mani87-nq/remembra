@@ -671,6 +671,96 @@ class Memory:
             self._shadow_cache.clear()
 
     # -------------------------------------------------------------------------
+    # Agent inbox — targeted agent-to-agent delivery (issue #9)
+    # -------------------------------------------------------------------------
+
+    def send_to_inbox(
+        self,
+        to_agent: str,
+        subject: str,
+        body: str,
+        metadata: dict[str, Any] | None = None,
+        from_agent: str | None = None,
+        expires_at: str | None = None,
+    ) -> dict[str, Any]:
+        """Send a targeted message to another agent's inbox.
+
+        Args:
+            to_agent: Logical recipient agent id (free-form string).
+            subject: Short subject line.
+            body: Message body.
+            metadata: Optional key/value metadata.
+            from_agent: Optional sender id. Defaults to 'unknown' server-side.
+            expires_at: Optional ISO-8601 expiry timestamp.
+
+        Returns:
+            Dict with `inbox_id`, `status`, and `created_at`.
+        """
+        payload: dict[str, Any] = {
+            "to_agent": to_agent,
+            "subject": subject,
+            "body": body,
+            "metadata": metadata or {},
+        }
+        if from_agent:
+            payload["from_agent"] = from_agent
+        if expires_at:
+            payload["expires_at"] = expires_at
+        return self._request("POST", "/api/v1/inbox/send", json=payload)
+
+    def get_inbox(
+        self,
+        agent_id: str,
+        status: str = "unread",
+        limit: int = 20,
+    ) -> list[dict[str, Any]]:
+        """List inbox rows addressed to `agent_id`.
+
+        Args:
+            agent_id: The logical recipient to fetch for.
+            status: "unread" (default) or "all".
+            limit: Max rows to return (1-200).
+
+        Returns:
+            List of inbox row dicts, newest first.
+        """
+        params: dict[str, Any] = {
+            "agent_id": agent_id,
+            "status": status,
+            "limit": limit,
+        }
+        result = self._request("GET", "/api/v1/inbox", params=params)
+        return result if isinstance(result, list) else []
+
+    def ack_inbox(
+        self,
+        inbox_id: str,
+        result: str | None = None,
+        note: str | None = None,
+    ) -> dict[str, Any]:
+        """Acknowledge an inbox item.
+
+        Args:
+            inbox_id: The item to ack.
+            result: Optional terminal status — "done", "blocked", or "rejected".
+                    Omit to mark the row as simply "read".
+            note: Optional free-text note from the receiving agent.
+
+        Returns:
+            Updated inbox row summary.
+        """
+        payload: dict[str, Any] = {}
+        if result is not None:
+            payload["result"] = result
+        if note is not None:
+            payload["note"] = note
+        return self._request(
+            "POST",
+            f"/api/v1/inbox/{inbox_id}/ack",
+            json=payload,
+        )
+
+    # -------------------------------------------------------------------------
     # v0.12: Shadow TTL Cache Methods
     # -------------------------------------------------------------------------
 

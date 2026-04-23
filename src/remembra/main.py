@@ -24,6 +24,7 @@ from remembra.config import get_settings
 from remembra.core.health import build_health_response, check_qdrant
 from remembra.core.logging import configure_logging
 from remembra.extraction.conflicts import ConflictManager, ConflictStrategy
+from remembra.inbox.manager import InboxManager
 from remembra.plugins.manager import PluginManager
 from remembra.security.anomaly_detector import AnomalyDetector
 from remembra.security.audit import AuditLogger
@@ -74,6 +75,7 @@ class AppState:
     role_manager: RoleManager | None
     space_manager: SpaceManager | None
     team_manager: TeamManager | None
+    inbox_manager: InboxManager | None
     reindex_manager: ReindexManager | None
     plugin_manager: PluginManager | None
 
@@ -231,6 +233,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.team_manager = TeamManager(app.state.db)
     await app.state.team_manager.init_schema()
     log.info("team_collaboration_enabled")
+
+    # Agent inbox (targeted agent-to-agent delivery — issue #9)
+    app.state.inbox_manager = InboxManager(app.state.db)
+    await app.state.inbox_manager.init_schema()
+    log.info("agent_inbox_enabled")
 
     # Re-indexing manager (embedding model migration)
     app.state.reindex_manager = ReindexManager(
