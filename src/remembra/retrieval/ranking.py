@@ -15,6 +15,7 @@ from typing import Any
 
 import structlog
 
+from remembra.core.time import utcnow
 from remembra.models.memory import EntityRef
 
 log = structlog.get_logger(__name__)
@@ -174,9 +175,7 @@ class RelevanceRanker:
         """
         self.config = config or RankingConfig.from_env()
 
-    def _compute_recency_score(
-        self, created_at: datetime | None, config: RankingConfig | None = None
-    ) -> float:
+    def _compute_recency_score(self, created_at: datetime | None, config: RankingConfig | None = None) -> float:
         """
         Compute recency score using exponential decay.
 
@@ -188,7 +187,7 @@ class RelevanceRanker:
             return 0.5  # Default for unknown dates
 
         cfg = config or self.config
-        now = datetime.utcnow()
+        now = utcnow()
 
         try:
             # Handle timezone-aware datetimes
@@ -353,9 +352,7 @@ class RelevanceRanker:
 
             recency_score = self._compute_recency_score(created_at, config)
 
-            entity_score = self._compute_entity_score(
-                memory_entities, query_entities, query, config
-            )
+            entity_score = self._compute_entity_score(memory_entities, query_entities, query, config)
 
             access_score = self._compute_access_score(memory.get("access_count", 0))
 

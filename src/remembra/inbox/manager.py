@@ -256,9 +256,7 @@ class InboxManager:
         row does not exist / is not owned by caller.
         """
         if result is not None and result not in TERMINAL_STATUSES:
-            raise ValueError(
-                f"result must be one of {sorted(TERMINAL_STATUSES)} or omitted, got '{result}'"
-            )
+            raise ValueError(f"result must be one of {sorted(TERMINAL_STATUSES)} or omitted, got '{result}'")
 
         existing = await self.get_one(owner_user_id, inbox_id)
         if existing is None:

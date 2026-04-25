@@ -18,6 +18,8 @@ from typing import Any, Generic, TypeVar
 
 import structlog
 
+from remembra.core.time import utcnow
+
 log = structlog.get_logger(__name__)
 
 T = TypeVar("T")
@@ -145,7 +147,7 @@ class MemoryCache(Generic[T]):
                 return None
 
             # Check expiration
-            if entry.expires_at and datetime.utcnow() > entry.expires_at:
+            if entry.expires_at and utcnow() > entry.expires_at:
                 del self._cache[key]
                 self.stats.expirations += 1
                 self.stats.misses += 1
@@ -184,7 +186,7 @@ class MemoryCache(Generic[T]):
             ttl: Optional TTL override (seconds)
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = utcnow()
             ttl_seconds = ttl if ttl is not None else self.ttl_seconds
             expires_at = now + timedelta(seconds=ttl_seconds) if ttl_seconds else None
 
@@ -250,7 +252,7 @@ class MemoryCache(Generic[T]):
             Number of entries removed
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = utcnow()
             expired_keys = [key for key, entry in self._cache.items() if entry.expires_at and now > entry.expires_at]
 
             for key in expired_keys:

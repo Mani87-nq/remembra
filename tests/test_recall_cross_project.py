@@ -95,8 +95,7 @@ async def test_search_fts_omits_project_clause_when_none():
     params = conn.execute.call_args.args[1]
 
     assert "project_id" not in sql, (
-        "FTS query must omit project_id clause when project_id is None so "
-        "recall spans all of the user's projects."
+        "FTS query must omit project_id clause when project_id is None so recall spans all of the user's projects."
     )
     assert params == ("user_x", "hello world", 5)
 

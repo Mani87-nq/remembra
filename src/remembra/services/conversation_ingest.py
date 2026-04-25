@@ -13,13 +13,13 @@ This is the #1 feature gap vs Mem0 - automatic conversation ingestion.
 
 import json
 import time
-from datetime import datetime
 from typing import Any
 
 import structlog
 from openai import AsyncOpenAI
 
 from remembra.config import Settings
+from remembra.core.time import utcnow
 from remembra.extraction.prompts.conversation import (
     CONVERSATION_EXTRACTION_SYSTEM_PROMPT,
     CONVERSATION_EXTRACTION_USER_PROMPT,
@@ -677,7 +677,7 @@ class ConversationIngestService:
                 SET content = ?, updated_at = ? 
                 WHERE id = ? AND user_id = ?
                 """,
-                (content, datetime.utcnow().isoformat(), target_id, user_id),
+                (content, utcnow().isoformat(), target_id, user_id),
             )
             await self.memory_service.db.conn.commit()
 

@@ -3,6 +3,8 @@
 import re
 from datetime import datetime, timedelta
 
+from remembra.core.time import utcnow
+
 # TTL format: <number><unit> where unit is s/m/h/d/w/M/y
 TTL_PATTERN = re.compile(r"^(\d+)([smhdwMy])$")
 
@@ -95,7 +97,7 @@ def calculate_expires_at(
     if ttl_string is None and ttl_delta is None:
         return None
 
-    base_time = from_time or datetime.utcnow()
+    base_time = from_time or utcnow()
 
     delta = parse_ttl(ttl_string) if ttl_string else ttl_delta
 

@@ -22,6 +22,8 @@ from typing import Any, TypeVar
 
 import structlog
 
+from remembra.core.time import utcnow
+
 log = structlog.get_logger(__name__)
 
 T = TypeVar("T")
@@ -110,7 +112,7 @@ class CircuitBreaker:
         if self._state == CircuitState.OPEN:
             # Check if reset timeout has passed
             if self._last_failure_time:
-                elapsed = (datetime.utcnow() - self._last_failure_time).total_seconds()
+                elapsed = (utcnow() - self._last_failure_time).total_seconds()
                 if elapsed >= self.config.reset_timeout:
                     self._transition_to(CircuitState.HALF_OPEN)
 
@@ -180,7 +182,7 @@ class CircuitBreaker:
         """Record a successful call."""
         async with self._lock:
             self.stats.successful_calls += 1
-            self.stats.last_success = datetime.utcnow()
+            self.stats.last_success = utcnow()
 
             if self._state == CircuitState.HALF_OPEN:
                 self._success_count += 1
@@ -194,8 +196,8 @@ class CircuitBreaker:
         """Record a failed call."""
         async with self._lock:
             self.stats.failed_calls += 1
-            self.stats.last_failure = datetime.utcnow()
-            self._last_failure_time = datetime.utcnow()
+            self.stats.last_failure = utcnow()
+            self._last_failure_time = utcnow()
 
             log.warning(
                 "circuit_breaker_failure",

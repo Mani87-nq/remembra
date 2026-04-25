@@ -12,14 +12,15 @@ Features:
 
 import hashlib
 import json
-import os
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import structlog
+
+from remembra.core.time import utcnow
 
 log = structlog.get_logger(__name__)
 
@@ -81,7 +82,7 @@ class CalibrationCache:
             cache.save(metrics, current_config)
     """
 
-    def __init__(self, cache_path: Path | str | None = None):
+    def __init__(self, cache_path: Path | str | None = None) -> None:
         """
         Initialize calibration cache.
 
@@ -93,7 +94,7 @@ class CalibrationCache:
 
     def _ensure_cache_dir(self) -> bool:
         """Create cache directory if it doesn't exist.
-        
+
         Returns:
             True if cache directory is writable, False otherwise.
         """
@@ -118,7 +119,7 @@ class CalibrationCache:
         if not self._cache_enabled:
             log.debug("calibration_cache_miss", reason="cache_disabled")
             return None
-            
+
         if not self.cache_path.exists():
             log.debug("calibration_cache_miss", reason="file_not_found")
             return None
@@ -150,8 +151,8 @@ class CalibrationCache:
         if not self._cache_enabled:
             log.debug("calibration_cache_skip_save", reason="cache_disabled")
             return
-            
-        result.calibrated_at = datetime.utcnow().isoformat()
+
+        result.calibrated_at = utcnow().isoformat()
         result.config_hash = config.compute_hash()
         result.is_valid = True
 
@@ -202,7 +203,7 @@ class CalibrationCache:
         if result.calibrated_at:
             try:
                 calibrated_time = datetime.fromisoformat(result.calibrated_at)
-                age = datetime.utcnow() - calibrated_time
+                age = utcnow() - calibrated_time
                 if age > max_age:
                     log.debug(
                         "calibration_cache_invalidated",
@@ -251,12 +252,12 @@ class LatencyCollector:
     class _Timer:
         """Context manager for timing operations."""
 
-        def __init__(self, collector: "LatencyCollector", operation: str):
+        def __init__(self, collector: "LatencyCollector", operation: str) -> None:
             self.collector = collector
             self.operation = operation
             self.start: float = 0.0
 
-        def __enter__(self) -> "_Timer":
+        def __enter__(self) -> Self:
             self.start = time.perf_counter()
             return self
 
@@ -281,7 +282,6 @@ class LatencyCollector:
         Returns:
             CalibrationResult with computed percentiles
         """
-        import statistics
 
         def percentile(data: list[float], p: float) -> float:
             """Compute percentile (p between 0 and 100)."""

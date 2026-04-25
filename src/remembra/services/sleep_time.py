@@ -21,6 +21,7 @@ from typing import Any
 import structlog
 
 from remembra.config import Settings
+from remembra.core.time import utcnow
 from remembra.extraction.consolidator import (
     ConsolidationAction,
     ExistingMemory,
@@ -88,7 +89,7 @@ class SleepTimeWorker:
             )
 
         self.running = True
-        report = ConsolidationReport(started_at=datetime.utcnow())
+        report = ConsolidationReport(started_at=utcnow())
 
         try:
             log.info(
@@ -122,7 +123,7 @@ class SleepTimeWorker:
                     log.error("user_consolidation_failed", user_id=uid, error=str(e))
                     report.errors.append(f"User {uid}: {str(e)}")
 
-            report.completed_at = datetime.utcnow()
+            report.completed_at = utcnow()
             self.last_run = report.completed_at
 
             log.info(
@@ -141,7 +142,7 @@ class SleepTimeWorker:
 
     async def _get_active_users(self) -> list[str]:
         """Get users with recent memory activity."""
-        since = self.last_run or (datetime.utcnow() - timedelta(hours=24))
+        since = self.last_run or (utcnow() - timedelta(hours=24))
 
         try:
             cursor = await self.db.conn.execute(
@@ -163,7 +164,7 @@ class SleepTimeWorker:
         """
         Run all consolidation passes for a single user.
         """
-        report = ConsolidationReport(started_at=datetime.utcnow())
+        report = ConsolidationReport(started_at=utcnow())
 
         # Get recent memories for this user
         memories = await self._get_user_memories(user_id)
@@ -188,7 +189,7 @@ class SleepTimeWorker:
         decayed = await self._decay_cleanup_pass(user_id)
         report.memories_decayed = decayed
 
-        report.completed_at = datetime.utcnow()
+        report.completed_at = utcnow()
         return report
 
     async def _get_user_memories(
@@ -197,7 +198,7 @@ class SleepTimeWorker:
         limit: int = 500,
     ) -> list[dict[str, Any]]:
         """Get recent memories for a user."""
-        since = self.last_run or (datetime.utcnow() - timedelta(hours=24))
+        since = self.last_run or (utcnow() - timedelta(hours=24))
 
         try:
             cursor = await self.db.conn.execute(
@@ -453,7 +454,7 @@ class SleepTimeWorker:
 
                     if new_importance != current_importance:
                         metadata["importance"] = new_importance
-                        metadata["importance_rescored_at"] = datetime.utcnow().isoformat()
+                        metadata["importance_rescored_at"] = utcnow().isoformat()
 
                         await self.db.conn.execute(
                             "UPDATE memories SET metadata = ? WHERE id = ?",
@@ -483,7 +484,7 @@ class SleepTimeWorker:
 
         try:
             # Get very old memories with low access
-            cutoff = datetime.utcnow() - timedelta(days=90)
+            cutoff = utcnow() - timedelta(days=90)
 
             cursor = await self.db.conn.execute(
                 """
@@ -521,7 +522,7 @@ class SleepTimeWorker:
             if merged_content:
                 await self.db.conn.execute(
                     "UPDATE memories SET content = ?, updated_at = ? WHERE id = ?",
-                    (merged_content, datetime.utcnow().isoformat(), keep_id),
+                    (merged_content, utcnow().isoformat(), keep_id),
                 )
 
             await self._delete_memory(delete_id)

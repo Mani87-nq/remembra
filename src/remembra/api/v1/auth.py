@@ -1,7 +1,6 @@
 """Authentication API endpoints for user signup, login, and password management."""
 
 import asyncio
-from datetime import datetime
 from typing import Annotated
 
 import structlog
@@ -12,6 +11,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from remembra.auth.users import UserManager
 from remembra.config import get_settings
 from remembra.core.limiter import limiter
+from remembra.core.time import utcnow
 
 # Email imports (optional - only if cloud module available)
 try:
@@ -581,7 +581,7 @@ async def get_me(
             email_verified=bool(user.email_verified),  # Ensure boolean
             is_active=bool(user.is_active),  # Ensure boolean
             is_admin=is_admin,
-            created_at=user.created_at.isoformat() if user.created_at else datetime.utcnow().isoformat(),
+            created_at=user.created_at.isoformat() if user.created_at else utcnow().isoformat(),
         )
     except HTTPException:
         raise

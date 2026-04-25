@@ -3,6 +3,7 @@
 import pytest
 from datetime import datetime, timedelta
 
+from remembra.core.time import utcnow
 from remembra.temporal.ttl import (
     parse_ttl,
     calculate_expires_at,
@@ -99,9 +100,9 @@ class TestCalculateExpiresAt:
         assert calculate_expires_at(ttl_string=None, ttl_delta=None) is None
 
     def test_defaults_to_now(self):
-        before = datetime.utcnow()
+        before = utcnow()
         expires = calculate_expires_at("1d")
-        after = datetime.utcnow()
+        after = utcnow()
 
         # Should be within 1 day + small delta
         assert before + timedelta(days=1) <= expires <= after + timedelta(days=1, seconds=1)
@@ -225,7 +226,7 @@ class TestCalculateRelevanceScore:
     """Tests for relevance score calculation."""
 
     def test_fresh_memory_high_relevance(self):
-        now = datetime.utcnow()
+        now = utcnow()
         score = calculate_relevance_score(
             created_at=now,
             last_accessed=now,
@@ -235,7 +236,7 @@ class TestCalculateRelevanceScore:
         assert score > 0.5  # Should be boosted by newness
 
     def test_old_unaccessed_memory_decays(self):
-        now = datetime.utcnow()
+        now = utcnow()
         old_time = now - timedelta(days=60)
 
         score = calculate_relevance_score(
@@ -247,7 +248,7 @@ class TestCalculateRelevanceScore:
         assert score < 0.5  # Should have decayed
 
     def test_frequently_accessed_retains_relevance(self):
-        now = datetime.utcnow()
+        now = utcnow()
         old_time = now - timedelta(days=30)
         recent = now - timedelta(hours=2)
 
@@ -260,7 +261,7 @@ class TestCalculateRelevanceScore:
         assert score > 0.6  # Should retain relevance due to access patterns
 
     def test_importance_affects_score(self):
-        now = datetime.utcnow()
+        now = utcnow()
         old = now - timedelta(days=14)
 
         score_low = calculate_relevance_score(
@@ -298,7 +299,7 @@ class TestShouldPrune:
     """Tests for pruning decision logic."""
 
     def test_expired_ttl_should_prune(self):
-        now = datetime.utcnow()
+        now = utcnow()
         expired = now - timedelta(hours=1)
 
         result = should_prune(
@@ -309,7 +310,7 @@ class TestShouldPrune:
         assert result is True
 
     def test_fresh_memory_should_not_prune(self):
-        now = datetime.utcnow()
+        now = utcnow()
 
         result = should_prune(
             created_at=now,
@@ -320,7 +321,7 @@ class TestShouldPrune:
         assert result is False
 
     def test_decayed_memory_should_prune(self):
-        now = datetime.utcnow()
+        now = utcnow()
         very_old = now - timedelta(days=365)
 
         # Very old, never accessed, low importance
@@ -334,7 +335,7 @@ class TestShouldPrune:
 
     def test_custom_threshold(self):
         config = DecayConfig(prune_threshold=0.99)  # Very high threshold
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Even fresh memory would fail high threshold
         result = should_prune(
@@ -349,7 +350,7 @@ class TestCalculateMemoryDecayInfo:
     """Tests for memory decay info helper."""
 
     def test_returns_all_fields(self):
-        now = datetime.utcnow()
+        now = utcnow()
         memory_data = {
             "created_at": now.isoformat(),
             "last_accessed": now.isoformat(),
@@ -377,7 +378,7 @@ class TestCalculateMemoryDecayInfo:
         assert isinstance(info["relevance_score"], float)
 
     def test_ttl_remaining(self):
-        now = datetime.utcnow()
+        now = utcnow()
         expires = now + timedelta(hours=2)
 
         memory_data = {
@@ -396,7 +397,7 @@ class TestRankByRelevance:
     """Tests for ranking memories by relevance."""
 
     def test_ranks_by_score(self):
-        now = datetime.utcnow()
+        now = utcnow()
 
         memories = [
             {"id": "old", "created_at": (now - timedelta(days=60)).isoformat(), "access_count": 0},
@@ -417,7 +418,7 @@ class TestRankByRelevance:
 
     def test_adds_decay_score(self):
         memories = [
-            {"id": "test", "created_at": datetime.utcnow().isoformat()},
+            {"id": "test", "created_at": utcnow().isoformat()},
         ]
 
         ranked = rank_by_relevance(memories)
@@ -485,7 +486,7 @@ class TestTemporalIntegration:
 
     def test_ttl_with_decay(self):
         """Test TTL expiration takes precedence over decay."""
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Memory with short TTL but high importance
         expired_but_important = should_prune(

@@ -24,6 +24,7 @@ from typing import Any
 import stripe
 
 from remembra.cloud.plans import PlanTier
+from remembra.core.time import utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ class PromoCode:
             (is_valid, error_message)
         """
         # Check expiration
-        if self.expires_at and datetime.utcnow() > self.expires_at:
+        if self.expires_at and utcnow() > self.expires_at:
             return False, "This promo code has expired"
 
         # Check redemption limit
@@ -224,7 +225,7 @@ class PromoCodeManager:
         # Calculate expiration
         expires_at = None
         if promo.duration_days > 0:
-            expires_at = datetime.utcnow() + timedelta(days=promo.duration_days)
+            expires_at = utcnow() + timedelta(days=promo.duration_days)
 
         return RedemptionResult(
             success=True,
@@ -267,7 +268,7 @@ class PromoCodeManager:
         # Handle different promo types
         if promo.promo_type == PromoType.TRIAL:
             # Grant plan access directly (no Stripe needed)
-            expires_at = datetime.utcnow() + timedelta(days=promo.duration_days)
+            expires_at = utcnow() + timedelta(days=promo.duration_days)
 
             # Record redemption
             promo.redemption_count += 1

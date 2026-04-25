@@ -16,8 +16,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # 1 + 2) Client SDK — Memory.list() query-param shaping
@@ -54,8 +52,7 @@ class TestClientListMemoriesProjectFilter:
         m.list(limit=5, offset=0, project_id=None)
         params = http.request.call_args.kwargs["params"]
         assert "project_id" not in params, (
-            "When project_id is None, the SDK must not send the key at all "
-            "so the server can perform cross-project listing."
+            "When project_id is None, the SDK must not send the key at all so the server can perform cross-project listing."
         )
         assert params == {"limit": 5, "offset": 0}
 
@@ -81,6 +78,7 @@ class TestMCPListMemoriesForwardsProjectId:
 
         with patch.object(mcp_server, "_get_client", return_value=fake_client):
             import json
+
             raw = mcp_server.list_memories(limit=5, project_id="trademind")
             parsed = json.loads(raw)
 

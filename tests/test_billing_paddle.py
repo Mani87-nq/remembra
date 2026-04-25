@@ -45,6 +45,16 @@ from remembra.cloud.plans_paddle import (
 # Fixtures
 # =============================================================================
 
+PADDLE_INTEGRATION_SKIP_REASON = (
+    "Paddle integration tests require REMEMBRA_RUN_PADDLE_TESTS=1, PADDLE_SANDBOX_API_KEY, and PADDLE_SANDBOX_CLIENT_TOKEN."
+)
+
+RUN_PADDLE_INTEGRATION = (
+    os.environ.get("REMEMBRA_RUN_PADDLE_TESTS") == "1"
+    and bool(os.environ.get("PADDLE_SANDBOX_API_KEY"))
+    and bool(os.environ.get("PADDLE_SANDBOX_CLIENT_TOKEN"))
+)
+
 
 @pytest.fixture
 def sandbox_api_key():
@@ -497,6 +507,10 @@ class TestWebhookEventProcessing:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    not RUN_PADDLE_INTEGRATION,
+    reason=PADDLE_INTEGRATION_SKIP_REASON,
+)
 class TestPaddleAPIIntegration:
     """
     Integration tests that make real API calls to Paddle sandbox.

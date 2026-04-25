@@ -9,18 +9,16 @@ the caller (e.g. "trademind-trading", "charthustle-holding").
 Implements GitHub issue #9 (Agent inbox pattern for targeted pickup).
 """
 
-from __future__ import annotations
-
 import logging
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field, field_validator
 
-from remembra.auth.middleware import CurrentUser
+from remembra.auth.middleware import AuthenticatedUser, get_current_user
 from remembra.core.limiter import limiter
-from remembra.inbox.manager import InboxManager, TERMINAL_STATUSES
+from remembra.inbox.manager import TERMINAL_STATUSES, InboxManager
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +40,7 @@ def get_inbox_manager(request: Request) -> InboxManager:
     return manager
 
 
-InboxManagerDep = Annotated[InboxManager, Depends(get_inbox_manager)]
+CurrentUserDep = Annotated[AuthenticatedUser, Depends(get_current_user)]
 
 
 # ---------------------------------------------------------------------------
@@ -102,10 +100,7 @@ class SendInboxResponse(BaseModel):
 class AckInboxRequest(BaseModel):
     result: Literal["done", "blocked", "rejected"] | None = Field(
         default=None,
-        description=(
-            "Terminal ack status. Omit to simply mark the row as 'read'. "
-            f"Allowed: {sorted(TERMINAL_STATUSES)}"
-        ),
+        description=(f"Terminal ack status. Omit to simply mark the row as 'read'. Allowed: {sorted(TERMINAL_STATUSES)}"),
     )
     note: str | None = Field(default=None, max_length=4000)
 
@@ -132,9 +127,9 @@ class AckInboxResponse(BaseModel):
 @limiter.limit("120/minute")
 async def send_to_inbox(
     request: Request,
-    payload: SendInboxRequest,
-    current_user: CurrentUser,
-    inbox: InboxManagerDep,
+    payload: Annotated[SendInboxRequest, Body(...)],
+    current_user: CurrentUserDep,
+    inbox: Annotated[InboxManager, Depends(get_inbox_manager)],
 ) -> SendInboxResponse:
     """Write an inbox row addressed to `payload.to_agent`."""
     try:
@@ -171,8 +166,8 @@ async def send_to_inbox(
 @limiter.limit("240/minute")
 async def get_inbox(
     request: Request,
-    current_user: CurrentUser,
-    inbox: InboxManagerDep,
+    current_user: CurrentUserDep,
+    inbox: Annotated[InboxManager, Depends(get_inbox_manager)],
     agent_id: Annotated[str, Query(min_length=1, max_length=128)],
     status: Annotated[
         Literal["unread", "all"],
@@ -209,9 +204,9 @@ async def get_inbox(
 async def ack_inbox(
     request: Request,
     inbox_id: str,
-    payload: AckInboxRequest,
-    current_user: CurrentUser,
-    inbox: InboxManagerDep,
+    payload: Annotated[AckInboxRequest, Body(...)],
+    current_user: CurrentUserDep,
+    inbox: Annotated[InboxManager, Depends(get_inbox_manager)],
 ) -> AckInboxResponse:
     """Mark an inbox row read/done/blocked/rejected with an optional note."""
     try:

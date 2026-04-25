@@ -115,6 +115,9 @@ nav:
     - Scope & Boundaries: concepts/scope.md
     - Entity Graph: concepts/entity-graph.md
     - Durability & Recovery: concepts/durability.md
+  - Case Studies:
+    - Build Remembra with Remembra: case-studies/multi-agent-collaboration.md
+    - Trading Desk Memory: case-studies/trading-desk-memory.md
   - Examples:
     - Chatbot Memory: examples/chatbot.md
     - RAG Pipeline: examples/rag-pipeline.md

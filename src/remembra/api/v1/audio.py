@@ -61,9 +61,7 @@ async def stop_audio(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
                 }
                 for s in segments
             ]
-            payload["memories"] = _adapter.segments_as_memories(
-                segments, meeting_id=session.meeting_id
-            )
+            payload["memories"] = _adapter.segments_as_memories(segments, meeting_id=session.meeting_id)
         except RuntimeError as exc:
             payload["transcription_error"] = str(exc)
         except Exception as exc:  # pragma: no cover

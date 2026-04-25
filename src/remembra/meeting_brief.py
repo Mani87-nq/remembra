@@ -6,9 +6,9 @@ produces a structured brief with citations in both JSON and text form.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from typing import Any, Iterable
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
+from typing import Any
 
 from remembra.calendar_client import Attendee, CalendarEvent
 
@@ -132,15 +132,13 @@ class MeetingBriefBuilder:
             location=event.location,
             recurrence_note=recurrence_note,
             attendees=attendee_briefs,
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
             raw_event=event.to_dict(),
         )
 
     # ------------------------------------------------------------ per-attendee
 
-    def _build_attendee(
-        self, attendee: Attendee, memories: list[dict[str, Any]]
-    ) -> AttendeeBrief:
+    def _build_attendee(self, attendee: Attendee, memories: list[dict[str, Any]]) -> AttendeeBrief:
         brief = AttendeeBrief(
             email=attendee.email,
             name=attendee.name,

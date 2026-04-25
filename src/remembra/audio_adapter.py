@@ -14,8 +14,9 @@ import threading
 import time
 import uuid
 import wave
-from dataclasses import dataclass, field, asdict
-from typing import Any, Iterable
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -108,7 +109,7 @@ class AudioAdapter:
             log.warning("sounddevice unavailable (%s); session in file-only mode", exc)
             return session
 
-        def _callback(indata, frames, time_info, status):  # noqa: ANN001
+        def _callback(indata, frames, time_info, status) -> None:  # noqa: ANN001
             if not session._active:
                 return
             session.frames.append(bytes(indata))
@@ -159,19 +160,14 @@ class AudioAdapter:
 
     # ------------------------------------------------------------ transcription
 
-    def _load_model(self):
+    def _load_model(self) -> Any:
         if self._model is not None:
             return self._model
         try:
             from faster_whisper import WhisperModel  # type: ignore
         except ImportError as exc:
-            raise RuntimeError(
-                "faster-whisper is required for transcription. "
-                "Install: pip install faster-whisper"
-            ) from exc
-        self._model = WhisperModel(
-            self.model_name, device=self.device, compute_type=self.compute_type
-        )
+            raise RuntimeError("faster-whisper is required for transcription. Install: pip install faster-whisper") from exc
+        self._model = WhisperModel(self.model_name, device=self.device, compute_type=self.compute_type)
         return self._model
 
     def transcribe(
@@ -224,9 +220,7 @@ class AudioAdapter:
 
     # -------------------------------------------------- energy-based diarization
 
-    def _assign_speakers(
-        self, path: str, segments: list[dict[str, Any]]
-    ) -> list[TranscriptSegment]:
+    def _assign_speakers(self, path: str, segments: list[dict[str, Any]]) -> list[TranscriptSegment]:
         """Very simple speaker attribution using per-segment average energy.
 
         This is intentionally lightweight: we bucket segments into N speakers
@@ -273,7 +267,7 @@ class AudioAdapter:
         remap = {old: f"speaker_{new + 1}" for new, old in enumerate(order)}
 
         out: list[TranscriptSegment] = []
-        for seg, lbl in zip(segments, labels):
+        for seg, lbl in zip(segments, labels, strict=True):
             out.append(
                 TranscriptSegment(
                     start=seg["start"],
@@ -287,9 +281,7 @@ class AudioAdapter:
 
     # ---------------------------------------------------------------- utilities
 
-    def segments_as_memories(
-        self, segments: Iterable[TranscriptSegment], meeting_id: str | None = None
-    ) -> list[dict[str, Any]]:
+    def segments_as_memories(self, segments: Iterable[TranscriptSegment], meeting_id: str | None = None) -> list[dict[str, Any]]:
         return [seg.to_memory(meeting_id=meeting_id) for seg in segments]
 
     def session_dict(self, session: AudioSession) -> dict[str, Any]:
@@ -352,7 +344,7 @@ def _one_dim_kmeans(values: list[float], centroids: list[float], iterations: int
         # update
         sums = [0.0] * k
         counts = [0] * k
-        for v, lbl in zip(values, labels):
+        for v, lbl in zip(values, labels, strict=True):
             sums[lbl] += v
             counts[lbl] += 1
         for j in range(k):

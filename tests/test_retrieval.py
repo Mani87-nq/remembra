@@ -10,10 +10,11 @@ Tests cover:
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 # Import retrieval modules
+from remembra.core.time import utcnow
 from remembra.retrieval.hybrid import (
     BM25Index,
     HybridSearcher,
@@ -301,7 +302,7 @@ class TestRelevanceRanker:
         )
         ranker = RelevanceRanker(config)
 
-        now = datetime.utcnow()
+        now = utcnow()
         memories = [
             {
                 "id": "old",

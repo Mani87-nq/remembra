@@ -4,6 +4,9 @@ Complete reference for Remembra's MCP tools, resources, and configuration.
 
 Use Remembra as persistent memory for AI assistants via the [Model Context Protocol](https://modelcontextprotocol.io).
 
+!!! warning "Security note"
+    MCP servers are tools — treat them like running code. Only connect to MCP servers you trust, and run servers with least privilege (no shell access, minimal filesystem/network access). Prefer allowlists for any server that can execute commands or access internal systems.
+
 ## Quick Setup (v0.10.1)
 
 Configure all your AI tools with one command:

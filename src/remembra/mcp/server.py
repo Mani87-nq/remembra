@@ -822,8 +822,7 @@ def _resolve_agent_id(agent_id: str | None) -> str:
     aid = (agent_id or REMEMBRA_AGENT_ID or "").strip()
     if not aid:
         raise ValueError(
-            "agent_id is required. Pass it explicitly or set REMEMBRA_AGENT_ID "
-            "in the environment so this agent can be addressed."
+            "agent_id is required. Pass it explicitly or set REMEMBRA_AGENT_ID in the environment so this agent can be addressed."
         )
     return aid
 

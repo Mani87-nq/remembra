@@ -216,7 +216,7 @@ class TestPluginQuery:
         await mgr.register(DummyPlugin())
         assert mgr.count == 1
 
-    def test_register_class(self):
+    async def test_register_class(self):
         mgr = PluginManager()
         mgr.register_class(DummyPlugin)
         registry = mgr.list_registry()

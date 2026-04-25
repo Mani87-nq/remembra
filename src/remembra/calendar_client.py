@@ -9,8 +9,8 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 log = logging.getLogger(__name__)
@@ -95,14 +95,12 @@ class GoogleCalendarClient:
         self.calendar_id = calendar_id
         self.scopes = scopes or ["https://www.googleapis.com/auth/calendar.readonly"]
         self.token_path = token_path or os.environ.get("REMEMBRA_GOOGLE_TOKEN")
-        self.credentials_path = credentials_path or os.environ.get(
-            "REMEMBRA_GOOGLE_CREDENTIALS"
-        )
+        self.credentials_path = credentials_path or os.environ.get("REMEMBRA_GOOGLE_CREDENTIALS")
         self._service = None
 
     # ------------------------------------------------------------------- auth
 
-    def _build_service(self):
+    def _build_service(self) -> Any:
         if self._service is not None:
             return self._service
 
@@ -110,20 +108,19 @@ class GoogleCalendarClient:
             from googleapiclient.discovery import build  # type: ignore
         except ImportError as exc:
             raise RuntimeError(
-                "google-api-python-client is required. "
-                "Install: pip install google-api-python-client google-auth-oauthlib"
+                "google-api-python-client is required. Install: pip install google-api-python-client google-auth-oauthlib"
             ) from exc
 
         creds = self._load_credentials()
         self._service = build("calendar", "v3", credentials=creds, cache_discovery=False)
         return self._service
 
-    def _load_credentials(self):
+    def _load_credentials(self) -> Any:
         # Try OAuth token first.
         if self.token_path and os.path.exists(self.token_path):
             try:
-                from google.oauth2.credentials import Credentials  # type: ignore
                 from google.auth.transport.requests import Request  # type: ignore
+                from google.oauth2.credentials import Credentials  # type: ignore
 
                 creds = Credentials.from_authorized_user_file(self.token_path, self.scopes)
                 if creds and creds.expired and creds.refresh_token:
@@ -137,13 +134,10 @@ class GoogleCalendarClient:
         if sa_path and os.path.exists(sa_path):
             from google.oauth2 import service_account  # type: ignore
 
-            return service_account.Credentials.from_service_account_file(
-                sa_path, scopes=self.scopes
-            )
+            return service_account.Credentials.from_service_account_file(sa_path, scopes=self.scopes)
 
         raise RuntimeError(
-            "No Google credentials found. Set REMEMBRA_GOOGLE_TOKEN (OAuth) "
-            "or GOOGLE_APPLICATION_CREDENTIALS (service account)."
+            "No Google credentials found. Set REMEMBRA_GOOGLE_TOKEN (OAuth) or GOOGLE_APPLICATION_CREDENTIALS (service account)."
         )
 
     # --------------------------------------------------------------- queries
@@ -156,7 +150,7 @@ class GoogleCalendarClient:
     ) -> list[CalendarEvent]:
         """Return events starting in the next `lookahead_hours`."""
         service = self._build_service()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         time_min = now.isoformat()
         time_max = (now + timedelta(hours=lookahead_hours)).isoformat()
 
@@ -180,22 +174,14 @@ class GoogleCalendarClient:
 
     def get_event(self, event_id: str, calendar_id: str | None = None) -> CalendarEvent:
         service = self._build_service()
-        raw = (
-            service.events()
-            .get(calendarId=calendar_id or self.calendar_id, eventId=event_id)
-            .execute()
-        )
+        raw = service.events().get(calendarId=calendar_id or self.calendar_id, eventId=event_id).execute()
         return self._parse_event(raw)
 
-    def get_event_attendees(
-        self, event_id: str, calendar_id: str | None = None
-    ) -> list[Attendee]:
+    def get_event_attendees(self, event_id: str, calendar_id: str | None = None) -> list[Attendee]:
         event = self.get_event(event_id, calendar_id=calendar_id)
         return event.attendees
 
-    def get_recurring_pattern(
-        self, event_id: str, calendar_id: str | None = None
-    ) -> dict[str, Any]:
+    def get_recurring_pattern(self, event_id: str, calendar_id: str | None = None) -> dict[str, Any]:
         """Return a human-readable summary of the recurrence rule, if any.
 
         Also counts how often we've met with this group historically by
@@ -231,7 +217,7 @@ class GoogleCalendarClient:
             log.warning("Failed to fetch recurring instances: %s", exc)
             return pattern
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         attendee_counts: Counter[str] = Counter()
         for inst in instances.get("items", []):
             start = _parse_dt(inst.get("start", {}))
@@ -246,9 +232,7 @@ class GoogleCalendarClient:
                 if email:
                     attendee_counts[email] += 1
 
-        pattern["typical_attendees"] = [
-            {"email": e, "count": c} for e, c in attendee_counts.most_common(10)
-        ]
+        pattern["typical_attendees"] = [{"email": e, "count": c} for e, c in attendee_counts.most_common(10)]
         return pattern
 
     # --------------------------------------------------------------- parsing

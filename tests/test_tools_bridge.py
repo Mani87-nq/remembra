@@ -5,7 +5,6 @@ from __future__ import annotations
 from email.message import Message
 import json
 import os
-import socket
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -189,53 +188,47 @@ def test_bridge_strips_content_encoding_when_relaying_decompressed_payload() -> 
 # ---------------------------------------------------------------------------
 
 
-def _pick_free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        return sock.getsockname()[1]
-
-
 def test_is_port_listening_true_when_bound() -> None:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        sock.listen(1)
-        _, port = sock.getsockname()
-        assert is_port_listening("127.0.0.1", port) is True
+    mock_conn = MagicMock()
+    mock_conn.__enter__.return_value = mock_conn
+    with patch("remembra.tools.bridge.socket.create_connection", return_value=mock_conn):
+        assert is_port_listening("127.0.0.1", 55555) is True
 
 
 def test_is_port_listening_false_when_unused() -> None:
-    port = _pick_free_port()
-    assert is_port_listening("127.0.0.1", port) is False
+    with patch("remembra.tools.bridge.socket.create_connection", side_effect=OSError("refused")):
+        assert is_port_listening("127.0.0.1", 55555) is False
 
 
 def test_find_pid_on_port_returns_none_when_unused() -> None:
-    port = _pick_free_port()
-    assert find_pid_on_port(port) is None
+    with patch("remembra.tools.bridge.shutil.which", return_value=None):
+        assert find_pid_on_port(55555) is None
 
 
 def test_find_pid_on_port_finds_current_process() -> None:
-    """lsof should be able to see a socket this process is holding."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        sock.listen(1)
-        _, port = sock.getsockname()
-        pid = find_pid_on_port(port)
-        # Best-effort: lsof might not be installed in every CI env;
-        # treat None as "can't tell" rather than a failure.
-        if pid is not None:
-            assert pid == os.getpid()
+    """find_pid_on_port should parse lsof output when available."""
+    fake_result = SimpleNamespace(returncode=0, stdout=f"{os.getpid()}\n")
+    with (
+        patch("remembra.tools.bridge.shutil.which", return_value="/usr/sbin/lsof"),
+        patch("remembra.tools.bridge.subprocess.run", return_value=fake_result),
+    ):
+        assert find_pid_on_port(55555) == os.getpid()
 
 
 def test_check_port_available_mentions_holder_when_resolvable(tmp_path: Path) -> None:
     """BridgePortInUseError should name the PID when find_pid_on_port returns one."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        sock.listen(1)
-        _, port = sock.getsockname()
+    port = 9819
+    mock_socket = MagicMock()
+    mock_socket.bind.side_effect = OSError("Address already in use")
+    mock_context = MagicMock()
+    mock_context.__enter__.return_value = mock_socket
 
-        with patch("remembra.tools.bridge.find_pid_on_port", return_value=12345):
-            with pytest.raises(BridgePortInUseError) as exc_info:
-                check_port_available("127.0.0.1", port)
+    with (
+        patch("remembra.tools.bridge.socket.socket", return_value=mock_context),
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=12345),
+        pytest.raises(BridgePortInUseError) as exc_info,
+    ):
+        check_port_available("127.0.0.1", port)
 
     msg = str(exc_info.value)
     assert "12345" in msg
@@ -244,14 +237,18 @@ def test_check_port_available_mentions_holder_when_resolvable(tmp_path: Path) ->
 
 def test_check_port_available_fallback_when_holder_unknown(tmp_path: Path) -> None:
     """When find_pid_on_port returns None, the error still suggests --stop --force."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        sock.bind(("127.0.0.1", 0))
-        sock.listen(1)
-        _, port = sock.getsockname()
+    port = 9819
+    mock_socket = MagicMock()
+    mock_socket.bind.side_effect = OSError("Address already in use")
+    mock_context = MagicMock()
+    mock_context.__enter__.return_value = mock_socket
 
-        with patch("remembra.tools.bridge.find_pid_on_port", return_value=None):
-            with pytest.raises(BridgePortInUseError) as exc_info:
-                check_port_available("127.0.0.1", port)
+    with (
+        patch("remembra.tools.bridge.socket.socket", return_value=mock_context),
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=None),
+        pytest.raises(BridgePortInUseError) as exc_info,
+    ):
+        check_port_available("127.0.0.1", port)
 
     msg = str(exc_info.value)
     assert "already in use" in msg
@@ -267,8 +264,10 @@ def test_stop_bridge_force_kills_orphan_when_no_pidfile(tmp_path: Path) -> None:
         terminated.append(pid)
         return True
 
-    with patch("remembra.tools.bridge.find_pid_on_port", return_value=4321), \
-         patch("remembra.tools.bridge._terminate_pid", side_effect=fake_terminate):
+    with (
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=4321),
+        patch("remembra.tools.bridge._terminate_pid", side_effect=fake_terminate),
+    ):
         result = stop_bridge(pid_file, port=9819, force=True)
 
     assert result is True
@@ -285,9 +284,11 @@ def test_stop_bridge_force_handles_matching_pid_without_double_kill(tmp_path: Pa
         terminated.append(pid)
         return True
 
-    with patch("remembra.tools.bridge.is_process_running", return_value=True), \
-         patch("remembra.tools.bridge.find_pid_on_port", return_value=7777), \
-         patch("remembra.tools.bridge._terminate_pid", side_effect=fake_terminate):
+    with (
+        patch("remembra.tools.bridge.is_process_running", return_value=True),
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=7777),
+        patch("remembra.tools.bridge._terminate_pid", side_effect=fake_terminate),
+    ):
         result = stop_bridge(pid_file, port=9819, force=True)
 
     assert result is True
@@ -299,9 +300,10 @@ def test_stop_bridge_default_mode_ignores_orphan(tmp_path: Path) -> None:
     pid_file = tmp_path / "no.pid"
     terminated: list[int] = []
 
-    with patch("remembra.tools.bridge.find_pid_on_port", return_value=9999), \
-         patch("remembra.tools.bridge._terminate_pid",
-               side_effect=lambda p: terminated.append(p) or True):
+    with (
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=9999),
+        patch("remembra.tools.bridge._terminate_pid", side_effect=lambda p: terminated.append(p) or True),
+    ):
         result = stop_bridge(pid_file, port=9819, force=False)
 
     assert result is False
@@ -316,10 +318,12 @@ def test_run_doctor_healthy_state(tmp_path: Path) -> None:
     fake_resp = MagicMock()
     fake_resp.status_code = 200
 
-    with patch("remembra.tools.bridge.is_process_running", return_value=True), \
-         patch("remembra.tools.bridge.is_port_listening", return_value=True), \
-         patch("remembra.tools.bridge.find_pid_on_port", return_value=12345), \
-         patch("httpx.Client") as httpx_client:
+    with (
+        patch("remembra.tools.bridge.is_process_running", return_value=True),
+        patch("remembra.tools.bridge.is_port_listening", return_value=True),
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=12345),
+        patch("httpx.Client") as httpx_client,
+    ):
         httpx_client.return_value.__enter__.return_value.get.return_value = fake_resp
         report = run_doctor("127.0.0.1", 9819, pid_file)
 
@@ -333,9 +337,11 @@ def test_run_doctor_detects_orphan(tmp_path: Path) -> None:
     """Orphan: port is held but pidfile is missing."""
     pid_file = tmp_path / "ghost.pid"  # does not exist
 
-    with patch("remembra.tools.bridge.is_port_listening", return_value=True), \
-         patch("remembra.tools.bridge.find_pid_on_port", return_value=1329), \
-         patch("httpx.Client"):
+    with (
+        patch("remembra.tools.bridge.is_port_listening", return_value=True),
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=1329),
+        patch("httpx.Client"),
+    ):
         report = run_doctor("127.0.0.1", 9819, pid_file)
 
     assert report.healthy is False
@@ -352,10 +358,12 @@ def test_run_doctor_detects_pidfile_mismatch(tmp_path: Path) -> None:
     fake_resp = MagicMock()
     fake_resp.status_code = 200
 
-    with patch("remembra.tools.bridge.is_process_running", return_value=True), \
-         patch("remembra.tools.bridge.is_port_listening", return_value=True), \
-         patch("remembra.tools.bridge.find_pid_on_port", return_value=222), \
-         patch("httpx.Client") as httpx_client:
+    with (
+        patch("remembra.tools.bridge.is_process_running", return_value=True),
+        patch("remembra.tools.bridge.is_port_listening", return_value=True),
+        patch("remembra.tools.bridge.find_pid_on_port", return_value=222),
+        patch("httpx.Client") as httpx_client,
+    ):
         httpx_client.return_value.__enter__.return_value.get.return_value = fake_resp
         report = run_doctor("127.0.0.1", 9819, pid_file)
 

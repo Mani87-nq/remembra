@@ -9,12 +9,12 @@ Also drafts a follow-up email.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
-from typing import Any, Iterable
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, field
+from datetime import UTC, datetime
+from typing import Any
 
 from remembra.audio_adapter import TranscriptSegment
-
 
 DECISION_CUES = (
     r"\b(we (decided|agreed|concluded)|let's go with|final (answer|call)|"
@@ -111,14 +111,12 @@ class PostMeetingProcessor:
             action_items=actions[: self.max_items],
             key_quotes=quotes[: self.max_items],
             follow_up_email=email,
-            generated_at=datetime.now(timezone.utc).isoformat(),
+            generated_at=datetime.now(UTC).isoformat(),
         )
 
     # -------------------------------------------------------------- extraction
 
-    def _extract_decisions(
-        self, segs: list[TranscriptSegment], meeting_id: str
-    ) -> list[ExtractedMemory]:
+    def _extract_decisions(self, segs: list[TranscriptSegment], meeting_id: str) -> list[ExtractedMemory]:
         out: list[ExtractedMemory] = []
         for seg in segs:
             if DECISION_RE.search(seg.text):
@@ -167,9 +165,7 @@ class PostMeetingProcessor:
             )
         return out
 
-    def _extract_quotes(
-        self, segs: list[TranscriptSegment], meeting_id: str
-    ) -> list[ExtractedMemory]:
+    def _extract_quotes(self, segs: list[TranscriptSegment], meeting_id: str) -> list[ExtractedMemory]:
         out: list[ExtractedMemory] = []
         for seg in segs:
             text = seg.text.strip()
@@ -193,8 +189,7 @@ class PostMeetingProcessor:
                     )
                 )
         # Cap quote volume; prefer cue matches first.
-        cues = [m for m in out if m.metadata.get("source") == "meeting_quote" and
-                QUOTE_RE.search(m.content)]
+        cues = [m for m in out if m.metadata.get("source") == "meeting_quote" and QUOTE_RE.search(m.content)]
         rest = [m for m in out if m not in cues]
         return cues + rest
 
@@ -206,9 +201,7 @@ class PostMeetingProcessor:
         return match.group(0) if match else None
 
     @staticmethod
-    def _guess_owner(
-        seg: TranscriptSegment, attendees: list[dict[str, Any]]
-    ) -> str | None:
+    def _guess_owner(seg: TranscriptSegment, attendees: list[dict[str, Any]]) -> str | None:
         text = seg.text.lower()
         if re.search(r"\bi'?ll\b|\bi will\b", text):
             return f"speaker:{seg.speaker}"

@@ -13,6 +13,7 @@ same predicate here and assert the model carries the filters field.
 from __future__ import annotations
 
 from remembra.models.memory import RecallRequest
+from remembra.services.memory import metadata_filters_match
 
 
 # ---------------------------------------------------------------------------
@@ -43,14 +44,11 @@ class TestRecallRequestFiltersField:
 
 
 def _apply_filter(hybrid_results: list[dict], filters: dict[str, str]) -> list[dict]:
-    """Mirror of the in-service filter predicate for unit testing."""
+    """Apply the same filter predicate used by MemoryService.recall()."""
 
     def _matches(r: dict) -> bool:
         meta = (r.get("payload") or {}).get("metadata") or {}
-        for k, v in filters.items():
-            if str(meta.get(k)) != str(v):
-                return False
-        return True
+        return metadata_filters_match(meta, filters)
 
     return [r for r in hybrid_results if _matches(r)]
 
@@ -93,6 +91,22 @@ class TestFilterPredicate:
             _mem("b", {"version": 3}),
         ]
         out = _apply_filter(results, {"version": "2"})
+        assert [r["id"] for r in out] == ["a"]
+
+    def test_list_values_match_any_member(self):
+        results = [
+            _mem("a", {"tags": ["orb", "rth"]}),
+            _mem("b", {"tags": ["vwap"]}),
+        ]
+        out = _apply_filter(results, {"tags": "orb"})
+        assert [r["id"] for r in out] == ["a"]
+
+    def test_dotted_keys_match_nested_dicts(self):
+        results = [
+            _mem("a", {"regime": {"phase": "RTH"}}),
+            _mem("b", {"regime": {"phase": "ETH"}}),
+        ]
+        out = _apply_filter(results, {"regime.phase": "RTH"})
         assert [r["id"] for r in out] == ["a"]
 
     def test_empty_filter_returns_all(self):

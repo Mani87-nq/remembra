@@ -9,6 +9,7 @@ from typing import Any
 import structlog
 
 from remembra.config import Settings
+from remembra.core.time import utcnow
 from remembra.extraction.conflicts import (
     ConflictManager,
     ConflictStatus,
@@ -50,6 +51,46 @@ from remembra.storage.embeddings import EmbeddingService
 from remembra.storage.qdrant import QdrantStore
 
 log = structlog.get_logger(__name__)
+
+
+def _get_nested_metadata_value(metadata: dict[str, Any], key: str) -> Any:
+    """Fetch a potentially nested metadata value.
+
+    Supports dotted keys like ``"regime.phase"`` for nested dict metadata.
+    """
+    if not key:
+        return None
+
+    value: Any = metadata
+    for part in key.split("."):
+        if not isinstance(value, dict):
+            return None
+        if part not in value:
+            return None
+        value = value.get(part)
+    return value
+
+
+def metadata_filters_match(metadata: dict[str, Any], filters: dict[str, str]) -> bool:
+    """Return True if metadata satisfies all AND-combined exact-match filters.
+
+    Matching rules (backward compatible for scalar values):
+    - Scalars: compare ``str(value) == str(filter_value)``
+    - Lists: match if ANY element stringifies equal to the filter value
+    - Nested keys: dotted paths (e.g. ``"regime.phase"``) are supported
+    """
+    for k, v in filters.items():
+        meta_value = _get_nested_metadata_value(metadata, k)
+
+        if isinstance(meta_value, list):
+            if not any(str(item) == str(v) for item in meta_value):
+                return False
+            continue
+
+        if str(meta_value) != str(v):
+            return False
+
+    return True
 
 
 def parse_ttl(ttl: str | None) -> timedelta | None:
@@ -217,7 +258,7 @@ class MemoryService:
             trust_score=trust_score,
         )
 
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Calculate expiration: explicit expires_at > ttl > default
         expires_at = None
@@ -315,34 +356,35 @@ class MemoryService:
     ) -> dict[str, Any]:
         """
         Fast bulk import for pre-structured data.
-        
+
         Optimized path that:
         1. Uses pre-computed embeddings OR batch embeds in one OpenAI call
         2. Bulk upserts to Qdrant
         3. Bulk inserts to SQLite
-        
+
         Skips: fact extraction, consolidation, conflict detection.
         Use for importing known-good structured data.
-        
+
         Args:
             items: List of StoreRequest objects
             user_id: User ID for all items
             project_id: Project ID for all items
             embeddings: Optional pre-computed embedding vectors (one per item).
                        When provided, skips OpenAI calls entirely.
-            
+
         Returns:
             Dict with stored count and any errors
         """
         import uuid
+
         from remembra.models.memory import Memory
-        
+
         if not items:
             return {"stored": 0, "errors": []}
-        
-        now = datetime.utcnow()
+
+        now = utcnow()
         errors = []
-        
+
         # Use pre-computed embeddings or generate them
         if embeddings and len(embeddings) == len(items):
             log.info("bulk_using_precomputed_embeddings", count=len(embeddings))
@@ -350,21 +392,21 @@ class MemoryService:
         else:
             # Extract all contents for batch embedding
             contents = [item.content.strip() for item in items]
-            
+
             # Batch embed all at once (single OpenAI call!)
             try:
                 computed_embeddings = await self.embeddings.embed_batch(contents)
             except Exception as e:
                 log.error("bulk_embed_failed", error=str(e), count=len(contents))
                 return {"stored": 0, "errors": [f"Embedding failed: {str(e)}"]}
-        
+
         # Build Memory objects
         memories = []
         memory_dicts = []
-        
-        for i, (item, embedding) in enumerate(zip(items, computed_embeddings)):
+
+        for item, embedding in zip(items, computed_embeddings, strict=False):
             memory_id = str(uuid.uuid4())
-            
+
             # Calculate expiration
             expires_at = None
             if item.expires_at:
@@ -375,7 +417,7 @@ class MemoryService:
                     expires_at = now + ttl_delta
             elif self.settings.default_ttl_days:
                 expires_at = now + timedelta(days=self.settings.default_ttl_days)
-            
+
             memory = Memory(
                 id=memory_id,
                 user_id=user_id,
@@ -389,24 +431,26 @@ class MemoryService:
                 expires_at=expires_at,
             )
             memories.append(memory)
-            
-            memory_dicts.append({
-                "id": memory_id,
-                "user_id": user_id,
-                "project_id": project_id,
-                "content": item.content.strip(),
-                "extracted_facts": [item.content.strip()],
-                "metadata": item.metadata or {},
-                "created_at": now,
-                "expires_at": expires_at,
-                "source": "bulk_import",
-                "trust_score": 1.0,
-                "checksum": None,
-                "visibility": item.visibility or "personal",
-                "space_id": item.space_id,
-                "team_id": item.team_id,
-            })
-        
+
+            memory_dicts.append(
+                {
+                    "id": memory_id,
+                    "user_id": user_id,
+                    "project_id": project_id,
+                    "content": item.content.strip(),
+                    "extracted_facts": [item.content.strip()],
+                    "metadata": item.metadata or {},
+                    "created_at": now,
+                    "expires_at": expires_at,
+                    "source": "bulk_import",
+                    "trust_score": 1.0,
+                    "checksum": None,
+                    "visibility": item.visibility or "personal",
+                    "space_id": item.space_id,
+                    "team_id": item.team_id,
+                }
+            )
+
         # Bulk upsert to Qdrant
         try:
             qdrant_count = await self.qdrant.upsert_batch(memories)
@@ -414,7 +458,7 @@ class MemoryService:
             log.error("bulk_qdrant_failed", error=str(e))
             errors.append(f"Qdrant bulk insert failed: {str(e)}")
             return {"stored": 0, "errors": errors}
-        
+
         # Bulk insert to SQLite
         try:
             db_count = await self.db.save_memories_bulk(memory_dicts)
@@ -422,7 +466,7 @@ class MemoryService:
             log.error("bulk_db_failed", error=str(e))
             errors.append(f"Database bulk insert failed: {str(e)}")
             # Note: Qdrant already has the data, might be inconsistent
-        
+
         log.info(
             "bulk_import_complete",
             user_id=user_id,
@@ -431,7 +475,7 @@ class MemoryService:
             qdrant_stored=qdrant_count,
             db_stored=db_count,
         )
-        
+
         return {
             "stored": min(qdrant_count, db_count) if not errors else 0,
             "qdrant_count": qdrant_count,
@@ -1071,10 +1115,7 @@ class MemoryService:
 
             def _matches(r: dict[str, Any]) -> bool:
                 meta = (r.get("payload") or {}).get("metadata") or {}
-                for k, v in requested_filters.items():
-                    if str(meta.get(k)) != str(v):
-                        return False
-                return True
+                return metadata_filters_match(meta, requested_filters)
 
             hybrid_results = [r for r in hybrid_results if _matches(r)]
             log.info(
@@ -1092,6 +1133,7 @@ class MemoryService:
         # Scope filter: restrict to memories whose scope starts with the requested prefix
         requested_scope = getattr(request, "scope", None)
         if requested_scope:
+
             def _scope_matches(r: dict[str, Any]) -> bool:
                 mem_scope = (r.get("payload") or {}).get("scope") or r.get("scope")
                 if not mem_scope:
@@ -1219,7 +1261,7 @@ class MemoryService:
                     )
 
         # Step 8b: Build memory results with freshness scores
-        now = datetime.utcnow()
+        now = utcnow()
         memories: list[RecallResult] = []
         for r in final_ranked:
             created = r.created_at or now
@@ -1313,6 +1355,9 @@ class MemoryService:
         """
         import json as _json
 
+        if not request.user_id:
+            raise ValueError("RecallRequest.user_id must be set for filter-only recall.")
+
         log.info(
             "recall_by_filters_only",
             user_id=request.user_id,
@@ -1321,47 +1366,92 @@ class MemoryService:
             limit=request.limit,
         )
 
-        # Fetch recent memories from SQLite
-        rows = await self.db.list_memories(
-            user_id=request.user_id,
-            project_id=request.project_id,
-            limit=request.limit * 3,  # over-fetch to allow for filter narrowing
-            offset=0,
-        )
-
-        # Apply metadata filters in Python (SQLite stores metadata as JSON TEXT)
-        filters = request.filters or {}
-        matched: list[dict] = []
-        for row in rows:
-            raw_meta = row.get("metadata")
-            if isinstance(raw_meta, str):
+        def _parse_created(value: Any) -> datetime:
+            if isinstance(value, datetime):
+                return value
+            if isinstance(value, str):
                 try:
-                    meta = _json.loads(raw_meta)
+                    return datetime.fromisoformat(value.replace("Z", "+00:00"))
                 except (ValueError, TypeError):
-                    meta = {}
-            elif isinstance(raw_meta, dict):
-                meta = raw_meta
-            else:
-                meta = {}
+                    return utcnow()
+            return utcnow()
 
-            if all(str(meta.get(k)) == str(v) for k, v in filters.items()):
-                matched.append({**row, "_parsed_metadata": meta})
+        filters = request.filters or {}
+        exclude_ids = set(getattr(request, "exclude", None) or [])
+        requested_scope = getattr(request, "scope", None)
+        as_of = getattr(request, "as_of", None)
+
+        # Scan through SQLite in pages. The previous implementation only
+        # checked the most recent (limit * 3) rows, which could miss older
+        # matches and made "filter-only recall" unreliable for long-lived
+        # trading journals and rule libraries.
+        batch_size = max(200, request.limit * 10)
+        max_scan = 5000
+        offset = 0
+        scanned = 0
+
+        matched: list[dict[str, Any]] = []
+        while len(matched) < request.limit and scanned < max_scan:
+            rows = await self.db.list_memories(
+                user_id=request.user_id,
+                project_id=request.project_id,
+                limit=batch_size,
+                offset=offset,
+            )
+            if not rows:
+                break
+
+            for row in rows:
+                scanned += 1
+                if scanned > max_scan:
+                    break
+
+                memory_id = row.get("id")
+                if memory_id and memory_id in exclude_ids:
+                    continue
+
+                created_dt = _parse_created(row.get("created_at", ""))
+                if as_of and created_dt > as_of:
+                    continue
+
+                raw_meta = row.get("metadata")
+                if isinstance(raw_meta, str):
+                    try:
+                        meta = _json.loads(raw_meta)
+                    except (ValueError, TypeError):
+                        meta = {}
+                elif isinstance(raw_meta, dict):
+                    meta = raw_meta
+                else:
+                    meta = {}
+
+                if requested_scope:
+                    mem_scope = meta.get("scope")
+                    if not mem_scope:
+                        continue
+                    if mem_scope != requested_scope and not str(mem_scope).startswith(str(requested_scope) + ":"):
+                        continue
+
+                if filters and not metadata_filters_match(meta, filters):
+                    continue
+
+                matched.append(
+                    {
+                        **row,
+                        "_parsed_metadata": meta,
+                        "_created_dt": created_dt,
+                    }
+                )
                 if len(matched) >= request.limit:
                     break
 
+            offset += batch_size
+
         # Build RecallResult objects
         memories: list[RecallResult] = []
-        context_parts: list[str] = []
+        memories_for_context: list[dict[str, Any]] = []
         for row in matched:
-            created = row.get("created_at", "")
-            if isinstance(created, str):
-                try:
-                    from datetime import datetime
-                    created_dt = datetime.fromisoformat(created)
-                except (ValueError, TypeError):
-                    created_dt = datetime.utcnow()
-            else:
-                created_dt = created
+            created_dt = row.get("_created_dt") or _parse_created(row.get("created_at", ""))
 
             meta = row.get("_parsed_metadata", {})
             content = row.get("content", "")
@@ -1384,14 +1474,31 @@ class MemoryService:
                 )
             )
             date_str = created_dt.strftime("%Y-%m-%d") if hasattr(created_dt, "strftime") else str(created_dt)[:10]
-            context_parts.append(f"[{date_str}] {content}")
+            memories_for_context.append(
+                {
+                    "id": row["id"],
+                    "content": f"[{date_str}] {content}",
+                    "relevance": 1.0,
+                    "created_at": None,  # date embedded above
+                }
+            )
 
-        context = "\n---\n".join(context_parts) if context_parts else ""
+        # Apply token budgeting consistent with semantic recall.
+        context_optimizer = ContextOptimizer(
+            max_tokens=max_tokens,
+            include_metadata=False,  # we embed [YYYY-MM-DD] ourselves
+        )
+        optimized = context_optimizer.optimize(
+            memories=memories_for_context,
+            sort_by_relevance=False,  # preserve created_at DESC ordering
+        )
 
         return RecallResponse(
-            context=context,
+            context=optimized.context,
             memories=memories,
             entities=[],
+            context_budget_used=optimized.total_tokens,
+            divergence_detected=False,
         )
 
     # -----------------------------------------------------------------------
@@ -1493,9 +1600,7 @@ class MemoryService:
                         id=mem_id,
                         content=mem_data.get("content", ""),
                         relevance=sim,
-                        created_at=(
-                            datetime.fromisoformat(mem_data["created_at"]) if mem_data.get("created_at") else datetime.utcnow()
-                        ),
+                        created_at=(datetime.fromisoformat(mem_data["created_at"]) if mem_data.get("created_at") else utcnow()),
                     )
                 )
                 seen_ids.add(mem_id)
@@ -1755,7 +1860,7 @@ class MemoryService:
                 old_meta = {}
 
         old_meta["superseded_by"] = new_memory_id
-        old_meta["superseded_at"] = datetime.utcnow().isoformat()
+        old_meta["superseded_at"] = utcnow().isoformat()
         old_meta["supersession_reason"] = reason
 
         await self.db.update_memory(
@@ -1972,7 +2077,7 @@ class MemoryService:
         Returns:
             Decay score between 0.0 (fully decayed) and 1.0+ (fresh/boosted)
         """
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Calculate age-based decay (exponential)
         age_days = (now - created_at).total_seconds() / 86400.0

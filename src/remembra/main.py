@@ -314,7 +314,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from remembra.core.calibration import (
         CalibrationCache,
         CalibrationConfig,
-        run_calibration,
     )
 
     calibration_cache = CalibrationCache()

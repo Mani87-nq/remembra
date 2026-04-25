@@ -2,7 +2,6 @@
 
 import asyncio
 import json
-from datetime import datetime
 from typing import Any
 
 import structlog
@@ -10,6 +9,7 @@ from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from starlette.websockets import WebSocketState
 
 from remembra.config import get_settings
+from remembra.core.time import utcnow
 
 log = structlog.get_logger(__name__)
 
@@ -79,7 +79,7 @@ class ConnectionManager:
             {
                 "type": event_type,
                 "data": data,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": utcnow().isoformat() + "Z",
                 "namespace": namespace,
                 "project_id": project_id,
             }
@@ -180,7 +180,7 @@ async def websocket_endpoint(
                     "project_id": project_id,
                     "message": "Connected to Remembra real-time updates",
                 },
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": utcnow().isoformat() + "Z",
             }
         )
 
@@ -216,7 +216,7 @@ async def websocket_endpoint(
                             {
                                 "type": "subscribed",
                                 "data": {"namespace": namespace, "project_id": project_id},
-                                "timestamp": datetime.utcnow().isoformat() + "Z",
+                                "timestamp": utcnow().isoformat() + "Z",
                             }
                         )
                 except json.JSONDecodeError:

@@ -24,6 +24,7 @@ from remembra.cloud.limits import (
 )
 from remembra.config import Settings, get_settings
 from remembra.core.limiter import limiter
+from remembra.core.time import utcnow
 from remembra.models.memory import (
     BatchRecallRequest,
     BatchRecallResponse,
@@ -112,7 +113,7 @@ def _is_memory_expired(memory: dict[str, Any]) -> bool:
         except ValueError:
             return False
 
-    return datetime.utcnow() > expires_at.replace(tzinfo=None)
+    return utcnow() > expires_at.replace(tzinfo=None)
 
 
 router = APIRouter(prefix="/memories", tags=["memories"])
@@ -528,21 +529,21 @@ async def bulk_import(
 ) -> dict:
     """
     Fast bulk import optimized for pre-structured data.
-    
+
     Unlike /batch which processes items individually, /bulk:
     - Embeds ALL items in a single OpenAI call
     - Bulk upserts to Qdrant in one operation
     - Bulk inserts to SQLite in one transaction
-    
+
     This is 10-50x faster than /batch for large imports.
-    
+
     **Use when:**
     - Importing pre-structured data (trading summaries, logs, etc.)
     - Data is known-good and doesn't need deduplication
     - Speed is critical
-    
+
     **Skips:** Fact extraction, consolidation, conflict detection.
-    
+
     **Request (with server-side embedding):**
     ```json
     {
@@ -552,7 +553,7 @@ async def bulk_import(
       ]
     }
     ```
-    
+
     **Request (with pre-computed embeddings - FASTEST):**
     ```json
     {
@@ -560,10 +561,10 @@ async def bulk_import(
       "embeddings": [[0.1, 0.2, ...], [0.3, 0.4, ...]]
     }
     ```
-    
+
     When embeddings are provided, OpenAI calls are skipped entirely.
     Generate embeddings client-side using text-embedding-3-small (1536 dimensions).
-    
+
     Rate limit: 10 requests/minute (100 items/request = 1000 items/minute max)
     """
     # RBAC: Check permission
@@ -572,10 +573,10 @@ async def bulk_import(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Permission denied: memory:store required",
         )
-    
+
     # Resolve project
     project_id = resolve_project_access(current_user, body.items[0].project_id if body.items else None) or "default"
-    
+
     try:
         result = await memory_service.bulk_import(
             items=body.items,
@@ -583,7 +584,7 @@ async def bulk_import(
             project_id=project_id,
             embeddings=body.embeddings,
         )
-        
+
         await audit_logger.log_memory_store(
             user_id=current_user.user_id,
             memory_id=f"bulk:{result.get('stored', 0)}",
@@ -591,13 +592,13 @@ async def bulk_import(
             ip_address=get_client_ip(request),
             success=True,
         )
-        
+
         return {
             "status": "ok",
             "stored": result.get("stored", 0),
             "errors": result.get("errors", []),
         }
-        
+
     except Exception as e:
         log.error("bulk_import_failed", error=str(e), user_id=current_user.user_id)
         raise HTTPException(

@@ -8,6 +8,7 @@ import aiosqlite
 import structlog
 
 from remembra.config import Settings
+from remembra.core.time import utcnow
 from remembra.models.memory import Entity, EntityRef, Relationship
 
 log = structlog.get_logger(__name__)
@@ -347,7 +348,7 @@ class Database:
         """Open database connection with optimized settings."""
         self._connection = await aiosqlite.connect(self.db_path)
         self._connection.row_factory = aiosqlite.Row
-        
+
         # Performance optimizations for concurrent access
         await self._connection.execute("PRAGMA foreign_keys = ON")
         await self._connection.execute("PRAGMA journal_mode = WAL")  # Better concurrency
@@ -355,7 +356,7 @@ class Database:
         await self._connection.execute("PRAGMA cache_size = -64000")  # 64MB cache
         await self._connection.execute("PRAGMA temp_store = MEMORY")  # Temp tables in RAM
         await self._connection.execute("PRAGMA mmap_size = 268435456")  # 256MB mmap
-        
+
         log.info("database_connected", path=self.db_path, journal_mode="WAL")
 
     async def close(self) -> None:
@@ -508,7 +509,7 @@ class Database:
                 json.dumps(extracted_facts),
                 json.dumps(metadata),
                 created_at.isoformat(),
-                datetime.utcnow().isoformat(),
+                utcnow().isoformat(),
                 expires_at.isoformat() if expires_at else None,
                 source,
                 trust_score,
@@ -529,39 +530,45 @@ class Database:
         memories: list[dict[str, Any]],
     ) -> int:
         """Bulk save multiple memories to SQLite.
-        
+
         Args:
             memories: List of memory dicts with keys:
                 id, user_id, project_id, content, extracted_facts,
                 metadata, created_at, expires_at, source, trust_score,
                 checksum, visibility, space_id, team_id
-                
+
         Returns:
             Number of memories saved
         """
         if not memories:
             return 0
-            
+
         values = []
         for m in memories:
-            values.append((
-                m["id"],
-                m["user_id"],
-                m["project_id"],
-                m["content"],
-                json.dumps(m.get("extracted_facts", [])),
-                json.dumps(m.get("metadata", {})),
-                m["created_at"].isoformat() if hasattr(m["created_at"], "isoformat") else m["created_at"],
-                datetime.utcnow().isoformat(),
-                m["expires_at"].isoformat() if m.get("expires_at") and hasattr(m["expires_at"], "isoformat") else m.get("expires_at"),
-                m.get("source", "bulk_import"),
-                m.get("trust_score", 1.0),
-                m.get("checksum"),
-                m.get("visibility", "personal"),
-                m.get("space_id"),
-                m.get("team_id"),
-            ))
-        
+            values.append(
+                (
+                    m["id"],
+                    m["user_id"],
+                    m["project_id"],
+                    m["content"],
+                    json.dumps(m.get("extracted_facts", [])),
+                    json.dumps(m.get("metadata", {})),
+                    m["created_at"].isoformat() if hasattr(m["created_at"], "isoformat") else m["created_at"],
+                    utcnow().isoformat(),
+                    (
+                        m["expires_at"].isoformat()
+                        if m.get("expires_at") and hasattr(m["expires_at"], "isoformat")
+                        else m.get("expires_at")
+                    ),
+                    m.get("source", "bulk_import"),
+                    m.get("trust_score", 1.0),
+                    m.get("checksum"),
+                    m.get("visibility", "personal"),
+                    m.get("space_id"),
+                    m.get("team_id"),
+                )
+            )
+
         await self.conn.executemany(
             """
             INSERT INTO memories (id, user_id, project_id, content, extracted_facts, 
@@ -602,7 +609,7 @@ class Database:
             WHERE user_id = ?
               AND (expires_at IS NULL OR expires_at > ?)
         """
-        params: list[Any] = [user_id, datetime.utcnow().isoformat()]
+        params: list[Any] = [user_id, utcnow().isoformat()]
 
         if project_id:
             query += " AND project_id = ?"
@@ -638,7 +645,7 @@ class Database:
             WHERE user_id = ?
               AND (expires_at IS NULL OR expires_at > ?)
         """
-        params: list[Any] = [user_id, datetime.utcnow().isoformat()]
+        params: list[Any] = [user_id, utcnow().isoformat()]
 
         if project_id:
             query += " AND project_id = ?"
@@ -676,7 +683,7 @@ class Database:
             WHERE user_id = ?
               AND (expires_at IS NULL OR expires_at > ?)
         """
-        params: list[Any] = [user_id, datetime.utcnow().isoformat()]
+        params: list[Any] = [user_id, utcnow().isoformat()]
 
         if project_id:
             query += " AND project_id = ?"
@@ -710,7 +717,7 @@ class Database:
                 content,
                 json.dumps(extracted_facts),
                 json.dumps(metadata),
-                datetime.utcnow().isoformat(),
+                utcnow().isoformat(),
                 memory_id,
             ),
         )
@@ -889,7 +896,7 @@ class Database:
             log.warning("archive_memory_not_found", memory_id=memory_id)
             return False
 
-        now = datetime.utcnow().isoformat()
+        now = utcnow().isoformat()
 
         try:
             # Insert into archive table
@@ -962,7 +969,7 @@ class Database:
             return False
 
         archived = dict(row)
-        now = datetime.utcnow().isoformat()
+        now = utcnow().isoformat()
 
         try:
             # Insert back into active memories
@@ -1140,7 +1147,7 @@ class Database:
             project_id: Project namespace (omit for all projects)
             before: Check expiry before this time (default: now)
         """
-        check_time = (before or datetime.utcnow()).isoformat()
+        check_time = (before or utcnow()).isoformat()
 
         query = """
             SELECT id FROM memories 
@@ -1228,7 +1235,7 @@ class Database:
             WHERE user_id = ?
               AND (expires_at IS NULL OR expires_at > ?)
         """
-        params: list[Any] = [user_id, datetime.utcnow().isoformat()]
+        params: list[Any] = [user_id, utcnow().isoformat()]
 
         if project_id:
             query += " AND project_id = ?"
@@ -1257,7 +1264,7 @@ class Database:
 
         Returns count of deleted memories.
         """
-        now = datetime.utcnow().isoformat()
+        now = utcnow().isoformat()
 
         query = "SELECT id FROM memories WHERE expires_at IS NOT NULL AND expires_at < ?"
         params: list[Any] = [now]
@@ -1288,7 +1295,7 @@ class Database:
             SET access_count = access_count + 1, last_accessed = ?
             WHERE id = ?
             """,
-            (datetime.utcnow().isoformat(), memory_id),
+            (utcnow().isoformat(), memory_id),
         )
         await self.conn.commit()
 
@@ -1311,7 +1318,7 @@ class Database:
             INSERT INTO memory_feedback (id, memory_id, user_id, signal, comment, query, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (feedback_id, memory_id, user_id, signal, comment, query, datetime.utcnow().isoformat()),
+            (feedback_id, memory_id, user_id, signal, comment, query, utcnow().isoformat()),
         )
         await self.conn.commit()
 
@@ -1451,7 +1458,7 @@ class Database:
                 json.dumps(entity.attributes),
                 entity.confidence,
                 entity.created_at.isoformat(),
-                datetime.utcnow().isoformat(),
+                utcnow().isoformat(),
             ),
         )
         await self.conn.commit()
@@ -1645,7 +1652,7 @@ class Database:
         """Update aliases for an entity."""
         await self.conn.execute(
             "UPDATE entities SET aliases = ?, updated_at = ? WHERE id = ?",
-            (json.dumps(aliases), datetime.utcnow().isoformat(), entity_id),
+            (json.dumps(aliases), utcnow().isoformat(), entity_id),
         )
         await self.conn.commit()
 
@@ -1745,9 +1752,9 @@ class Database:
         relationships = []
         for row in rows:
             # Parse temporal fields
-            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
+            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else utcnow()
             valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
-            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
+            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else utcnow()
 
             rel = Relationship(
                 id=row["id"],
@@ -1806,7 +1813,7 @@ class Database:
             new_rel_id: ID of the new relationship that supersedes it
             end_time: When the old relationship ended (default: now)
         """
-        end = end_time or datetime.utcnow()
+        end = end_time or utcnow()
         await self.conn.execute(
             """
             UPDATE relationships 
@@ -1859,9 +1866,9 @@ class Database:
 
         relationships = []
         for row in rows:
-            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
+            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else utcnow()
             valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
-            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
+            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else utcnow()
 
             relationships.append(
                 Relationship(
@@ -1917,9 +1924,9 @@ class Database:
 
         relationships = []
         for row in rows:
-            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else datetime.utcnow()
+            valid_from = datetime.fromisoformat(row["valid_from"]) if row["valid_from"] else utcnow()
             valid_to = datetime.fromisoformat(row["valid_to"]) if row["valid_to"] else None
-            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.utcnow()
+            created_at = datetime.fromisoformat(row["created_at"]) if row["created_at"] else utcnow()
 
             relationships.append(
                 Relationship(
@@ -1996,7 +2003,7 @@ class Database:
             INSERT INTO api_keys (id, key_hash, user_id, name, created_at, active, rate_limit_tier)
             VALUES (?, ?, ?, ?, ?, TRUE, ?)
             """,
-            (key_id, key_hash, user_id, name, datetime.utcnow().isoformat(), rate_limit_tier),
+            (key_id, key_hash, user_id, name, utcnow().isoformat(), rate_limit_tier),
         )
         await self.conn.commit()
 
@@ -2026,7 +2033,7 @@ class Database:
         """Update last_used_at timestamp for an API key."""
         await self.conn.execute(
             "UPDATE api_keys SET last_used_at = ? WHERE id = ?",
-            (datetime.utcnow().isoformat(), key_id),
+            (utcnow().isoformat(), key_id),
         )
         await self.conn.commit()
 
@@ -2102,7 +2109,7 @@ class Database:
             """,
             (
                 audit_id,
-                datetime.utcnow().isoformat(),
+                utcnow().isoformat(),
                 user_id,
                 api_key_id,
                 action,
@@ -2152,7 +2159,7 @@ class Database:
         created_at: datetime | None = None,
     ) -> None:
         """Create a new user."""
-        now = created_at or datetime.utcnow()
+        now = created_at or utcnow()
         await self.conn.execute(
             """
             INSERT INTO users (id, email, password_hash, name, created_at, updated_at)
@@ -2184,7 +2191,7 @@ class Database:
         """Update user's last login timestamp."""
         await self.conn.execute(
             "UPDATE users SET last_login_at = ? WHERE id = ?",
-            (datetime.utcnow().isoformat(), user_id),
+            (utcnow().isoformat(), user_id),
         )
         await self.conn.commit()
 
@@ -2192,7 +2199,7 @@ class Database:
         """Update user's password hash."""
         await self.conn.execute(
             "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
-            (password_hash, datetime.utcnow().isoformat(), user_id),
+            (password_hash, utcnow().isoformat(), user_id),
         )
         await self.conn.commit()
 
@@ -2200,7 +2207,7 @@ class Database:
         """Update user's email verification status."""
         await self.conn.execute(
             "UPDATE users SET email_verified = ?, updated_at = ? WHERE id = ?",
-            (verified, datetime.utcnow().isoformat(), user_id),
+            (verified, utcnow().isoformat(), user_id),
         )
         await self.conn.commit()
 
@@ -2208,7 +2215,7 @@ class Database:
         """Update user's profile information (name)."""
         cursor = await self.conn.execute(
             "UPDATE users SET name = ?, updated_at = ? WHERE id = ?",
-            (name, datetime.utcnow().isoformat(), user_id),
+            (name, utcnow().isoformat(), user_id),
         )
         await self.conn.commit()
         return cursor.rowcount > 0
@@ -2217,7 +2224,7 @@ class Database:
         """Deactivate a user account."""
         cursor = await self.conn.execute(
             "UPDATE users SET is_active = FALSE, updated_at = ? WHERE id = ?",
-            (datetime.utcnow().isoformat(), user_id),
+            (utcnow().isoformat(), user_id),
         )
         await self.conn.commit()
         return cursor.rowcount > 0
@@ -2324,7 +2331,7 @@ class Database:
         """Remove expired tokens from the blacklist."""
         cursor = await self.conn.execute(
             "DELETE FROM token_blacklist WHERE expires_at < ?",
-            (datetime.utcnow().isoformat(),),
+            (utcnow().isoformat(),),
         )
         await self.conn.commit()
         return cursor.rowcount

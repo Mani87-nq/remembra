@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from remembra.auth.middleware import CurrentUser, has_permission, resolve_project_access
 from remembra.core.limiter import limiter
+from remembra.core.time import utcnow
 from remembra.storage.database import Database
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -237,7 +238,7 @@ async def get_user_profile(
     activity = UserActivitySummary()
     last_active = None
     if include_activity:
-        now = datetime.utcnow()
+        now = utcnow()
 
         # Get most recent memory
         recent = await db.get_recent_memories(

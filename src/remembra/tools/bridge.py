@@ -74,14 +74,11 @@ def check_port_available(host: str, port: int) -> None:
         except OSError as exc:
             holder = find_pid_on_port(port)
             holder_note = (
-                f" Process {holder} is currently holding it. "
-                f"Run 'remembra-bridge --stop --force' to clean it up."
+                f" Process {holder} is currently holding it. Run 'remembra-bridge --stop --force' to clean it up."
                 if holder is not None
                 else " Run 'remembra-bridge --stop --force' to clean it up."
             )
-            raise BridgePortInUseError(
-                f"Port {port} is already in use on {host}.{holder_note}"
-            ) from exc
+            raise BridgePortInUseError(f"Port {port} is already in use on {host}.{holder_note}") from exc
 
 
 def find_pid_on_port(port: int) -> int | None:
@@ -169,7 +166,7 @@ def is_port_listening(host: str, port: int) -> bool:
     try:
         with socket.create_connection((host, port), timeout=0.5):
             return True
-    except (OSError, socket.timeout):
+    except (TimeoutError, OSError):
         return False
 
 
@@ -487,13 +484,11 @@ class DoctorReport:
         """Port is held but the pidfile doesn't know about it."""
         if not self.port_listening:
             return False
-        if self.pidfile_pid is None:
-            return True
-        if not self.pidfile_process_alive:
-            return True
-        if self.port_pid is not None and self.port_pid != self.pidfile_pid:
-            return True
-        return False
+        return (
+            self.pidfile_pid is None
+            or not self.pidfile_process_alive
+            or (self.port_pid is not None and self.port_pid != self.pidfile_pid)
+        )
 
 
 def run_doctor(
@@ -616,10 +611,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--force",
         action="store_true",
-        help=(
-            "With --stop, also kill any orphan process holding the port "
-            "even if the PID file is missing/stale."
-        ),
+        help=("With --stop, also kill any orphan process holding the port even if the PID file is missing/stale."),
     )
     parser.add_argument(
         "--status",
@@ -666,8 +658,7 @@ def main() -> None:
             orphan = find_pid_on_port(args.port) if not args.force else None
             if orphan is not None:
                 print(
-                    f"No managed bridge found, but port {args.port} is held by "
-                    f"PID {orphan}. Re-run with --force to clean it up."
+                    f"No managed bridge found, but port {args.port} is held by PID {orphan}. Re-run with --force to clean it up."
                 )
             else:
                 print("No running bridge found.")
@@ -701,10 +692,7 @@ def main() -> None:
         if is_port_listening(args.host, args.port):
             holder = find_pid_on_port(args.port)
             holder_str = f"PID {holder}" if holder is not None else "an unknown process"
-            print(
-                f"Bridge is NOT managed by this pidfile, but port {args.port} "
-                f"is held by {holder_str}."
-            )
+            print(f"Bridge is NOT managed by this pidfile, but port {args.port} is held by {holder_str}.")
             print("  Run 'remembra-bridge --stop --force' to clean up the orphan.")
             return
 

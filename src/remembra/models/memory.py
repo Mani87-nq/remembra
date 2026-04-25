@@ -211,8 +211,7 @@ class RecallRequest(BaseModel):
     project_id: str | None = Field(
         default=None,
         description=(
-            "Optional project namespace to scope recall to. "
-            "When omitted/null, recall spans all projects owned by the user."
+            "Optional project namespace to scope recall to. When omitted/null, recall spans all projects owned by the user."
         ),
     )
     user_id: str | None = Field(
@@ -256,7 +255,7 @@ class RecallRequest(BaseModel):
         description=(
             "Optional metadata filters — AND-combined exact-match against "
             "the memory's `metadata` field. Applied after retrieval, before "
-            "ranking. Example: {\"project\": \"trademind\", \"type\": \"deploy-config\"}."
+            'ranking. Example: {"project": "trademind", "type": "deploy-config"}.'
         ),
     )
     exclude: list[str] | None = Field(

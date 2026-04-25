@@ -23,6 +23,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
+from remembra.core.time import utcnow
+
 
 @dataclass
 class DecayConfig:
@@ -160,7 +162,7 @@ def calculate_relevance_score(
         Relevance: 0.72
     """
     cfg = config or DEFAULT_CONFIG
-    now = as_of or datetime.utcnow()
+    now = as_of or utcnow()
 
     # Use last_accessed if available, otherwise use created_at
     reference_time = last_accessed or created_at
@@ -220,7 +222,7 @@ def should_prune(
         True if memory should be pruned
     """
     cfg = config or DEFAULT_CONFIG
-    now = as_of or datetime.utcnow()
+    now = as_of or utcnow()
 
     # Check hard TTL expiration first
     if expires_at and now > expires_at:
@@ -254,7 +256,7 @@ def calculate_memory_decay_info(memory_data: dict[str, Any], config: DecayConfig
         Dict with relevance_score, days_since_access, stability, should_prune
     """
     cfg = config or DEFAULT_CONFIG
-    now = datetime.utcnow()
+    now = utcnow()
 
     # Parse dates
     created_at_raw = memory_data.get("created_at")

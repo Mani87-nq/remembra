@@ -1,6 +1,5 @@
 """Temporal endpoints - TTL, decay, archive, and adaptive threshold operations."""
 
-from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -8,9 +7,9 @@ from pydantic import BaseModel, Field
 
 from remembra.auth.middleware import CurrentUser
 from remembra.core.limiter import limiter
+from remembra.core.time import utcnow
 from remembra.services.memory import MemoryService
 from remembra.temporal.adaptive import (
-    AdaptiveThresholdManager,
     SessionMode,
     create_adaptive_manager,
 )
@@ -192,7 +191,7 @@ async def run_cleanup(
     ⚠️ WARNING: Setting dry_run=false will permanently delete memories!
     """
 
-    start_time = datetime.utcnow()
+    start_time = utcnow()
 
     # Create cleanup job
     cleanup = TemporalCleanupJob(
@@ -210,7 +209,7 @@ async def run_cleanup(
         dry_run=dry_run,
     )
 
-    duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+    duration_ms = int((utcnow() - start_time).total_seconds() * 1000)
 
     return CleanupResponse(
         dry_run=dry_run,
@@ -513,7 +512,7 @@ async def restore_memory(
                     "project_id": memory.get("project_id", "default"),
                 },
             )
-        except Exception as e:
+        except Exception:
             # Log but don't fail - memory is restored, just not searchable yet
             pass
 

@@ -13,9 +13,9 @@ Tests cover:
 """
 
 import pytest
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from remembra.core.time import utcnow
 from remembra.models.memory import (
     ConversationIngestRequest,
     ConversationMessage,
@@ -113,7 +113,7 @@ class TestConversationModels:
 
     def test_conversation_message_with_metadata(self):
         """Test ConversationMessage with all fields."""
-        now = datetime.utcnow()
+        now = utcnow()
         msg = ConversationMessage(
             role="user",
             content="Test message",

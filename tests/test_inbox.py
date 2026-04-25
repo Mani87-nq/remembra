@@ -26,8 +26,8 @@ async def inbox(in_memory_db):
 
 
 def test_valid_statuses_are_well_known():
-    assert VALID_INBOX_STATUSES == {"unread", "read", "done", "blocked", "rejected"}
-    assert TERMINAL_STATUSES == {"done", "blocked", "rejected"}
+    assert set(VALID_INBOX_STATUSES) == {"unread", "read", "done", "blocked", "rejected"}
+    assert set(TERMINAL_STATUSES) == {"done", "blocked", "rejected"}
     assert TERMINAL_STATUSES.issubset(VALID_INBOX_STATUSES)
 
 
@@ -87,21 +87,13 @@ class TestSend:
 
     async def test_send_rejects_empty_fields(self, inbox):
         with pytest.raises(ValueError, match="from_agent"):
-            await inbox.send(
-                owner_user_id="u1", from_agent="", to_agent="b", subject="s", body="b"
-            )
+            await inbox.send(owner_user_id="u1", from_agent="", to_agent="b", subject="s", body="b")
         with pytest.raises(ValueError, match="to_agent"):
-            await inbox.send(
-                owner_user_id="u1", from_agent="a", to_agent="", subject="s", body="b"
-            )
+            await inbox.send(owner_user_id="u1", from_agent="a", to_agent="", subject="s", body="b")
         with pytest.raises(ValueError, match="subject"):
-            await inbox.send(
-                owner_user_id="u1", from_agent="a", to_agent="b", subject="", body="b"
-            )
+            await inbox.send(owner_user_id="u1", from_agent="a", to_agent="b", subject="", body="b")
         with pytest.raises(ValueError, match="body"):
-            await inbox.send(
-                owner_user_id="u1", from_agent="a", to_agent="b", subject="s", body="  "
-            )
+            await inbox.send(owner_user_id="u1", from_agent="a", to_agent="b", subject="s", body="  ")
 
     async def test_send_strips_whitespace(self, inbox):
         row = await inbox.send(
@@ -150,12 +142,20 @@ class TestGetForAgent:
         past = datetime.now(UTC) - timedelta(hours=1)
         future = datetime.now(UTC) + timedelta(hours=1)
         await inbox.send(
-            owner_user_id="u1", from_agent="a", to_agent="b",
-            subject="expired", body="x", expires_at=past,
+            owner_user_id="u1",
+            from_agent="a",
+            to_agent="b",
+            subject="expired",
+            body="x",
+            expires_at=past,
         )
         await inbox.send(
-            owner_user_id="u1", from_agent="a", to_agent="b",
-            subject="live", body="x", expires_at=future,
+            owner_user_id="u1",
+            from_agent="a",
+            to_agent="b",
+            subject="live",
+            body="x",
+            expires_at=future,
         )
         rows = await inbox.get_for_agent("u1", "b")
         assert len(rows) == 1
@@ -176,8 +176,11 @@ class TestGetForAgent:
     async def test_limit(self, inbox):
         for i in range(5):
             await inbox.send(
-                owner_user_id="u1", from_agent="a", to_agent="b",
-                subject=f"s{i}", body="x",
+                owner_user_id="u1",
+                from_agent="a",
+                to_agent="b",
+                subject=f"s{i}",
+                body="x",
             )
         rows = await inbox.get_for_agent("u1", "b", limit=3)
         assert len(rows) == 3

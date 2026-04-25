@@ -18,6 +18,8 @@ from typing import Any
 
 import structlog
 
+from remembra.core.time import utcnow
+
 log = structlog.get_logger(__name__)
 
 
@@ -105,7 +107,7 @@ class AnomalyDetector:
         if not self.enabled:
             return AnomalyReport(
                 user_id=user_id,
-                checked_at=datetime.utcnow(),
+                checked_at=utcnow(),
                 anomalies=[],
             )
 
@@ -123,7 +125,7 @@ class AnomalyDetector:
 
         report = AnomalyReport(
             user_id=user_id,
-            checked_at=datetime.utcnow(),
+            checked_at=utcnow(),
             anomalies=anomalies,
         )
 
@@ -154,7 +156,7 @@ class AnomalyDetector:
             AnomalyResult indicating if rate is abnormal
         """
         try:
-            since = datetime.utcnow() - timedelta(minutes=window_minutes)
+            since = utcnow() - timedelta(minutes=window_minutes)
 
             cursor = await self.db.conn.execute(
                 """
@@ -208,7 +210,7 @@ class AnomalyDetector:
         """
         try:
             # Get source distribution for last 24 hours
-            since = datetime.utcnow() - timedelta(hours=24)
+            since = utcnow() - timedelta(hours=24)
 
             cursor = await self.db.conn.execute(
                 """
@@ -272,7 +274,7 @@ class AnomalyDetector:
         """
         try:
             # Check audit logs for mass deletions
-            since = datetime.utcnow() - timedelta(hours=1)
+            since = utcnow() - timedelta(hours=1)
 
             cursor = await self.db.conn.execute(
                 """

@@ -16,6 +16,7 @@ from typing import Any
 
 import structlog
 
+from remembra.core.time import utcnow
 from remembra.temporal.adaptive import AdaptiveThresholdManager
 from remembra.temporal.decay import (
     DEFAULT_CONFIG,
@@ -94,7 +95,7 @@ class TemporalCleanupJob:
             Dict with cleanup statistics
         """
         self._run_count += 1
-        start_time = datetime.utcnow()
+        start_time = utcnow()
 
         # Track errors separately for proper typing
         errors: list[str] = []
@@ -137,7 +138,7 @@ class TemporalCleanupJob:
                 "cleanup_completed",
                 expired_deleted=expired_deleted,
                 decayed_pruned=decayed_pruned,
-                duration_ms=int((datetime.utcnow() - start_time).total_seconds() * 1000),
+                duration_ms=int((utcnow() - start_time).total_seconds() * 1000),
                 dry_run=dry_run,
             )
 
@@ -155,8 +156,8 @@ class TemporalCleanupJob:
             "decayed_pruned": decayed_pruned,
             "decayed_archived": decayed_archived,
             "errors": errors,
-            "completed_at": datetime.utcnow().isoformat(),
-            "duration_ms": int((datetime.utcnow() - start_time).total_seconds() * 1000),
+            "completed_at": utcnow().isoformat(),
+            "duration_ms": int((utcnow() - start_time).total_seconds() * 1000),
         }
 
     async def _cleanup_expired(
@@ -216,7 +217,7 @@ class TemporalCleanupJob:
         dry_run: bool,
     ) -> dict[str, Any]:
         """Handle memories that have decayed below threshold.
-        
+
         Uses adaptive thresholds when available for smarter pruning
         based on session context and user behavior.
         """

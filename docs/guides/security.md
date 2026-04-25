@@ -258,6 +258,42 @@ GET /api/v1/admin/audit?user_id=user_123&limit=100
 }
 ```
 
+---
+
+## MCP / Tool Security
+
+Model Context Protocol (MCP) servers are *tools* — treat them like running code.
+
+**Recommendations:**
+
+- Only connect to MCP servers you trust (avoid “random marketplace” servers in production).
+- Run MCP servers with least privilege (no shell access, minimal filesystem access, least network access).
+- Prefer allowlists over blocklists for any server that can execute commands or reach internal systems.
+- Assume prompt injection can trigger tool use; require explicit user confirmation for risky tools/actions.
+
+If you expose Remembra via MCP (`remembra-mcp`), keep the Remembra API key scoped (RBAC + project scoping) and avoid sharing keys across unrelated projects.
+
+---
+
+## MCP Hardening (Supply Chain + Prompt Injection)
+
+If you use Remembra via MCP clients (IDE agents, desktop chat apps, etc.), treat MCP server installation/configuration as **high risk**. Recent ecosystem advisories have shown that attacker-controlled content can sometimes lead to **malicious MCP STDIO server registration** and then local command execution, depending on the client and its configuration flow.
+
+References:
+
+- OX Security advisory: [MCP Supply Chain Advisory](https://www.ox.security/blog/mcp-supply-chain-advisory-rce-vulnerabilities-across-the-ai-ecosystem/)
+- NVD example CVE: [CVE-2026-30615](https://nvd.nist.gov/vuln/detail/CVE-2026-30615)
+- MCP spec (Security & Trust & Safety): [MCP Specification](https://modelcontextprotocol.io/specification/2025-11-25)
+
+Recommended mitigations:
+
+1. **Only install trusted MCP servers** (treat registry entries like packages: verify publisher, pin versions, review changes).
+2. **Prefer direct binaries over shell wrappers** (avoid `bash -lc ...` style commands where possible).
+3. **Pin commands to known paths** and avoid dynamic command strings or environment interpolation that changes behavior unexpectedly.
+4. **Run MCP servers with least privilege** (separate user, minimal filesystem access, no unnecessary secrets).
+5. **Use a local bridge/proxy** when working in sandboxed clients so API keys don’t need to live inside restricted tools.
+
+
 ### Export
 
 ```http

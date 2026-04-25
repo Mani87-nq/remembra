@@ -7,6 +7,7 @@ from enum import StrEnum
 
 import structlog
 
+from remembra.core.time import utcnow
 from remembra.storage.database import Database
 
 log = structlog.get_logger(__name__)
@@ -96,7 +97,7 @@ class AuditLogger:
             The created AuditEvent
         """
         audit_id = self.generate_audit_id()
-        timestamp = datetime.utcnow()
+        timestamp = utcnow()
 
         # Store in database
         await self.db.log_audit_event(

@@ -9,6 +9,7 @@ from typing import Any
 import bcrypt
 import structlog
 
+from remembra.core.time import utcnow
 from remembra.storage.database import Database
 
 log = structlog.get_logger(__name__)
@@ -126,7 +127,7 @@ class APIKeyManager:
             key=raw_key,
             user_id=user_id,
             name=name,
-            created_at=datetime.utcnow(),
+            created_at=utcnow(),
             rate_limit_tier=rate_limit_tier,
         )
 

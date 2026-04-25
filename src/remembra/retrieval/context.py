@@ -13,6 +13,8 @@ from typing import Any
 
 import structlog
 
+from remembra.core.time import utcnow
+
 log = structlog.get_logger(__name__)
 
 
@@ -367,7 +369,7 @@ class ContextOptimizer:
         # Parse dates if prioritizing recent
         from datetime import datetime
 
-        now = datetime.utcnow()
+        now = utcnow()
         max_age_days = 365  # Normalize over 1 year
 
         for memory in memories:
