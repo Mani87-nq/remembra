@@ -83,6 +83,7 @@ export function SearchBar({
 
         <input
           ref={inputRef}
+          data-remembra-memory-search
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}

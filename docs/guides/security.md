@@ -1,6 +1,6 @@
 # Security Features
 
-**NEW in v0.7.1** — OWASP 2026 ASI compliance with PII detection and anomaly monitoring.
+**NEW in v0.7.1** — PII detection and anomaly monitoring for safer AI memory operations.
 
 Remembra includes production-grade security features to protect your AI memory system from attacks and data leaks.
 
@@ -25,7 +25,7 @@ Automatically scan content for Personally Identifiable Information before storag
 | `email` | Email Addresses | `john@example.com` |
 | `phone_us` | US Phone Numbers | `(555) 123-4567` |
 | `phone_intl` | International Phone | `+44 20 7123 4567` |
-| `api_key` | API Keys/Secrets | `sk_live_abc123...` |
+| `api_key` | API Keys/Secrets | `sk_...` |
 | `aws_key` | AWS Access Keys | `AKIA...` |
 | `ip_address` | IP Addresses | `192.168.1.1` |
 
@@ -275,9 +275,9 @@ POST /api/v1/admin/audit/export
 
 ---
 
-## OWASP ASI Compliance
+## OWASP ASI Alignment
 
-Remembra addresses the following OWASP AI Security Initiative guidelines:
+Remembra includes controls that align with the following OWASP AI Security Initiative guidance:
 
 ### ASI06: Memory Poisoning
 
@@ -368,7 +368,7 @@ REMEMBRA_AUTH_MASTER_KEY=your-secure-master-key
 Keys are prefixed with `rem_` for easy identification:
 
 ```
-rem_abc123def456...
+rem_...
 ```
 
 Keys are:
@@ -395,17 +395,19 @@ curl -X POST http://localhost:8787/api/v1/keys \
 Include in the Authorization header:
 
 ```bash
-curl -H "Authorization: Bearer rem_abc123..." \
+curl -H "Authorization: Bearer $REMEMBRA_API_KEY" \
      http://localhost:8787/api/v1/recall
 ```
 
 Or in the SDK:
 
 ```python
+import os
+
 memory = Memory(
     base_url="http://localhost:8787",
     user_id="user_123",
-    api_key="rem_abc123..."
+    api_key=os.environ["REMEMBRA_API_KEY"]
 )
 ```
 

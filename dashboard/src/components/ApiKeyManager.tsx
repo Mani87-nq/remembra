@@ -8,8 +8,6 @@ import {
   Check, 
   X, 
   Loader2, 
-  Eye,
-  EyeOff,
   Shield,
   Calendar,
   Clock,
@@ -598,7 +596,10 @@ function DeleteKeyModal({ keyData, onClose, onDeleted }: { keyData: ApiKey; onCl
     try {
       await api.revokeKey(keyData.id, true);
       onDeleted();
-    } catch (err) {} finally {
+    } catch (err) {
+      setConfirmName('');
+      console.error('Failed to revoke API key:', err);
+    } finally {
       setLoading(false);
     }
   };

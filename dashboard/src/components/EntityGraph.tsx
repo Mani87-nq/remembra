@@ -52,30 +52,10 @@ const TYPE_COLORS: Record<string, string> = {
   technologies: '#14b8a6',
 };
 
-const TYPE_LABELS: Record<string, string> = {
-  person: '👤 Person',
-  persons: '👤 Person',
-  organization: '🏢 Organization',
-  organizations: '🏢 Organization',
-  orgs: '🏢 Organization',
-  company: '🏢 Company',
-  location: '📍 Location',
-  locations: '📍 Location',
-  place: '📍 Place',
-  places: '📍 Place',
-  concept: '💡 Concept',
-  concepts: '💡 Concept',
-  money: '💰 Money',
-  moneys: '💰 Money',
-  date: '📅 Date',
-  dates: '📅 Date',
-  event: '🎉 Event',
-  events: '🎉 Event',
-  product: '📦 Product',
-  products: '📦 Product',
-  technology: '⚡ Technology',
-  technologies: '⚡ Technology',
-};
+function graphNodeId(node: string | number | NodeObject | undefined) {
+  if (node && typeof node === 'object') return String(node.id ?? '');
+  return String(node ?? '');
+}
 
 export function EntityGraph({ projectId }: EntityGraphProps) {
   const graphRef = useRef<ForceGraphMethods>(null!);
@@ -777,15 +757,15 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
           ctx.fill();
         }}
         linkCanvasObject={paintLink}
-        linkDirectionalParticles={l => highlightLinks.has(`${(l.source as any).id}-${(l.target as any).id}`) ? 4 : 1}
-        linkDirectionalParticleWidth={(link) => highlightLinks.has(`${((link as GraphLink).source as any).id}-${((link as GraphLink).target as any).id}`) ? 2.4 : 1.2}
-        linkDirectionalParticleSpeed={(link) => highlightLinks.has(`${((link as GraphLink).source as any).id}-${((link as GraphLink).target as any).id}`) ? 0.013 : 0.0045}
+        linkDirectionalParticles={(link) => highlightLinks.has(`${graphNodeId((link as GraphLink).source)}-${graphNodeId((link as GraphLink).target)}`) ? 4 : 1}
+        linkDirectionalParticleWidth={(link) => highlightLinks.has(`${graphNodeId((link as GraphLink).source)}-${graphNodeId((link as GraphLink).target)}`) ? 2.4 : 1.2}
+        linkDirectionalParticleSpeed={(link) => highlightLinks.has(`${graphNodeId((link as GraphLink).source)}-${graphNodeId((link as GraphLink).target)}`) ? 0.013 : 0.0045}
         linkDirectionalParticleColor={(link) => {
           const source = (link as GraphLink).source as GraphNode;
           return source.color || 'rgba(168, 85, 247, 0.8)';
         }}
-        onNodeHover={handleNodeHover as any}
-        onNodeClick={handleNodeClick as any}
+        onNodeHover={(node) => handleNodeHover(node as GraphNode | null)}
+        onNodeClick={(node) => handleNodeClick(node as GraphNode)}
         cooldownTicks={Infinity}
         d3AlphaDecay={0.008}
         d3VelocityDecay={0.2}

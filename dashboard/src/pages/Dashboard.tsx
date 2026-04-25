@@ -4,6 +4,7 @@ import { useMemories, useSearch } from '../hooks/useMemories';
 import { SearchBar } from '../components/SearchBar';
 import { MemoryList } from '../components/MemoryList';
 import { StatsOverview } from '../components/StatsOverview';
+import { ControlPlaneOverview } from '../components/ControlPlaneOverview';
 import { EmptyState } from '../components/EmptyState';
 import { type Memory, api } from '../lib/api';
 import { RefreshCw, Plus } from 'lucide-react';
@@ -60,6 +61,7 @@ interface DashboardProps {
   onLogout?: () => void;
   showNewMemory?: boolean;
   onCloseNewMemory?: () => void;
+  onTabChange?: (tab: TabType) => void;
 }
 
 function SectionLoading({ label = 'Loading workspace surface...' }: { label?: string }) {
@@ -73,7 +75,7 @@ function SectionLoading({ label = 'Loading workspace surface...' }: { label?: st
   );
 }
 
-export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryProp, onCloseNewMemory }: DashboardProps) {
+export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryProp, onCloseNewMemory, onTabChange }: DashboardProps) {
   const [currentProjectId, setCurrentProjectId] = useState(() => api.getProjectId() || 'default');
   const { memories, loading, error, hasMore, refresh, loadMore, wsConnected } = useMemories(20, currentProjectId);
   const { results, loading: searchLoading, error: searchError, search, clear } = useSearch(currentProjectId);
@@ -174,6 +176,10 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
     clear();
   };
 
+  const handleFocusSearch = () => {
+    document.querySelector<HTMLInputElement>('[data-remembra-memory-search]')?.focus();
+  };
+
   const handleSelectMemory = (memory: Memory) => {
     setSelectedMemory(memory);
   };
@@ -222,6 +228,20 @@ export function Dashboard({ activeTab, onLogout, showNewMemory: showNewMemoryPro
       case 'memories':
         return (
           <>
+            <ControlPlaneOverview
+              memoryCount={stats.memoryCount}
+              entityCount={stats.entityCount}
+              storageUsed={stats.storageUsed}
+              apiCalls={stats.apiCalls}
+              loading={statsLoading}
+              wsConnected={wsConnected}
+              currentProjectId={currentProjectId}
+              onNewMemory={() => setShowNewMemory(true)}
+              onSearch={handleFocusSearch}
+              onOpenDebugger={() => onTabChange?.('debugger')}
+              onOpenGraph={() => onTabChange?.('graph')}
+            />
+
             {/* Stats Overview */}
             <StatsOverview
               memoryCount={stats.memoryCount}

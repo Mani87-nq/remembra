@@ -622,10 +622,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#whats-new-in-v0120" class="md-nav__link">
+  <a href="#whats-new-in-v013x" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What's New in v0.12.0
+        What's New in v0.13.x
       
     </span>
   </a>
@@ -2447,10 +2447,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#whats-new-in-v0120" class="md-nav__link">
+  <a href="#whats-new-in-v013x" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What's New in v0.12.0
+        What's New in v0.13.x
       
     </span>
   </a>
@@ -2524,8 +2524,8 @@
 <h1 id="remembra">Remembra<a class="headerlink" href="#remembra" title="Permanent link">&para;</a></h1>
 <p><strong>Persistent memory for AI applications. Self-host in minutes.</strong></p>
 <div class="admonition tip">
-<p class="admonition-title">🚀 v0.12.0 Released!</p>
-<p>Now with <strong>User Profiles</strong>, <strong>Smart Auto-Forgetting</strong>, <strong>Event-driven Expiry</strong>, and <strong>Browser Extension</strong>. Human-like memory that naturally fades over time.</p>
+<p class="admonition-title">Remembra v0.13.x</p>
+<p>Now with dashboard v2, team collaboration, cold archive, adaptive thresholds, smart auto-forgetting, event-driven expiry, and stronger observability for agent memory.</p>
 </div>
 <hr />
 <h2 id="what-is-remembra">What is Remembra?<a class="headerlink" href="#what-is-remembra" title="Permanent link">&para;</a></h2>
@@ -2624,7 +2624,7 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="2:3"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Docker (Recommended)</label><label for="__tabbed_2_2">Quick Start (One Command)</label><label for="__tabbed_2_3">From Source</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">8787</span>:8787<span class="w"> </span>remembra/remembra:0.12.0
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>-p<span class="w"> </span><span class="m">8787</span>:8787<span class="w"> </span>remembra/remembra
 </span></code></pre></div>
 </div>
 <div class="tabbed-block">
@@ -2699,13 +2699,28 @@
 <p><a class="md-button md-button--primary" href="getting-started/quickstart/">Get Started :material-arrow-right:</a>
 <a class="md-button" href="https://github.com/remembra-ai/remembra">View on GitHub :material-github:</a></p>
 <hr />
-<h2 id="whats-new-in-v0120">What's New in v0.12.0<a class="headerlink" href="#whats-new-in-v0120" title="Permanent link">&para;</a></h2>
+<h2 id="whats-new-in-v013x">What's New in v0.13.x<a class="headerlink" href="#whats-new-in-v013x" title="Permanent link">&para;</a></h2>
 <div class="grid cards">
 <ul>
 <li>
+<p>:material-view-dashboard:{ .lg .middle } <strong>Dashboard v2</strong></p>
+<hr />
+<p>Teams, activity logs, entity browser, timeline fixes, retrieval settings, diagnostics, and admin surfaces for operating memory.</p>
+</li>
+<li>
+<p>:material-archive:{ .lg .middle } <strong>Cold Archive</strong></p>
+<hr />
+<p>Decayed memories can move to queryable archive storage and be restored back into active recall when needed.</p>
+</li>
+<li>
+<p>:material-tune:{ .lg .middle } <strong>Adaptive Thresholds</strong></p>
+<hr />
+<p>Cleanup and pruning can adjust by session mode, memory density, warm-up phase, and result quality.</p>
+</li>
+<li>
 <p>:material-account-box:{ .lg .middle } <strong>User Profiles API</strong></p>
 <hr />
-<p><code>GET /api/v1/users/{user_id}/profile</code> returns aggregated user intelligence: facts, activity metrics, top topics, and memory count. Perfect for personalization dashboards.</p>
+<p><code>GET /api/v1/users/{user_id}/profile</code> returns aggregated facts, activity metrics, top topics, and memory count.</p>
 </li>
 <li>
 <p>:material-clock-alert:{ .lg .middle } <strong>Smart Auto-Forgetting</strong></p>
@@ -2715,12 +2730,7 @@
 <li>
 <p>:material-calendar-clock:{ .lg .middle } <strong>Event-Driven Expiry</strong></p>
 <hr />
-<p>New <code>expires_at</code> parameter accepts ISO 8601 timestamps for explicit expiration control. Perfect for event-driven workflows.</p>
-</li>
-<li>
-<p>:material-google-chrome:{ .lg .middle } <strong>Browser Extension</strong></p>
-<hr />
-<p>Chrome Manifest V3 extension for ChatGPT, Claude, and Perplexity. Auto-inject memory context into any AI chat. Available on Chrome Web Store.</p>
+<p><code>expires_at</code> accepts ISO 8601 timestamps for explicit expiration control. Perfect for event-driven workflows.</p>
 </li>
 <li>
 <p>:material-alert-decagram:{ .lg .middle } <strong>Strict Mode 410 GONE</strong></p>

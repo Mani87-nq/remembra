@@ -3,32 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remembra - Memory Layer for AI</title>
-    <meta name="description" content="Persistent memory for AI applications. Entity resolution, temporal features, and graph-aware recall. Self-host in minutes.">
-    
+    <title>Remembra - AI Memory Control Plane</title>
+    <meta name="description" content="A governed memory control plane for AI agents. Share context across tools, resolve entities, inspect recall, and self-host in minutes.">
+
     <!-- Open Graph -->
-    <meta property="og:title" content="Remembra - Memory Layer for AI">
-    <meta property="og:description" content="Persistent memory for AI applications. Entity resolution, temporal decay, graph-aware recall. Self-host in minutes. Open source.">
+    <meta property="og:title" content="Remembra - AI Memory Control Plane">
+    <meta property="og:description" content="Give every AI agent a shared, governed memory bank with temporal context, entity resolution, graph-aware recall, and operator visibility.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://remembra.dev">
     <meta property="og:image" content="https://remembra.dev/social-preview.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    
+
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@remembradev">
     <meta name="twitter:creator" content="@remembradev">
-    <meta name="twitter:title" content="Remembra - Memory Layer for AI">
-    <meta name="twitter:description" content="Persistent memory for AI applications. Self-host in minutes. Open source.">
+    <meta name="twitter:title" content="Remembra - AI Memory Control Plane">
+    <meta name="twitter:description" content="Shared, governed memory for AI agents. MCP native, self-hostable, and built for real operator visibility.">
     <meta name="twitter:image" content="https://remembra.dev/social-preview.png">
-    
+
     <!-- Additional SEO -->
     <meta name="robots" content="index, follow">
     <meta name="author" content="DolphyTech">
-    <meta name="keywords" content="AI memory, LLM memory, RAG, vector database, entity resolution, AI chatbot, persistent memory, self-hosted, MCP">
+    <meta name="keywords" content="AI memory, LLM memory, MCP memory, agent memory, AI agents, RAG, vector database, entity resolution, AI chatbot, persistent memory, self-hosted, MCP">
     <link rel="canonical" href="https://remembra.dev">
-    
+
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
     {
@@ -37,7 +37,7 @@
         "name": "Remembra",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Any",
-        "description": "Universal memory layer for AI applications. Persistent memory with entity resolution, temporal decay, and graph-aware recall.",
+        "description": "AI memory control plane for agents. Persistent memory with entity resolution, temporal context, governance, and graph-aware recall.",
         "url": "https://remembra.dev",
         "offers": {
             "@type": "Offer",
@@ -52,7 +52,7 @@
         }
     }
     </script>
-    
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -60,16 +60,16 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Remembra" />
     <link rel="manifest" href="/site.webmanifest" />
-    
+
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+
     <style>
         /* Reset */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        
+
         /* Variables - Minimal palette */
         :root {
             --black: #000000;
@@ -95,9 +95,9 @@
             --red-light: #f87171;
             --yellow: #eab308;
         }
-        
+
         html { scroll-behavior: smooth; }
-        
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--black);
@@ -105,11 +105,11 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
         }
-        
+
         a { color: inherit; text-decoration: none; }
-        
+
         .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-        
+
         /* Header */
         .header {
             position: fixed;
@@ -119,7 +119,7 @@
             z-index: 100;
             transition: all 0.3s ease;
         }
-        
+
         .header-inner {
             max-width: 1200px;
             margin: 0 auto;
@@ -129,13 +129,13 @@
             align-items: center;
             justify-content: space-between;
         }
-        
+
         .header.scrolled {
             background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        
+
         .logo {
             display: flex;
             align-items: center;
@@ -143,10 +143,10 @@
             font-weight: 600;
             font-size: 18px;
         }
-        
+
         .logo img { width: 28px; height: 28px; border-radius: 8px; }
         .logo svg { width: 24px; height: 24px; }
-        
+
         .nav { display: flex; align-items: center; gap: 32px; }
         .nav-links { display: flex; gap: 32px; list-style: none; }
         .nav-links a {
@@ -155,7 +155,7 @@
             transition: color 0.2s;
         }
         .nav-links a:hover { color: var(--white); }
-        
+
         /* Mobile Menu Toggle */
         .mobile-menu-toggle {
             display: none;
@@ -170,7 +170,7 @@
             height: 24px;
             stroke: var(--white);
         }
-        
+
         /* Mobile Menu */
         .mobile-menu {
             display: none;
@@ -207,13 +207,13 @@
             justify-content: center;
         }
         body.menu-open { overflow: hidden; }
-        
+
         @media (max-width: 900px) {
             .mobile-menu-toggle { display: block; }
         }
-        
+
         .nav-actions { display: flex; align-items: center; gap: 12px; }
-        
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -227,13 +227,13 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        
+
         .btn-ghost { background: transparent; color: var(--gray-400); }
         .btn-ghost:hover { color: var(--white); }
-        
+
         .btn-primary { background: var(--white); color: var(--black); }
         .btn-primary:hover { background: rgba(255,255,255,0.9); transform: translateY(-1px); }
-        
+
         .btn-outline {
             background: transparent;
             color: var(--white);
@@ -243,21 +243,51 @@
             border-color: rgba(255,255,255,0.4);
             background: rgba(255,255,255,0.05);
         }
-        
+
         .btn-purple { background: var(--purple); color: var(--white); }
         .btn-purple:hover { background: var(--purple-light); }
-        
+
         /* Hero */
         .hero {
+            position: relative;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 120px 24px 80px;
-            text-align: center;
+            padding: 104px 24px 80px;
+            overflow: hidden;
+            background:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                radial-gradient(circle at 50% 0%, rgba(139,92,246,0.16), transparent 42%),
+                var(--black);
+            background-size: 56px 56px, 56px 56px, auto, auto;
         }
-        
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.12), var(--black) 88%);
+            pointer-events: none;
+        }
+
+        .hero-stage {
+            position: relative;
+            z-index: 1;
+            width: min(1200px, 100%);
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
+            gap: 42px;
+            align-items: center;
+            margin: 0 auto 40px;
+        }
+
+        .hero-copy-block {
+            text-align: left;
+        }
+
         .hero-badge {
             display: inline-flex;
             align-items: center;
@@ -268,9 +298,9 @@
             border-radius: 100px;
             font-size: 13px;
             color: var(--purple-light);
-            margin-bottom: 32px;
+            margin-bottom: 26px;
         }
-        
+
         .hero-badge .dot {
             width: 6px;
             height: 6px;
@@ -278,38 +308,333 @@
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
-        
+
         .hero-title {
             font-size: clamp(40px, 7vw, 72px);
             font-weight: 700;
             line-height: 1.05;
-            letter-spacing: -0.03em;
+            letter-spacing: 0;
             max-width: 900px;
             margin-bottom: 24px;
         }
-        
+
         .hero-title .highlight {
             background: linear-gradient(135deg, var(--purple-light) 0%, var(--cyan) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .hero-subtitle {
             font-size: 18px;
             color: var(--gray-400);
-            max-width: 600px;
-            margin-bottom: 40px;
+            max-width: 760px;
+            margin-bottom: 28px;
             line-height: 1.7;
         }
-        
-        .hero-actions { display: flex; gap: 16px; margin-bottom: 40px; flex-wrap: wrap; justify-content: center; }
-        
+
+        .hero-kpis {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(150px, 1fr));
+            gap: 12px;
+            width: min(640px, 100%);
+            margin: 24px 0 0;
+        }
+
+        .hero-kpi {
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 14px 16px;
+            text-align: left;
+        }
+
+        .hero-kpi strong {
+            display: block;
+            font-size: 22px;
+            line-height: 1.1;
+            color: var(--white);
+            margin-bottom: 5px;
+        }
+
+        .hero-kpi span {
+            display: block;
+            font-size: 12px;
+            color: var(--gray-500);
+            line-height: 1.4;
+        }
+
+        .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-start; }
+
+        .memory-console {
+            position: relative;
+            min-height: 560px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 28px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.075), rgba(255,255,255,0.025)),
+                rgba(6,8,13,0.92);
+            box-shadow: 0 30px 90px rgba(0,0,0,0.58);
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .memory-console::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+            background-size: 36px 36px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.75), transparent 70%);
+            pointer-events: none;
+        }
+
+        .console-topbar {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 18px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .console-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .console-title span {
+            width: 9px;
+            height: 9px;
+            border-radius: 999px;
+            background: var(--green-light);
+            box-shadow: 0 0 18px rgba(74,222,128,0.72);
+        }
+
+        .console-pills {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .console-pill {
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 999px;
+            padding: 6px 9px;
+            color: var(--gray-300);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .console-body {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr 0.9fr;
+            gap: 16px;
+            padding: 20px;
+        }
+
+        .console-column {
+            display: grid;
+            gap: 14px;
+            align-content: start;
+        }
+
+        .console-label {
+            color: var(--gray-500);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .signal-card,
+        .memory-record,
+        .mini-graph,
+        .recall-card {
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            background: rgba(0,0,0,0.24);
+        }
+
+        .signal-card {
+            padding: 14px;
+        }
+
+        .signal-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+            color: var(--gray-500);
+            font-size: 12px;
+        }
+
+        .signal-source {
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .signal-text {
+            color: var(--gray-300);
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .pipeline {
+            display: grid;
+            gap: 9px;
+        }
+
+        .pipeline-row {
+            display: grid;
+            grid-template-columns: 18px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            color: var(--gray-300);
+            font-size: 12px;
+        }
+
+        .pipeline-row span:first-child {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(34,197,94,0.14);
+            border: 1px solid rgba(34,197,94,0.35);
+            box-shadow: inset 0 0 0 4px rgba(34,197,94,0.05);
+        }
+
+        .pipeline-row em {
+            color: var(--gray-500);
+            font-style: normal;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        .memory-record {
+            padding: 14px;
+        }
+
+        .memory-record strong {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--white);
+            font-size: 13px;
+        }
+
+        .memory-record p {
+            color: var(--gray-400);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .record-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .record-tags span {
+            border-radius: 999px;
+            padding: 4px 7px;
+            background: rgba(139,92,246,0.12);
+            color: var(--purple-light);
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mini-graph {
+            position: relative;
+            min-height: 210px;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        .graph-node {
+            position: absolute;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 68px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: var(--gray-300);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .graph-node.core {
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 86px;
+            height: 42px;
+            color: var(--white);
+            border-color: rgba(6,182,212,0.42);
+            background: rgba(6,182,212,0.14);
+            box-shadow: 0 0 34px rgba(6,182,212,0.18);
+        }
+
+        .graph-node.n1 { left: 14px; top: 22px; }
+        .graph-node.n2 { right: 16px; top: 26px; }
+        .graph-node.n3 { left: 24px; bottom: 28px; }
+        .graph-node.n4 { right: 22px; bottom: 30px; }
+
+        .graph-line {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(6,182,212,0.52), transparent);
+            transform-origin: center;
+        }
+
+        .graph-line.l1 { width: 170px; left: 70px; top: 76px; transform: rotate(24deg); }
+        .graph-line.l2 { width: 150px; right: 70px; top: 78px; transform: rotate(-23deg); }
+        .graph-line.l3 { width: 155px; left: 72px; bottom: 76px; transform: rotate(-24deg); }
+        .graph-line.l4 { width: 148px; right: 76px; bottom: 76px; transform: rotate(22deg); }
+
+        .recall-card {
+            padding: 14px;
+            background: rgba(34,197,94,0.055);
+            border-color: rgba(34,197,94,0.18);
+        }
+
+        .recall-card strong {
+            display: block;
+            color: var(--green-light);
+            font-size: 12px;
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .recall-card p {
+            color: var(--gray-300);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
         /* Interactive Demo */
         .timeline-indicator { text-align: center; margin-bottom: 24px; }
         .timeline-badge {
@@ -319,13 +644,13 @@
         }
         .timeline-badge svg { width: 18px; height: 18px; }
         .timeline-badge .session-num { color: var(--white); font-weight: 600; }
-        
+
         .demo-container {
             display: grid; grid-template-columns: 1fr 100px 1.3fr; max-width: 1400px; margin: 0 auto;
             background: var(--gray-900); border: 1px solid rgba(255,255,255,0.1);
             border-radius: 24px; overflow: hidden; box-shadow: 0 25px 80px -20px rgba(0,0,0,0.6);
         }
-        
+
         .panel { display: flex; flex-direction: column; }
         .panel-header {
             display: flex; align-items: center; justify-content: space-between;
@@ -346,7 +671,7 @@
         .panel.with { border-left: 1px solid rgba(255,255,255,0.04); background: rgba(34, 197, 94, 0.02); display: grid; grid-template-columns: 1fr 200px; grid-template-rows: auto 1fr; }
         .panel.with .panel-header { grid-column: 1 / -1; }
         .panel.with .panel-body { border-right: 1px solid rgba(255,255,255,0.06); }
-        
+
         .memory-sidebar { padding: 20px; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; }
         .memory-sidebar-header { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--purple-light); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .memory-sidebar-header svg { width: 16px; height: 16px; }
@@ -359,7 +684,7 @@
         .memory-item-meta { display: flex; align-items: center; justify-content: space-between; }
         .memory-item-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; background: rgba(139, 92, 246, 0.2); color: var(--purple-light); }
         .memory-item-time { font-size: 10px; color: var(--gray-600); }
-        
+
         .chat-messages { display: flex; flex-direction: column; gap: 18px; }
         .chat-message { display: flex; gap: 14px; opacity: 0; transform: translateY(15px); }
         .chat-message.visible { animation: msgIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
@@ -379,7 +704,7 @@
         .status-badge.satisfied { color: var(--green-light); }
         .status-badge.visible { animation: fadeInBadge 0.3s ease forwards; }
         @keyframes fadeInBadge { to { opacity: 1; } }
-        
+
         .connection-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(180deg, rgba(139,92,246,0.05) 0%, rgba(6,182,212,0.05) 100%); position: relative; overflow: hidden; }
         .flow-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, transparent 0%, rgba(139,92,246,0.4) 20%, rgba(6,182,212,0.6) 50%, rgba(139,92,246,0.4) 80%, transparent 100%); transform: translateX(-50%); }
         .brain-container { position: relative; z-index: 10; }
@@ -400,13 +725,13 @@
         @keyframes streamDown { 0% { top: 15%; opacity: 0; } 20% { opacity: 1; } 100% { top: 85%; opacity: 0; } }
         .connection-label { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--gray-600); white-space: nowrap; opacity: 0; transition: all 0.3s ease; }
         .connection-label.visible { opacity: 1; color: var(--cyan); }
-        
+
         .nav-dots { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
         .nav-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.3s ease; border: none; padding: 0; }
         .nav-dot:hover { background: rgba(255,255,255,0.4); }
         .nav-dot.active { background: var(--cyan); box-shadow: 0 0 10px var(--cyan-glow); }
         .pause-hint { text-align: center; font-size: 11px; color: var(--gray-600); margin-top: 10px; margin-bottom: 20px; }
-        
+
         /* Code Block */
         .code-block {
             background: var(--gray-900);
@@ -417,7 +742,7 @@
             max-width: 700px;
             width: 100%;
         }
-        
+
         .code-header {
             display: flex;
             align-items: center;
@@ -426,14 +751,14 @@
             background: rgba(255,255,255,0.03);
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        
+
         .code-dot { width: 12px; height: 12px; border-radius: 50%; }
         .code-dot.red { background: #ff5f57; }
         .code-dot.yellow { background: #febc2e; }
         .code-dot.green { background: #28c840; }
-        
+
         .code-title { margin-left: 12px; font-size: 13px; color: var(--gray-500); }
-        
+
         .code-body {
             padding: 20px;
             font-family: 'JetBrains Mono', monospace;
@@ -441,24 +766,24 @@
             line-height: 1.7;
             overflow-x: auto;
         }
-        
+
         .code-body .kw { color: #ff79c6; }
         .code-body .str { color: #50fa7b; }
         .code-body .cmt { color: #6272a4; }
         .code-body .fn { color: #8be9fd; }
-        
+
         /* Section Styling */
         section { padding: 120px 24px; }
-        
+
         .section-dark { background: var(--black-light); }
         .section-darker { background: var(--gray-900); }
-        
+
         .section-header {
             text-align: center;
             max-width: 700px;
             margin: 0 auto 64px;
         }
-        
+
         .section-badge {
             display: inline-flex;
             align-items: center;
@@ -472,20 +797,471 @@
             color: var(--green);
             margin-bottom: 16px;
         }
-        
+
         .section-title {
             font-size: clamp(32px, 5vw, 48px);
             font-weight: 700;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             margin-bottom: 16px;
         }
-        
+
         .section-subtitle {
             font-size: 18px;
             color: var(--gray-400);
             line-height: 1.7;
         }
-        
+
+        /* Control Plane */
+        .control-plane-section {
+            background:
+                linear-gradient(180deg, var(--black), var(--black-light) 42%, var(--gray-900));
+            overflow: hidden;
+        }
+
+        .control-plane {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 0.9fr 1.1fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+
+        .control-copy {
+            background: rgba(255,255,255,0.035);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 34px;
+            text-align: left;
+        }
+
+        .control-copy h2 {
+            font-size: clamp(30px, 4vw, 48px);
+            line-height: 1.08;
+            letter-spacing: 0;
+            margin: 12px 0 18px;
+        }
+
+        .control-copy p {
+            color: var(--gray-400);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        .control-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(6,182,212,0.24);
+            background: rgba(6,182,212,0.08);
+            color: var(--cyan);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .control-points {
+            display: grid;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .control-point {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .control-point svg {
+            width: 18px;
+            height: 18px;
+            color: var(--green-light);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .control-point strong {
+            display: block;
+            color: var(--white);
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .control-point span {
+            color: var(--gray-500);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .control-map {
+            background: var(--gray-900);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            padding: 22px;
+            min-height: 520px;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 18px;
+            box-shadow: 0 25px 80px -20px rgba(0,0,0,0.58);
+        }
+
+        .control-map-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .control-map-title {
+            color: var(--white);
+            font-weight: 700;
+        }
+
+        .control-map-subtitle {
+            margin-top: 4px;
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        .control-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--green-light);
+            font-size: 12px;
+            border: 1px solid rgba(34,197,94,0.24);
+            background: rgba(34,197,94,0.08);
+            border-radius: 999px;
+            padding: 7px 10px;
+            white-space: nowrap;
+        }
+
+        .control-status span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green-light);
+            box-shadow: 0 0 12px rgba(74,222,128,0.7);
+        }
+
+        .memory-map {
+            display: grid;
+            grid-template-columns: 1fr 1.1fr 1fr;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .map-column {
+            display: grid;
+            gap: 12px;
+        }
+
+        .map-label {
+            color: var(--gray-500);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .map-node {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 52px;
+            padding: 12px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            color: var(--gray-300);
+            font-size: 13px;
+        }
+
+        .map-node svg {
+            width: 18px;
+            height: 18px;
+            color: var(--purple-light);
+            flex-shrink: 0;
+        }
+
+        .map-node.output svg { color: var(--cyan); }
+
+        .memory-core {
+            position: relative;
+            border-radius: 22px;
+            border: 1px solid rgba(139,92,246,0.28);
+            background:
+                linear-gradient(180deg, rgba(139,92,246,0.16), rgba(6,182,212,0.08)),
+                rgba(255,255,255,0.035);
+            padding: 22px;
+            min-height: 330px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .memory-core-top {
+            text-align: center;
+        }
+
+        .memory-core-icon {
+            width: 62px;
+            height: 62px;
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(0,0,0,0.22);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+
+        .memory-core-icon svg {
+            width: 30px;
+            height: 30px;
+            color: var(--cyan);
+        }
+
+        .memory-core h3 {
+            color: var(--white);
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .memory-core p {
+            color: var(--gray-400);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .memory-ops {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .memory-op {
+            padding: 10px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.18);
+            border: 1px solid rgba(255,255,255,0.07);
+            font-size: 12px;
+            color: var(--gray-300);
+        }
+
+        .memory-op strong {
+            display: block;
+            color: var(--white);
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        /* Product Dock */
+        .product-dock-section {
+            padding-top: 70px;
+            padding-bottom: 70px;
+            background: var(--black);
+        }
+
+        .product-dock {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .dock-card {
+            min-height: 168px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.018)),
+                var(--gray-900);
+            padding: 18px;
+            text-align: left;
+            transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+        }
+
+        .dock-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(6,182,212,0.28);
+            background:
+                linear-gradient(180deg, rgba(6,182,212,0.075), rgba(255,255,255,0.018)),
+                var(--gray-900);
+        }
+
+        .dock-icon {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04);
+            color: var(--cyan);
+            margin-bottom: 14px;
+        }
+
+        .dock-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .dock-card h3 {
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: var(--white);
+        }
+
+        .dock-card p {
+            color: var(--gray-500);
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .dock-card span {
+            display: inline-flex;
+            margin-top: 14px;
+            color: var(--gray-400);
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* API System */
+        .api-system-section {
+            background:
+                linear-gradient(180deg, var(--black-light), var(--black));
+            overflow: hidden;
+        }
+
+        .api-system {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 0.95fr 1.05fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+
+        .api-copy {
+            text-align: left;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 24px;
+            background: rgba(255,255,255,0.032);
+            padding: 34px;
+        }
+
+        .api-copy h2 {
+            font-size: clamp(30px, 4vw, 48px);
+            line-height: 1.08;
+            letter-spacing: 0;
+            margin: 14px 0 18px;
+        }
+
+        .api-copy p {
+            color: var(--gray-400);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        .api-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(139,92,246,0.25);
+            background: rgba(139,92,246,0.1);
+            color: var(--purple-light);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .api-terminal {
+            margin-top: 26px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            background: rgba(0,0,0,0.28);
+            overflow: hidden;
+        }
+
+        .api-terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            color: var(--gray-500);
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .api-terminal-body {
+            padding: 18px;
+            color: var(--gray-300);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .api-terminal-body .endpoint { color: var(--cyan); }
+        .api-terminal-body .method { color: var(--green-light); }
+        .api-terminal-body .dim { color: var(--gray-600); }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .api-card {
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            background: var(--gray-900);
+            padding: 18px;
+            text-align: left;
+        }
+
+        .api-card h3 {
+            color: var(--white);
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .api-card p {
+            color: var(--gray-500);
+            font-size: 12px;
+            line-height: 1.58;
+        }
+
+        .api-chip {
+            display: inline-flex;
+            margin-bottom: 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(6,182,212,0.22);
+            background: rgba(6,182,212,0.08);
+            color: var(--cyan);
+            padding: 5px 8px;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         /* Feature Cards */
         .features-grid {
             display: grid;
@@ -494,7 +1270,7 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-        
+
         .feature-card {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.05);
@@ -502,12 +1278,12 @@
             padding: 32px;
             transition: all 0.3s ease;
         }
-        
+
         .feature-card:hover {
             border-color: rgba(139,92,246,0.3);
             transform: translateY(-4px);
         }
-        
+
         .feature-icon {
             width: 48px;
             height: 48px;
@@ -518,30 +1294,30 @@
             justify-content: center;
             margin-bottom: 20px;
         }
-        
+
         .feature-icon svg {
             width: 24px;
             height: 24px;
             color: var(--white);
         }
-        
+
         .feature-title {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 12px;
         }
-        
+
         .feature-desc {
             font-size: 14px;
             color: var(--gray-400);
             margin-bottom: 16px;
             line-height: 1.6;
         }
-        
+
         .feature-list {
             list-style: none;
         }
-        
+
         .feature-list li {
             display: flex;
             align-items: center;
@@ -550,14 +1326,14 @@
             color: var(--gray-400);
             padding: 4px 0;
         }
-        
+
         .feature-list li svg {
             width: 16px;
             height: 16px;
             color: var(--purple-light);
             flex-shrink: 0;
         }
-        
+
         /* Enterprise Grid */
         .enterprise-grid {
             display: grid;
@@ -566,7 +1342,7 @@
             max-width: 1000px;
             margin: 0 auto;
         }
-        
+
         .enterprise-card {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.05);
@@ -574,11 +1350,11 @@
             padding: 24px;
             transition: all 0.3s ease;
         }
-        
+
         .enterprise-card:hover {
             border-color: rgba(255,255,255,0.1);
         }
-        
+
         .enterprise-card .icon {
             width: 40px;
             height: 40px;
@@ -589,25 +1365,25 @@
             justify-content: center;
             margin-bottom: 16px;
         }
-        
+
         .enterprise-card .icon svg {
             width: 20px;
             height: 20px;
             color: var(--white);
         }
-        
+
         .enterprise-card h3 {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
         }
-        
+
         .enterprise-card p {
             font-size: 13px;
             color: var(--gray-400);
             line-height: 1.5;
         }
-        
+
         /* MCP Section */
         .mcp-grid {
             display: grid;
@@ -617,21 +1393,21 @@
             max-width: 1100px;
             margin: 0 auto;
         }
-        
+
         .mcp-content h2 {
             font-size: clamp(28px, 4vw, 40px);
             font-weight: 700;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             margin-bottom: 20px;
         }
-        
+
         .mcp-content p {
             font-size: 17px;
             color: var(--gray-400);
             line-height: 1.7;
             margin-bottom: 24px;
         }
-        
+
         .mcp-command {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.1);
@@ -642,11 +1418,11 @@
             margin-bottom: 24px;
             overflow-x: auto;
         }
-        
+
         .mcp-list {
             list-style: none;
         }
-        
+
         .mcp-list li {
             display: flex;
             align-items: center;
@@ -655,14 +1431,14 @@
             font-size: 15px;
             color: var(--gray-300);
         }
-        
+
         .mcp-list li svg {
             width: 20px;
             height: 20px;
             color: var(--purple-light);
             flex-shrink: 0;
         }
-        
+
         .integrations-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -710,7 +1486,7 @@
             border-radius: 16px;
             padding: 24px;
         }
-        
+
         .mcp-demo-header {
             display: flex;
             align-items: center;
@@ -719,13 +1495,13 @@
             padding-bottom: 16px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        
+
         .mcp-demo-header .dot { width: 10px; height: 10px; border-radius: 50%; }
         .mcp-demo-header .red { background: #ff5f57; }
         .mcp-demo-header .yellow { background: #febc2e; }
         .mcp-demo-header .green { background: #28c840; }
         .mcp-demo-header span { margin-left: 8px; font-size: 13px; color: var(--gray-500); }
-        
+
         .mcp-chat { font-size: 14px; }
         .mcp-chat .msg { display: flex; gap: 12px; margin-bottom: 16px; }
         .mcp-chat .msg.user .label { color: var(--purple-light); font-weight: 600; }
@@ -737,55 +1513,55 @@
             padding-top: 8px;
         }
         .mcp-chat .divider span { font-size: 12px; color: var(--gray-600); }
-        
+
         /* Comparison Table */
         .comparison-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 14px;
         }
-        
+
         .comparison-table th,
         .comparison-table td {
             padding: 16px;
             text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        
+
         .comparison-table th:first-child,
         .comparison-table td:first-child {
             text-align: left;
         }
-        
+
         .comparison-table thead th {
             font-weight: 600;
             color: var(--gray-400);
             padding-bottom: 20px;
         }
-        
+
         .comparison-table thead th:nth-child(2) {
             color: var(--purple-light);
         }
-        
+
         .comparison-table tbody tr:hover {
             background: rgba(255,255,255,0.02);
         }
-        
+
         .comparison-table tbody tr.highlight {
             background: rgba(139,92,246,0.05);
         }
-        
+
         .comparison-table td:first-child {
             color: var(--gray-300);
         }
-        
+
         .check { color: var(--green); }
         .cross { color: var(--red); opacity: 0.6; }
         .partial { color: var(--yellow); }
         .text-green { color: var(--green); font-weight: 600; }
         .text-red { color: var(--red); }
         .text-yellow { color: var(--yellow); }
-        
+
         /* Steps */
         .steps-grid {
             display: grid;
@@ -794,11 +1570,11 @@
             max-width: 1000px;
             margin: 0 auto;
         }
-        
+
         .step {
             position: relative;
         }
-        
+
         .step-number {
             position: absolute;
             top: -16px;
@@ -813,26 +1589,26 @@
             font-size: 20px;
             font-weight: 700;
         }
-        
+
         .step-content {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.05);
             border-radius: 16px;
             padding: 40px 28px 28px;
         }
-        
+
         .step-content h3 {
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 12px;
         }
-        
+
         .step-content p {
             font-size: 14px;
             color: var(--gray-400);
             margin-bottom: 16px;
         }
-        
+
         .step-code {
             background: rgba(0,0,0,0.5);
             border-radius: 8px;
@@ -842,11 +1618,11 @@
             color: var(--green);
             overflow-x: auto;
         }
-        
+
         .step-methods {
             list-style: none;
         }
-        
+
         .step-methods li {
             display: flex;
             align-items: center;
@@ -855,7 +1631,7 @@
             font-size: 13px;
             color: var(--gray-300);
         }
-        
+
         .step-methods .badge {
             width: 28px;
             height: 28px;
@@ -866,7 +1642,7 @@
             justify-content: center;
             font-size: 14px;
         }
-        
+
         /* Use Cases */
         .usecases-grid {
             display: grid;
@@ -875,7 +1651,7 @@
             max-width: 1000px;
             margin: 0 auto;
         }
-        
+
         .usecase-card {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.05);
@@ -883,11 +1659,11 @@
             padding: 24px;
             transition: all 0.3s ease;
         }
-        
+
         .usecase-card:hover {
             border-color: rgba(255,255,255,0.1);
         }
-        
+
         .usecase-card .icon {
             width: 48px;
             height: 48px;
@@ -899,19 +1675,19 @@
             margin-bottom: 16px;
             font-size: 24px;
         }
-        
+
         .usecase-card h3 {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
         }
-        
+
         .usecase-card p {
             font-size: 13px;
             color: var(--gray-400);
             line-height: 1.5;
         }
-        
+
         /* Pricing */
         .pricing-grid {
             display: grid;
@@ -920,11 +1696,11 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-        
+
         @media (max-width: 1100px) {
             .pricing-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        
+
         .pricing-card {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.05);
@@ -932,12 +1708,12 @@
             padding: 32px;
             transition: all 0.3s ease;
         }
-        
+
         .pricing-card.featured {
             border-color: var(--purple);
             position: relative;
         }
-        
+
         .pricing-card.featured::before {
             content: 'Most Popular';
             position: absolute;
@@ -951,36 +1727,36 @@
             padding: 4px 12px;
             border-radius: 100px;
         }
-        
+
         .pricing-name {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 8px;
         }
-        
+
         .pricing-price {
             font-size: 42px;
             font-weight: 700;
             margin-bottom: 8px;
         }
-        
+
         .pricing-price span {
             font-size: 16px;
             font-weight: 400;
             color: var(--gray-500);
         }
-        
+
         .pricing-desc {
             font-size: 14px;
             color: var(--gray-400);
             margin-bottom: 24px;
         }
-        
+
         .pricing-features {
             list-style: none;
             margin-bottom: 32px;
         }
-        
+
         .pricing-features li {
             display: flex;
             align-items: center;
@@ -989,16 +1765,16 @@
             font-size: 14px;
             color: var(--gray-300);
         }
-        
+
         .pricing-features li svg {
             width: 16px;
             height: 16px;
             color: var(--purple-light);
             flex-shrink: 0;
         }
-        
+
         .pricing-card .btn { width: 100%; }
-        
+
         /* Blog/Changelog Preview */
         .blog-grid {
             display: grid;
@@ -1007,7 +1783,7 @@
             max-width: 1000px;
             margin: 0 auto;
         }
-        
+
         .blog-card {
             background: var(--gray-900);
             border: 1px solid rgba(255,255,255,0.05);
@@ -1015,12 +1791,12 @@
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .blog-card:hover {
             border-color: rgba(255,255,255,0.1);
             transform: translateY(-4px);
         }
-        
+
         .blog-card-image {
             height: 160px;
             background: var(--gray-800);
@@ -1028,69 +1804,69 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .blog-card-image svg {
             width: 48px;
             height: 48px;
             color: var(--gray-600);
         }
-        
+
         .blog-card-content {
             padding: 20px;
         }
-        
+
         .blog-card-date {
             font-size: 12px;
             color: var(--gray-500);
             margin-bottom: 8px;
         }
-        
+
         .blog-card h3 {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
             line-height: 1.4;
         }
-        
+
         .blog-card p {
             font-size: 13px;
             color: var(--gray-400);
             line-height: 1.5;
         }
-        
+
         /* CTA */
         .cta {
             text-align: center;
             padding: 120px 24px;
             background: linear-gradient(to bottom, var(--gray-900), var(--black));
         }
-        
+
         .cta h2 {
             font-size: clamp(32px, 5vw, 48px);
             font-weight: 700;
-            letter-spacing: -0.02em;
+            letter-spacing: 0;
             margin-bottom: 16px;
         }
-        
+
         .cta p {
             font-size: 18px;
             color: var(--gray-400);
             margin-bottom: 32px;
         }
-        
+
         .cta-actions {
             display: flex;
             justify-content: center;
             gap: 16px;
             flex-wrap: wrap;
         }
-        
+
         /* Footer */
         .footer {
             padding: 80px 24px 40px;
             border-top: 1px solid rgba(255,255,255,0.05);
         }
-        
+
         .footer-grid {
             display: grid;
             grid-template-columns: 2fr repeat(4, 1fr);
@@ -1098,20 +1874,20 @@
             max-width: 1200px;
             margin: 0 auto 60px;
         }
-        
+
         .footer-brand p {
             font-size: 14px;
             color: var(--gray-500);
             line-height: 1.6;
             margin-top: 16px;
         }
-        
+
         .footer-column h4 {
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 20px;
         }
-        
+
         .footer-column ul { list-style: none; }
         .footer-column li { margin-bottom: 12px; }
         .footer-column a {
@@ -1120,7 +1896,7 @@
             transition: color 0.2s;
         }
         .footer-column a:hover { color: var(--white); }
-        
+
         .footer-bottom {
             display: flex;
             justify-content: space-between;
@@ -1130,38 +1906,48 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-        
+
         .footer-bottom p {
             font-size: 13px;
             color: var(--gray-600);
         }
-        
+
         .footer-legal {
             display: flex;
             gap: 24px;
         }
-        
+
         .footer-legal a {
             font-size: 13px;
             color: var(--gray-600);
             transition: color 0.2s;
         }
         .footer-legal a:hover { color: var(--white); }
-        
+
         /* Animations */
         .reveal {
             opacity: 0;
             transform: translateY(30px);
             transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        
+
         .reveal.visible {
             opacity: 1;
             transform: translateY(0);
         }
-        
+
         /* Mobile */
         @media (max-width: 1100px) {
+            .hero-stage {
+                grid-template-columns: 1fr;
+                gap: 28px;
+                text-align: center;
+            }
+            .hero-copy-block { text-align: center; }
+            .hero-subtitle,
+            .hero-kpis { margin-left: auto; margin-right: auto; }
+            .hero-actions { justify-content: center; }
+            .memory-console { width: min(720px, 100%); margin: 0 auto; }
             .demo-container { grid-template-columns: 1fr; }
             .connection-zone { height: 100px; flex-direction: row; }
             .flow-line { width: 100%; height: 3px; left: 0; top: 50%; transform: translateY(-50%); background: linear-gradient(90deg, transparent, rgba(139,92,246,0.4), rgba(6,182,212,0.6), rgba(139,92,246,0.4), transparent); }
@@ -1171,8 +1957,12 @@
             .memory-sidebar-header { width: 100%; }
             .memory-list { flex-direction: row; flex-wrap: wrap; }
             .memory-item { flex: 1; min-width: 200px; }
+            .control-plane { grid-template-columns: 1fr; }
+            .memory-map { grid-template-columns: 1fr; }
+            .product-dock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .api-system { grid-template-columns: 1fr; }
         }
-        
+
         @media (max-width: 900px) {
             .nav-links { display: none; }
             .mcp-grid { grid-template-columns: 1fr; gap: 40px; }
@@ -1180,17 +1970,35 @@
             .pricing-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
             .footer-brand { grid-column: 1 / -1; }
+            .hero-kpis { grid-template-columns: repeat(2, 1fr); }
+            .console-body { grid-template-columns: 1fr; }
+            .memory-console { min-height: auto; }
+            .mini-graph { min-height: 190px; }
         }
-        
+
         @media (max-width: 600px) {
             .hero-actions { flex-direction: column; width: 100%; }
             .hero-actions .btn { width: 100%; max-width: 300px; }
+            .hero-kpis { grid-template-columns: 1fr; }
+            .hero { padding-left: 16px; padding-right: 16px; }
+            .memory-console { border-radius: 20px; }
+            .console-topbar { align-items: flex-start; flex-direction: column; }
+            .console-pills { justify-content: flex-start; }
+            .graph-node { min-width: 58px; padding: 0 8px; font-size: 10px; }
+            .graph-line { opacity: 0.65; }
+            .product-dock { grid-template-columns: 1fr; }
+            .dock-card { min-height: 128px; }
+            .api-grid { grid-template-columns: 1fr; }
+            .api-copy { padding: 22px; border-radius: 18px; }
+            .control-copy, .control-map { padding: 20px; border-radius: 18px; }
+            .control-map-header { align-items: flex-start; flex-direction: column; }
+            .memory-ops { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr; }
             .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
             .cta-actions { flex-direction: column; }
             .cta-actions .btn { width: 100%; max-width: 300px; }
         }
-        
+
         /* Table responsive */
         .table-wrapper {
             overflow-x: auto;
@@ -1206,7 +2014,7 @@
                 <img src="/logo.jpg" alt="Remembra">
                 Remembra
             </a>
-            
+
             <nav class="nav">
                 <ul class="nav-links">
                     <li><a href="#features">Features</a></li>
@@ -1251,32 +2059,120 @@
 
     <!-- Hero -->
     <section class="hero">
-        <div class="hero-badge">
-            <span class="dot"></span>
-            Open Source • Self-Hosted • MCP Native
+        <div class="hero-stage">
+            <div class="hero-copy-block">
+                <div class="hero-badge">
+                    <span class="dot"></span>
+                    Memory Control Plane • MCP Native • Self-Hosted
+                </div>
+
+                <h1 class="hero-title">
+                    One memory bank<br><span class="highlight">for every AI agent.</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    Remembra gives Claude, Cursor, Codex, OpenAI agents, and automations a shared brain with provenance, temporal context, entity resolution, and a dashboard you can actually operate.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="https://app.remembra.dev/signup" class="btn btn-primary">Start Building Free →</a>
+                    <a href="https://docs.remembra.dev" class="btn btn-outline">Read the Docs</a>
+                </div>
+
+                <div class="hero-kpis">
+                    <div class="hero-kpi">
+                        <strong>5 min</strong>
+                        <span>Docker self-host setup</span>
+                    </div>
+                    <div class="hero-kpi">
+                        <strong>MCP</strong>
+                        <span>Native tools for agent workflows</span>
+                    </div>
+                    <div class="hero-kpi">
+                        <strong>Graph</strong>
+                        <span>Entity and relationship recall</span>
+                    </div>
+                    <div class="hero-kpi">
+                        <strong>Audit</strong>
+                        <span>Inspect who wrote what and why</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="memory-console" aria-label="Remembra memory control plane preview">
+                <div class="console-topbar">
+                    <div class="console-title"><span></span>Remembra Live Memory</div>
+                    <div class="console-pills">
+                        <div class="console-pill">mcp_server</div>
+                        <div class="console-pill">entity_graph</div>
+                        <div class="console-pill">audit_log</div>
+                    </div>
+                </div>
+
+                <div class="console-body">
+                    <div class="console-column">
+                        <div class="console-label">Incoming context</div>
+                        <div class="signal-card">
+                            <div class="signal-meta">
+                                <span class="signal-source">Agent workspace</span>
+                                <span>project: customer-onboarding</span>
+                            </div>
+                            <div class="signal-text">
+                                The team chose self-hosted Remembra, connected MCP tools, and wants future agents to remember install notes, owners, and open tasks.
+                            </div>
+                        </div>
+                        <div class="pipeline">
+                            <div class="pipeline-row"><span></span><strong>Extract facts</strong><em>14ms</em></div>
+                            <div class="pipeline-row"><span></span><strong>Resolve entities</strong><em>31ms</em></div>
+                            <div class="pipeline-row"><span></span><strong>Attach provenance</strong><em>18ms</em></div>
+                            <div class="pipeline-row"><span></span><strong>Index for recall</strong><em>42ms</em></div>
+                        </div>
+                        <div class="recall-card">
+                            <strong>Recalled for next agent</strong>
+                            <p>Continue from the last verified step, use the saved deployment notes, and cite the source memory before making changes.</p>
+                        </div>
+                    </div>
+
+                    <div class="console-column">
+                        <div class="console-label">Memory graph</div>
+                        <div class="mini-graph">
+                            <div class="graph-line l1"></div>
+                            <div class="graph-line l2"></div>
+                            <div class="graph-line l3"></div>
+                            <div class="graph-line l4"></div>
+                            <div class="graph-node n1">Team</div>
+                            <div class="graph-node n2">Agent</div>
+                            <div class="graph-node core">Remembra</div>
+                            <div class="graph-node n3">Docker</div>
+                            <div class="graph-node n4">Docs</div>
+                        </div>
+                        <div class="memory-record">
+                            <strong>Memory record</strong>
+                            <p>Workspace prefers local-first setup, Docker deployment, and documented handoffs between Claude, Cursor, Codex, and automations.</p>
+                            <div class="record-tags">
+                                <span>handoff</span>
+                                <span>source</span>
+                                <span>team</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <h1 class="hero-title">
-            AI Agents Forget.<br><span class="highlight">Remembra Remembers.</span>
-        </h1>
-        
-        <p class="hero-subtitle">
-            See the difference persistent memory makes. Same user, same AI — completely different experience.
-        </p>
-        
+
         <div class="timeline-indicator">
             <div class="timeline-badge">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span class="session-num" id="sessionLabel">Session 2</span> — The next day
+                <span class="session-num" id="sessionLabel">Session 2</span> — Context survives the handoff
             </div>
         </div>
-        
+
         <div class="demo-container" id="demoContainer">
             <div class="panel without">
                 <div class="panel-header">
                     <div class="panel-label bad">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Without Memory
+                        Scattered Agents
                     </div>
                     <div class="panel-dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
                 </div>
@@ -1284,7 +2180,7 @@
                     <div class="chat-messages" id="chatWithout"></div>
                 </div>
             </div>
-            
+
             <div class="connection-zone">
                 <div class="flow-line"></div>
                 <div class="particle-container" id="particleContainer"></div>
@@ -1297,12 +2193,12 @@
                 </div>
                 <div class="connection-label" id="connectionLabel">Memory Flow</div>
             </div>
-            
+
             <div class="panel with">
                 <div class="panel-header">
                     <div class="panel-label good">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        With Remembra
+                        Remembra Control Plane
                     </div>
                     <div class="panel-dots"><span class="red"></span><span class="yellow"></span><span class="green"></span></div>
                 </div>
@@ -1318,17 +2214,150 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="nav-dots" id="navDots">
             <button class="nav-dot active" data-index="0"></button>
             <button class="nav-dot" data-index="1"></button>
             <button class="nav-dot" data-index="2"></button>
         </div>
         <div class="pause-hint">Hover to pause</div>
-        
-        <div class="hero-actions">
-            <a href="https://app.remembra.dev/signup" class="btn btn-primary">Start Building Free →</a>
-            <a href="https://docs.remembra.dev" class="btn btn-outline">Read the Docs</a>
+    </section>
+
+    <!-- Control Plane -->
+    <section class="control-plane-section">
+        <div class="container">
+            <div class="control-plane">
+                <div class="control-copy reveal">
+                    <div class="control-badge">Shared context layer</div>
+                    <h2>Not just memory. The operating layer between your tools and your agents.</h2>
+                    <p>
+                        The next generation of AI work is multi-agent, multi-tool, and always interrupted. Remembra turns all of that scattered context into a governed memory system: what happened, who said it, when it changed, which agent can see it, and why it was recalled.
+                    </p>
+                    <div class="control-points">
+                        <div class="control-point">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <div>
+                                <strong>Media and project context that follows the work</strong>
+                                <span>Store meeting notes, code decisions, campaign context, launch plans, documents, and agent handoffs in one recallable layer.</span>
+                            </div>
+                        </div>
+                        <div class="control-point">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <div>
+                                <strong>Temporal truth instead of stale snippets</strong>
+                                <span>Resolve conflicts, expire temporary facts, query relationships as of a date, and keep agents from repeating yesterday's assumptions.</span>
+                            </div>
+                        </div>
+                        <div class="control-point">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            <div>
+                                <strong>Operator visibility built for production</strong>
+                                <span>Use the dashboard to inspect recall quality, entity graphs, teams, API keys, billing, webhooks, audit trails, and debugger output.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-map reveal">
+                    <div class="control-map-header">
+                        <div>
+                            <div class="control-map-title">Remembra Memory Graph</div>
+                            <div class="control-map-subtitle">Context enters once. Every approved agent recalls the right slice.</div>
+                        </div>
+                        <div class="control-status"><span></span> Live memory layer</div>
+                    </div>
+
+                    <div class="memory-map">
+                        <div class="map-column">
+                            <div class="map-label">Inputs</div>
+                            <div class="map-node"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5m-9 5V5a2 2 0 012-2h12a2 2 0 012 2v14l-4-4H6l-4 4z"/></svg> Claude, Cursor, Codex</div>
+                            <div class="map-node"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-8 4h6a2 2 0 002-2V8a2 2 0 00-2-2H7a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> Meetings and media notes</div>
+                            <div class="map-node"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg> Docs, issues, CRM, Slack</div>
+                        </div>
+
+                        <div class="memory-core">
+                            <div class="memory-core-top">
+                                <div class="memory-core-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M11 4a3 3 0 00-3 3v1H7a3 3 0 000 6h1v1a3 3 0 006 0v-1h1a3 3 0 000-6h-1V7a3 3 0 00-3-3z"/></svg>
+                                </div>
+                                <h3>Extract. Resolve. Rank. Govern.</h3>
+                                <p>Hybrid semantic search, BM25, entity graph traversal, scopes, feedback, and temporal policies work together before context reaches the model.</p>
+                            </div>
+                            <div class="memory-ops">
+                                <div class="memory-op"><strong>Provenance</strong>Source, actor, project</div>
+                                <div class="memory-op"><strong>Temporal</strong>TTL, decay, as-of</div>
+                                <div class="memory-op"><strong>Graph</strong>People, orgs, links</div>
+                                <div class="memory-op"><strong>Guardrails</strong>Teams, keys, audit</div>
+                            </div>
+                        </div>
+
+                        <div class="map-column">
+                            <div class="map-label">Outputs</div>
+                            <div class="map-node output"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> Better agent replies</div>
+                            <div class="map-node output"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 11V7a4 4 0 118 0v4m-9 0h10l1 10H9l1-10z"/></svg> Scoped team memory</div>
+                            <div class="map-node output"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6h13M9 7h13M5 7h.01M5 17h.01"/></svg> Debuggable recall</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Dock -->
+    <section class="product-dock-section">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-badge">Product surfaces</span>
+                <h2 class="section-title">Everything points back to one operating layer.</h2>
+                <p class="section-subtitle">The landing page, dashboard, docs, changelog, and API should tell the same truth: Remembra is the control plane for agent memory.</p>
+            </div>
+
+            <div class="product-dock reveal">
+                <a class="dock-card" href="#features">
+                    <div class="dock-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h10"/></svg>
+                    </div>
+                    <h3>Features</h3>
+                    <p>Memory extraction, temporal truth, graph recall, conflict review, and security controls.</p>
+                    <span>inspect_features()</span>
+                </a>
+
+                <a class="dock-card" href="https://docs.remembra.dev">
+                    <div class="dock-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13M5 4.5A2.5 2.5 0 012.5 7v11A2.5 2.5 0 015 20.5h14A2.5 2.5 0 0021.5 18V7A2.5 2.5 0 0019 4.5h-7z"/></svg>
+                    </div>
+                    <h3>Docs</h3>
+                    <p>Install guides, MCP setup, API reference, diagnostics, and integration paths.</p>
+                    <span>docs.remembra.dev</span>
+                </a>
+
+                <a class="dock-card" href="https://app.remembra.dev">
+                    <div class="dock-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16v14H4zM4 10h16M9 10v9"/></svg>
+                    </div>
+                    <h3>Dashboard</h3>
+                    <p>Operate memories, teams, keys, billing, graph views, timeline, and recall debugging.</p>
+                    <span>control_plane()</span>
+                </a>
+
+                <a class="dock-card" href="#changelog">
+                    <div class="dock-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h8M8 15h5M5 3h14a2 2 0 012 2v14l-4-2-4 2-4-2-4 2V5a2 2 0 012-2z"/></svg>
+                    </div>
+                    <h3>Changelog</h3>
+                    <p>Track what changed, what shipped, and what agents should remember about the project.</p>
+                    <span>ingest_changelog()</span>
+                </a>
+
+                <a class="dock-card" href="#api-system">
+                    <div class="dock-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M4 5h16v14H4z"/></svg>
+                    </div>
+                    <h3>API</h3>
+                    <p>Conversation ingest, recall debug, webhooks, inbox, meetings, and transfer endpoints.</p>
+                    <span>/api/v1/*</span>
+                </a>
+            </div>
         </div>
     </section>
 
@@ -1336,56 +2365,56 @@
     <section id="features" class="section-dark">
         <div class="container">
             <div class="section-header reveal">
-                <h2 class="section-title">Why Remembra?</h2>
-                <p class="section-subtitle">Features that actually matter for production AI</p>
+                <h2 class="section-title">A memory layer you can operate, not just call.</h2>
+                <p class="section-subtitle">Remembra is built for agent systems that need continuity, accountability, source-aware recall, and context that improves over time.</p>
             </div>
-            
+
             <div class="features-grid">
                 <div class="feature-card reveal">
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                     </div>
-                    <h3 class="feature-title">Entity Resolution</h3>
-                    <p class="feature-desc">Automatically extract and link entities. "Mr. Kim" and "David Kim" resolve to the same person.</p>
+                    <h3 class="feature-title">Conversation Ingest</h3>
+                    <p class="feature-desc">Turn full conversations into durable facts, entities, and deduped memories with optional dry runs and streaming progress.</p>
                     <ul class="feature-list">
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> PERSON, ORG, LOCATION extraction</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Alias resolution</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Relationship mapping</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Fact extraction + importance scoring</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Entity extraction and speaker attribution</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> SSE progress for larger sessions</li>
                     </ul>
                 </div>
-                
+
                 <div class="feature-card reveal">
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
-                    <h3 class="feature-title">Temporal Memory</h3>
-                    <p class="feature-desc">Memories that understand time. TTL, natural decay, and historical queries built-in.</p>
+                    <h3 class="feature-title">Temporal Truth</h3>
+                    <p class="feature-desc">Memories that understand time: TTL, natural decay, as-of relationship queries, and stale-context cleanup.</p>
                     <ul class="feature-list">
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> TTL presets (session → permanent)</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Ebbinghaus-based decay</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> as_of historical queries</li>
                     </ul>
                 </div>
-                
+
                 <div class="feature-card reveal">
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
-                    <h3 class="feature-title">Hybrid Search</h3>
-                    <p class="feature-desc">Not just vectors. Combine semantic search with BM25 and graph traversal for better recall.</p>
+                    <h3 class="feature-title">Recall Pipeline</h3>
+                    <p class="feature-desc">Not just vectors. Combine semantic search, BM25, graph retrieval, reranking, and token-aware context shaping.</p>
                     <ul class="feature-list">
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Vector + BM25 fusion</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Graph-aware recall</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Context optimization</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Token-aware context optimization</li>
                     </ul>
                 </div>
-                
+
                 <div class="feature-card reveal">
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                     </div>
-                    <h3 class="feature-title">Enterprise Security</h3>
-                    <p class="feature-desc">OWASP 2026 ASI compliant. AES-256-GCM encryption, PII detection, anomaly monitoring.</p>
+                    <h3 class="feature-title">Security Controls</h3>
+                    <p class="feature-desc">Practical production controls for memory systems: encryption support, PII handling, scoped keys, rate limits, sanitization, and audit trails.</p>
                     <ul class="feature-list">
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> AES-256-GCM encryption at rest</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> PII detection & redaction</li>
@@ -1393,44 +2422,108 @@
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Full audit logging</li>
                     </ul>
                 </div>
-                
+
                 <div class="feature-card reveal">
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
                     </div>
-                    <h3 class="feature-title">Self-Host Ready</h3>
-                    <p class="feature-desc">One-command Docker deployment. Your data stays on your infrastructure.</p>
+                    <h3 class="feature-title">Conflict Review</h3>
+                    <p class="feature-desc">Track, inspect, resolve, or dismiss conflicting memories so agents do not keep repeating old assumptions.</p>
                     <ul class="feature-list">
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Docker Compose ready</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> No external dependencies</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Full data ownership</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Open, resolved, dismissed states</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Project-scoped conflict lists</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Review stats for operators</li>
                     </ul>
                 </div>
-                
+
                 <div class="feature-card reveal">
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     </div>
-                    <h3 class="feature-title">Dashboard UI</h3>
-                    <p class="feature-desc">Visual memory browser with entity graphs, search, and real-time monitoring.</p>
+                    <h3 class="feature-title">Dashboard Control Plane</h3>
+                    <p class="feature-desc">Visual memory browser with entity graphs, query debugging, teams, projects, keys, billing, and activity visibility.</p>
                     <ul class="feature-list">
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Memory browser</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Entity graph visualization</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Semantic search UI</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Query debugger and analytics</li>
                     </ul>
                 </div>
-                
+
                 <div class="feature-card reveal">
                     <div class="feature-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     </div>
-                    <h3 class="feature-title">Multi-Agent Ready</h3>
-                    <p class="feature-desc">One command connects ALL your AI tools. Shared memory across Claude, Codex, Cursor, and more.</p>
+                    <h3 class="feature-title">Agent Handoffs</h3>
+                    <p class="feature-desc">Use MCP tools and the agent inbox pattern to pass targeted context between supported agents and workflows.</p>
                     <ul class="feature-list">
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> 6+ agents supported</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> MCP server for supported tools</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> One-command installer</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Built-in diagnostics</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Targeted agent inbox + acknowledgements</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- API System -->
+    <section id="api-system" class="api-system-section">
+        <div class="container">
+            <div class="api-system">
+                <div class="api-copy reveal">
+                    <span class="api-badge">API advantage</span>
+                    <h2>Memory APIs for the parts agents usually lose.</h2>
+                    <p>
+                        The next level for Remembra is not another generic vector endpoint. It is the operational API surface around memory: ingestion, conflicts, inbox handoffs, meetings, observability, plugins, and exports that help teams trust what agents remember.
+                    </p>
+
+                    <div class="api-terminal">
+                        <div class="api-terminal-header">
+                            <span class="code-dot red"></span>
+                            <span class="code-dot yellow"></span>
+                            <span class="code-dot green"></span>
+                            remembra-api
+                        </div>
+                        <div class="api-terminal-body">
+                            <span class="method">POST</span> <span class="endpoint">/api/v1/ingest/conversation/stream</span> <span class="dim"># extract facts with progress</span><br>
+                            <span class="method">POST</span> <span class="endpoint">/api/v1/debug/recall</span> <span class="dim"># explain why memory returned</span><br>
+                            <span class="method">GET</span> <span class="endpoint">/api/v1/conflicts/stats</span> <span class="dim"># review contradictory facts</span><br>
+                            <span class="method">POST</span> <span class="endpoint">/api/v1/inbox/send</span> <span class="dim"># target another agent</span><br>
+                            <span class="method">POST</span> <span class="endpoint">/api/v1/meetings/summarize</span> <span class="dim"># convert calls into action memory</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="api-grid reveal">
+                    <div class="api-card">
+                        <span class="api-chip">ingest</span>
+                        <h3>Conversation memory, not chat logs</h3>
+                        <p>Extracts facts, entities, speaker context, deduped memories, and processing stats from whole conversations.</p>
+                    </div>
+                    <div class="api-card">
+                        <span class="api-chip">debug</span>
+                        <h3>Explainable recall</h3>
+                        <p>Shows semantic, keyword, graph, recency, entity, access, rerank, and final scores for operators.</p>
+                    </div>
+                    <div class="api-card">
+                        <span class="api-chip">conflicts</span>
+                        <h3>Contradiction queue</h3>
+                        <p>Gives teams a place to inspect and resolve memory conflicts instead of letting old facts quietly win.</p>
+                    </div>
+                    <div class="api-card">
+                        <span class="api-chip">inbox</span>
+                        <h3>Agent-to-agent pickup</h3>
+                        <p>Lets agents leave targeted tasks, context, status, and acknowledgements for the next tool in the chain.</p>
+                    </div>
+                    <div class="api-card">
+                        <span class="api-chip">meetings</span>
+                        <h3>Meeting continuity</h3>
+                        <p>Builds pre-meeting briefs and post-meeting summaries from calendar, transcript, and memory context.</p>
+                    </div>
+                    <div class="api-card">
+                        <span class="api-chip">webhooks</span>
+                        <h3>Evented memory systems</h3>
+                        <p>Dispatch memory lifecycle events to downstream tools with signing, retries, plugins, and audit visibility.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1440,11 +2533,11 @@
     <section>
         <div class="container">
             <div class="section-header reveal">
-                <span class="section-badge">NEW in v0.13.0</span>
-                <h2 class="section-title">Enterprise Features, Free</h2>
-                <p class="section-subtitle">Everything you need for production. No paywall.</p>
+                <span class="section-badge">Available in current builds</span>
+                <h2 class="section-title">Production controls without mystery.</h2>
+                <p class="section-subtitle">The page should match what the product actually exposes: webhooks, RBAC, import/export, plugins, teams, audit logs, and scoped keys.</p>
             </div>
-            
+
             <div class="enterprise-grid">
                 <div class="enterprise-card reveal">
                     <div class="icon">
@@ -1453,7 +2546,7 @@
                     <h3>Webhooks</h3>
                     <p>Real-time event notifications with HMAC-SHA256 signing and automatic retry delivery.</p>
                 </div>
-                
+
                 <div class="enterprise-card reveal">
                     <div class="icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -1461,7 +2554,7 @@
                     <h3>RBAC</h3>
                     <p>Admin, Editor, Viewer roles with 12 granular permissions. Scoped API keys included.</p>
                 </div>
-                
+
                 <div class="enterprise-card reveal">
                     <div class="icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -1469,7 +2562,7 @@
                     <h3>Import / Export</h3>
                     <p>Migrate from ChatGPT, Claude, or other providers. Export to JSON, CSV, JSONL.</p>
                 </div>
-                
+
                 <div class="enterprise-card reveal">
                     <div class="icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
@@ -1486,15 +2579,15 @@
         <div class="container">
             <div class="mcp-grid">
                 <div class="mcp-content reveal">
-                    <span class="hero-badge" style="margin-bottom: 16px;">Works with 9 AI tools</span>
+                    <span class="hero-badge" style="margin-bottom: 16px;">MCP clients and agent tools</span>
                     <h2>MCP-Native Memory</h2>
-                    <p>One command to give any AI coding tool persistent memory across all your sessions.</p>
-                    
+                    <p>Install the MCP server once, then connect supported agents and IDEs to the same memory layer.</p>
+
                     <div class="mcp-command">
                         <span style="color: var(--gray-500)"># Add to Claude Code</span><br>
                         claude mcp add remembra -e REMEMBRA_URL=<span style="color: var(--green)">http://localhost:8787</span> -- remembra-mcp
                     </div>
-                    
+
                     <ul class="mcp-list">
                         <li>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -1502,15 +2595,15 @@
                         </li>
                         <li>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            Automatic memory storage and recall
+                            MCP tools for memory storage, recall, entity search, timeline, and relationships
                         </li>
                         <li>
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                            No code changes needed
+                            Works through agent tool calls; no app code changes required
                         </li>
                     </ul>
                 </div>
-                
+
                 <div class="mcp-demo reveal">
                     <div class="mcp-demo-header">
                         <span class="dot red"></span>
@@ -1592,184 +2685,108 @@
         </div>
     </section>
 
-    <!-- Benchmark Results -->
-    <section style="background: linear-gradient(180deg, rgba(34, 197, 94, 0.05) 0%, transparent 100%);">
-        <div class="container">
-            <div class="section-header reveal">
-                <h2 class="section-title">📊 Proven Performance</h2>
-                <p class="section-subtitle">Tested on the <a href="https://github.com/snap-research/locomo" style="color: var(--purple-light);">LoCoMo academic benchmark</a> (Snap Research, ACL 2024)</p>
-            </div>
-            
-            <div class="reveal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; max-width: 900px; margin: 0 auto;">
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 32px; text-align: center;">
-                    <div style="font-size: 48px; font-weight: 800; color: var(--green); margin-bottom: 8px;">100%</div>
-                    <div style="color: var(--gray-300); font-size: 14px;">Single-hop Recall</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 32px; text-align: center;">
-                    <div style="font-size: 48px; font-weight: 800; color: var(--green); margin-bottom: 8px;">100%</div>
-                    <div style="color: var(--gray-300); font-size: 14px;">Multi-hop Reasoning</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 32px; text-align: center;">
-                    <div style="font-size: 48px; font-weight: 800; color: var(--green); margin-bottom: 8px;">100%</div>
-                    <div style="color: var(--gray-300); font-size: 14px;">Temporal Queries</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 16px; padding: 32px; text-align: center;">
-                    <div style="font-size: 48px; font-weight: 800; color: var(--green); margin-bottom: 8px;">100%</div>
-                    <div style="color: var(--gray-300); font-size: 14px;">Open-domain</div>
-                </div>
-            </div>
-            
-            <p class="reveal" style="text-align: center; margin-top: 24px; color: var(--gray-400); font-size: 14px;">
-                152 questions across 4 memory categories • Scored with LLM judge (GPT-4o-mini) • <a href="https://docs.remembra.dev/benchmarks/" style="color: var(--purple-light);">Run it yourself →</a>
-            </p>
-        </div>
-    </section>
-
-    <!-- Comparison Table -->
+    <!-- Product Truth -->
     <section>
         <div class="container">
             <div class="section-header reveal">
-                <h2 class="section-title">How We Compare</h2>
-                <p class="section-subtitle">Why developers choose Remembra</p>
+                <h2 class="section-title">What Remembra is strongest at today.</h2>
+                <p class="section-subtitle">No inflated benchmark claims here. These are the product surfaces backed by the current codebase and docs.</p>
             </div>
-            
+
             <div class="table-wrapper reveal">
                 <table class="comparison-table">
                     <thead>
                         <tr>
-                            <th>Feature</th>
-                            <th>Remembra</th>
-                            <th>Mem0</th>
-                            <th>Zep</th>
-                            <th>LangMem</th>
+                            <th>Surface</th>
+                            <th>What it gives you</th>
+                            <th>Where to inspect it</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr class="highlight">
-                            <td>Price for Graph + Entities</td>
-                            <td class="text-green">Free</td>
-                            <td class="text-red">$249/mo</td>
-                            <td class="text-yellow">$25/mo+</td>
-                            <td class="text-yellow">DIY</td>
+                            <td>Temporal memory</td>
+                            <td>TTL, decay, as-of relationship queries, and history-aware recall.</td>
+                            <td>Temporal API, timeline, decay report</td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr>
-                            <td>Entity Resolution</td>
-                            <td class="check">✓ Free</td>
-                            <td class="partial">Pro ($249)</td>
-                            <td class="check">✓</td>
-                            <td class="cross">✗</td>
+                            <td>Entity graph</td>
+                            <td>People, organizations, concepts, aliases, and relationships tied back to memories.</td>
+                            <td>Entity Atlas, Knowledge Graph</td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr class="highlight">
-                            <td>Bi-Temporal Relationships</td>
-                            <td class="check">✓ Point-in-time</td>
-                            <td class="cross">✗</td>
-                            <td class="partial">Basic</td>
-                            <td class="cross">✗</td>
+                            <td>MCP server</td>
+                            <td>Agent tools for store, recall, update, entity search, timeline, and relationships.</td>
+                            <td>Docs, MCP tool reference</td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr>
-                            <td>MCP Server</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                            <td class="cross">✗</td>
-                        </tr>
-                        <tr>
-                            <td>Webhooks</td>
-                            <td class="check">✓ Free</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                        </tr>
-                        <tr>
-                            <td>RBAC / Permissions</td>
-                            <td class="check">✓ Free</td>
-                            <td class="partial">Enterprise</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                        </tr>
-                        <tr>
-                            <td>Import from ChatGPT/Claude</td>
-                            <td class="check">✓</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                        </tr>
-                        <tr>
-                            <td>Self-Host (Full Features)</td>
-                            <td class="check">✓ 100%</td>
-                            <td class="partial">Limited</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                        </tr>
-                        <tr>
-                            <td>Dashboard UI</td>
-                            <td class="check">✓ Included</td>
-                            <td class="partial">Pro only</td>
-                            <td class="check">✓</td>
-                            <td class="cross">✗</td>
+                            <td>Conversation ingest</td>
+                            <td>Extracts facts, entities, speaker context, dedupes, and streams progress for large sessions.</td>
+                            <td><code>/ingest/conversation</code>, <code>/stream</code></td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr class="highlight">
-                            <td>Conversation Ingestion</td>
-                            <td class="check">✓ Auto-extract</td>
-                            <td class="check">✓</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
+                            <td>Recall debugging</td>
+                            <td>Explains semantic, keyword, graph, recency, entity, access, rerank, and final scores.</td>
+                            <td><code>/debug/recall</code>, dashboard debugger</td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr>
-                            <td>Sleep-Time Compute</td>
-                            <td class="check">✓ Background</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                            <td class="check">✓ (Letta)</td>
-                        </tr>
-                        <tr>
-                            <td>PII Detection</td>
-                            <td class="check">✓ Built-in</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                        </tr>
-                        <tr>
-                            <td>TypeScript SDK</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                            <td class="cross">✗</td>
-                        </tr>
-                        <tr>
-                            <td>Open Source</td>
-                            <td class="check">✓ MIT</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
-                            <td class="check">✓</td>
+                            <td>Conflict review</td>
+                            <td>Lists conflicting memories, reports stats, and lets operators resolve or dismiss them.</td>
+                            <td><code>/conflicts</code> APIs</td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr class="highlight">
-                            <td>Universal Agent Installer</td>
-                            <td class="check">✓ One command</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
+                            <td>Agent inbox</td>
+                            <td>Targeted agent-to-agent messages with read/done/blocked/rejected acknowledgements.</td>
+                            <td><code>/inbox</code> APIs, MCP inbox tools</td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr>
-                            <td>Multi-Agent Support</td>
-                            <td class="check">✓ 6+ agents</td>
-                            <td class="partial">Claude only</td>
-                            <td class="partial">Claude only</td>
-                            <td class="cross">✗</td>
+                            <td>Universal installer</td>
+                            <td>Auto-detects supported AI tools and writes MCP configuration.</td>
+                            <td><code>remembra-install</code>, <code>remembra-doctor</code></td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr>
-                            <td>Setup Diagnostics</td>
-                            <td class="check">✓ remembra-doctor</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
+                            <td>Local bridge</td>
+                            <td>Gives sandboxed agents a local endpoint that can proxy to Remembra Cloud.</td>
+                            <td><code>remembra-bridge</code></td>
+                            <td class="check">Live</td>
                         </tr>
                         <tr>
-                            <td>Local Bridge (Sandboxed)</td>
-                            <td class="check">✓ Auto-proxy</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
-                            <td class="cross">✗</td>
+                            <td>Control plane dashboard</td>
+                            <td>Browse memories, inspect graph, debug recall, manage projects, teams, keys, and billing.</td>
+                            <td>Dashboard app</td>
+                            <td class="check">Live</td>
+                        </tr>
+                        <tr>
+                            <td>Webhooks and plugins</td>
+                            <td>Lifecycle events, HMAC signing, retries, auto-tagging, recall logging, and Slack notifier plugin.</td>
+                            <td>Webhooks and plugins modules</td>
+                            <td class="check">Live</td>
+                        </tr>
+                        <tr>
+                            <td>Cloud plans</td>
+                            <td>Free, Pro, Team, and Enterprise tiers with usage metering and upgrade flows.</td>
+                            <td>Billing and cloud plan APIs</td>
+                            <td class="check">Live</td>
+                        </tr>
+                        <tr>
+                            <td>Import/export</td>
+                            <td>Move memory data through JSON, JSONL, CSV, and provider import paths.</td>
+                            <td>Transfer APIs</td>
+                            <td class="check">Live</td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>Meetings and audio</td>
+                            <td>Builds meeting briefs, summarizes transcripts, and can convert audio segments into memory payloads.</td>
+                            <td><code>/meetings</code>, <code>/audio</code> APIs</td>
+                            <td class="check">Live</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1784,7 +2801,7 @@
                 <h2 class="section-title">Up and Running in 5 Minutes</h2>
                 <p class="section-subtitle">From zero to AI memory in three steps</p>
             </div>
-            
+
             <div class="steps-grid">
                 <div class="step reveal">
                     <div class="step-number">1</div>
@@ -1792,28 +2809,26 @@
                         <h3>Deploy</h3>
                         <p>One command to run Remembra with Docker:</p>
                         <div class="step-code">
-                            docker run -d -p 8787:8787 \<br>
-                            &nbsp;&nbsp;remembra/remembra
+                            docker run -d -p 8787:8787 remembra/remembra
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="step reveal">
                     <div class="step-number">2</div>
                     <div class="step-content">
                         <h3>Connect All Agents</h3>
-                        <p>One command configures ALL your AI tools:</p>
+                        <p>One command configures supported AI tools:</p>
                         <div class="step-code">
                             pip install remembra<br>
-                            remembra-install --all --api-key rem_xxx
+                            remembra-install --all --url http://localhost:8787
                         </div>
                         <p style="margin-top: 12px; font-size: 14px; color: var(--gray-500);">
-                            ✓ Claude Desktop &nbsp;✓ Claude Code &nbsp;✓ Codex<br>
-                            ✓ Cursor &nbsp;✓ Windsurf &nbsp;✓ Gemini
+                            Detects Claude, Codex, Cursor, Windsurf, Gemini, and more where supported.
                         </p>
                     </div>
                 </div>
-                
+
                 <div class="step reveal">
                     <div class="step-number">3</div>
                     <div class="step-content">
@@ -1828,7 +2843,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div style="text-align: center; margin-top: 48px;" class="reveal">
                 <a href="https://docs.remembra.dev/getting-started/quickstart" class="btn btn-outline">
                     Read the Full Guide →
@@ -1844,7 +2859,7 @@
                 <h2 class="section-title">Use Cases</h2>
                 <p class="section-subtitle">Build AI that actually remembers</p>
             </div>
-            
+
             <div class="usecases-grid">
                 <div class="usecase-card reveal">
                     <div class="icon">💬</div>
@@ -1854,7 +2869,7 @@
                 <div class="usecase-card reveal">
                     <div class="icon">🏥</div>
                     <h3>Healthcare AI</h3>
-                    <p>Patient history, treatment plans, and medical context that persists and connects. HIPAA-ready with full audit logs.</p>
+                    <p>Clinical copilots can preserve patient context and care-team notes when deployed with the required privacy, compliance, and audit controls.</p>
                 </div>
                 <div class="usecase-card reveal">
                     <div class="icon">📚</div>
@@ -1887,7 +2902,7 @@
                 <h2 class="section-title">Simple, Transparent Pricing</h2>
                 <p class="section-subtitle">Start free. Scale when you're ready.</p>
             </div>
-            
+
             <div class="pricing-grid">
                 <div class="pricing-card reveal">
                     <div class="pricing-name">Free</div>
@@ -1901,7 +2916,7 @@
                     </ul>
                     <a href="https://app.remembra.dev/signup" class="btn btn-outline">Get Started</a>
                 </div>
-                
+
                 <div class="pricing-card featured reveal">
                     <div class="pricing-name">Pro</div>
                     <div class="pricing-price">$49<span>/month</span></div>
@@ -1915,7 +2930,7 @@
                     </ul>
                     <a href="https://app.remembra.dev/signup" class="btn btn-primary">Get Started →</a>
                 </div>
-                
+
                 <div class="pricing-card reveal" style="border-color: rgba(139,92,246,0.3);">
                     <div class="pricing-name">Team</div>
                     <div class="pricing-price">$199<span>/month</span></div>
@@ -1929,24 +2944,24 @@
                     </ul>
                     <a href="https://app.remembra.dev/signup" class="btn btn-purple">Get Started →</a>
                 </div>
-                
+
                 <div class="pricing-card reveal">
                     <div class="pricing-name">Enterprise</div>
                     <div class="pricing-price">Custom</div>
                     <p class="pricing-desc">For large deployments</p>
                     <ul class="pricing-features">
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Unlimited</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Custom limits</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Dedicated infra</li>
-                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> SSO/SAML</li>
+                        <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Custom security requirements</li>
                         <li><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Custom SLA</li>
                     </ul>
                     <a href="/contact.html?type=enterprise" class="btn btn-outline">Contact Sales</a>
                 </div>
             </div>
-            
+
             <!-- Self-hosted note -->
             <p style="text-align: center; color: var(--gray-400); margin-top: 32px; font-size: 14px;">
-                🔧 Self-hosting? Remembra is <a href="https://github.com/remembra-ai/remembra" style="color: var(--purple-light);">open source (MIT)</a> — deploy free with unlimited memories.
+                🔧 Self-hosting? Remembra is <a href="https://github.com/remembra-ai/remembra" style="color: var(--purple-light);">open source (MIT)</a> — self-host without Remembra Cloud plan limits.
             </p>
         </div>
     </section>
@@ -1958,8 +2973,30 @@
                 <h2 class="section-title">Changelog</h2>
                 <p class="section-subtitle">What's new in Remembra</p>
             </div>
-            
+
             <div class="blog-grid">
+                <a href="/changelog/v0.13.2" class="blog-card reveal">
+                    <div class="blog-card-image">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6l5-3v6l-5 3zM4 7l8-4 8 4-8 4-8-4zM4 7v10l8 4 8-4V7"/></svg>
+                    </div>
+                    <div class="blog-card-content">
+                        <div class="blog-card-date">Apr 25, 2026</div>
+                        <h3>Remembra v0.13.2 — Product Surfaces & Dashboard Control Plane</h3>
+                        <p>New landing narrative, dashboard operator overview, runtime billing config, safer examples, and hardened release hygiene.</p>
+                    </div>
+                </a>
+
+                <a href="/changelog/v0.13.1" class="blog-card reveal">
+                    <div class="blog-card-image">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7M4 17h16M4 7h16"/></svg>
+                    </div>
+                    <div class="blog-card-content">
+                        <div class="blog-card-date">Mar 30, 2026</div>
+                        <h3>Remembra v0.13.1 — Cold Archive & Adaptive Thresholds</h3>
+                        <p>Queryable cold storage for decayed memories, adaptive pruning thresholds, archive restore, and temporal cleanup improvements.</p>
+                    </div>
+                </a>
+
                 <a href="/changelog/v0.13.0" class="blog-card reveal">
                     <div class="blog-card-image">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -1971,7 +3008,7 @@
                     </div>
                 </a>
 
-                <a href="/changelog/v0.12.0" class="blog-card reveal">
+                <a href="/changelog/v0.10.1" class="blog-card reveal">
                     <div class="blog-card-image">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
@@ -2014,7 +3051,7 @@
                         <p>EntityGraph performance fix, rebuild-vectors admin endpoint, troubleshooting docs.</p>
                     </div>
                 </a>
-                
+
                 <a href="/changelog/v0.7.1" class="blog-card reveal">
                     <div class="blog-card-image">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -2025,7 +3062,7 @@
                         <p>Dashboard improvements, auth fixes, and documentation updates.</p>
                     </div>
                 </a>
-                
+
                 <a href="/changelog/v0.7.0" class="blog-card reveal">
                     <div class="blog-card-image">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -2036,7 +3073,7 @@
                         <p>Webhooks, RBAC, Import/Export, and Plugins - all available in the free tier.</p>
                     </div>
                 </a>
-                
+
                 <a href="/changelog/mcp-server" class="blog-card reveal">
                     <div class="blog-card-image">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -2048,7 +3085,7 @@
                     </div>
                 </a>
             </div>
-            
+
             <div style="text-align: center; margin-top: 40px;" class="reveal">
                 <a href="/changelog" class="btn btn-ghost">View all updates →</a>
             </div>
@@ -2086,7 +3123,7 @@
                     </a>
                 </div>
             </div>
-            
+
             <div class="footer-column">
                 <h4>Product</h4>
                 <ul>
@@ -2096,7 +3133,7 @@
                     <li><a href="https://github.com/remembra-ai/remembra">Open Source</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-column">
                 <h4>Resources</h4>
                 <ul>
@@ -2106,7 +3143,7 @@
                     <li><a href="/blog">Blog</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-column">
                 <h4>Company</h4>
                 <ul>
@@ -2117,7 +3154,7 @@
                     <li><a href="https://discord.gg/mPYQRKzXz5">Discord</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-column">
                 <h4>Legal</h4>
                 <ul>
@@ -2127,7 +3164,7 @@
                 </ul>
             </div>
         </div>
-        
+
         <div class="footer-bottom">
             <p>&copy; 2026 DolphyTech. All rights reserved.</p>
             <div class="footer-legal">
@@ -2137,61 +3174,13 @@
         </div>
     </footer>
 
-    <!-- Waitlist Modal -->
-    <div id="waitlistModal" style="position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div style="background: var(--gray-900); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px; max-width: 420px; width: 90%; margin: 20px; position: relative;">
-            <button onclick="closeWaitlistModal()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 4px;">
-                <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-            
-            <div style="text-align: center; margin-bottom: 24px;">
-                <div style="width: 64px; height: 64px; background: rgba(139,92,246,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px;">🚀</div>
-                <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Join the Waitlist</h3>
-                <p style="color: var(--gray-400); font-size: 14px;">Be the first to know when Remembra Pro Cloud launches.</p>
-            </div>
-            
-            <form id="waitlistForm" action="https://formsubmit.co/admin@dolphytech.com" method="POST">
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Email</label>
-                    <input type="email" name="email" required placeholder="you@company.com" 
-                           style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 14px; outline: none;">
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px;">Name (optional)</label>
-                    <input type="text" name="name" placeholder="Your name"
-                           style="width: 100%; padding: 12px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 14px; outline: none;">
-                </div>
-                <input type="hidden" name="_subject" value="🚀 New Remembra Waitlist Signup!">
-                <input type="hidden" name="_captcha" value="false">
-                <input type="text" name="_honey" style="display:none">
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">
-                    Join Waitlist →
-                </button>
-            </form>
-            
-            <p style="text-align: center; font-size: 12px; color: var(--gray-500); margin-top: 16px;">We'll never spam you. Unsubscribe anytime.</p>
-        </div>
-    </div>
-
-    <!-- Success Modal -->
-    <div id="successModal" style="position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);">
-        <div style="background: var(--gray-900); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 32px; max-width: 420px; width: 90%; margin: 20px; text-align: center;">
-            <div style="width: 80px; height: 80px; background: rgba(34,197,94,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 24px;">✓</div>
-            <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">You're on the list!</h3>
-            <p style="color: var(--gray-400); font-size: 14px; margin-bottom: 24px;">We'll notify you when Remembra Pro Cloud is ready. Thanks for your interest!</p>
-            <button onclick="closeSuccessModal()" class="btn btn-primary" style="padding: 14px 32px;">
-                Got it!
-            </button>
-        </div>
-    </div>
-
     <script>
         // Header scroll effect
         const header = document.getElementById('header');
         window.addEventListener('scroll', () => {
             header.classList.toggle('scrolled', window.scrollY > 50);
         });
-        
+
         // Scroll reveal
         const reveals = document.querySelectorAll('.reveal');
         const revealOnScroll = () => {
@@ -2204,61 +3193,7 @@
         };
         window.addEventListener('scroll', revealOnScroll);
         revealOnScroll();
-        
-        // Waitlist Modal
-        function openWaitlistModal() {
-            document.getElementById('waitlistModal').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-        
-        function closeWaitlistModal() {
-            document.getElementById('waitlistModal').style.display = 'none';
-            document.body.style.overflow = '';
-        }
-        
-        function closeSuccessModal() {
-            document.getElementById('successModal').style.display = 'none';
-            document.body.style.overflow = '';
-        }
-        
-        // Close on backdrop click
-        document.getElementById('waitlistModal').addEventListener('click', function(e) {
-            if (e.target === this) closeWaitlistModal();
-        });
-        
-        // Handle form submission
-        document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const data = new FormData(form);
-            
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: data,
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (response.ok) {
-                    closeWaitlistModal();
-                    document.getElementById('successModal').style.display = 'flex';
-                    form.reset();
-                } else {
-                    alert('Something went wrong. Please try again.');
-                }
-            } catch (error) {
-                alert('Something went wrong. Please try again.');
-            }
-        });
-        
-        // Close on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeWaitlistModal();
-                closeSuccessModal();
-            }
-        });
-        
+
         // ========== HERO DEMO ==========
         const chatWithout = document.getElementById('chatWithout');
         const chatWith = document.getElementById('chatWith');
@@ -2270,7 +3205,7 @@
         const particleContainer = document.getElementById('particleContainer');
         const connectionLabel = document.getElementById('connectionLabel');
         const demoContainer = document.getElementById('demoContainer');
-        
+
         const scenarios = [
             {
                 session: 'Session 2',
@@ -2333,9 +3268,9 @@
                 ]
             }
         ];
-        
+
         let currentScenario = 0;
-        
+
         function createMessage(msg) {
             const div = document.createElement('div');
             div.className = 'chat-message';
@@ -2345,14 +3280,14 @@
             div.innerHTML = '<div class="chat-avatar ' + msg.role + '">' + (msg.role === 'user' ? 'Y' : 'A') + '</div><div class="chat-content"><div class="chat-name">' + msg.name + '</div><div class="chat-bubble ' + bubbleClass + '">' + msg.text + '</div>' + (badgeText ? '<div class="status-badge ' + badgeClass + '">' + badgeText + '</div>' : '') + '</div>';
             return div;
         }
-        
+
         function createMemoryItem(mem) {
             const div = document.createElement('div');
             div.className = 'memory-item';
             div.innerHTML = '<div class="memory-item-text">' + mem.text + '</div><div class="memory-item-meta"><span class="memory-item-tag">' + mem.tag + '</span><span class="memory-item-time">' + mem.time + '</span></div>';
             return div;
         }
-        
+
         function spawnParticle() {
             const p = document.createElement('div');
             p.className = 'particle';
@@ -2360,7 +3295,7 @@
             setTimeout(function() { p.classList.add('down'); }, 10);
             setTimeout(function() { p.remove(); }, 1400);
         }
-        
+
         function spawnStream() {
             const s = document.createElement('div');
             s.className = 'data-stream';
@@ -2369,13 +3304,13 @@
             setTimeout(function() { s.classList.add('active'); }, 10);
             setTimeout(function() { s.remove(); }, 700);
         }
-        
+
         function triggerPulse(ring) {
             ring.classList.remove('active');
             void ring.offsetWidth;
             ring.classList.add('active');
         }
-        
+
         function runScenario(scenario) {
             chatWithout.innerHTML = '';
             chatWith.innerHTML = '';
@@ -2383,7 +3318,7 @@
             brainIcon.classList.remove('active');
             connectionLabel.classList.remove('visible');
             sessionLabel.textContent = scenario.session;
-            
+
             var wDelay = 0;
             scenario.without.forEach(function(msg, i) {
                 var el = createMessage(msg);
@@ -2395,7 +3330,7 @@
                 }, wDelay);
                 wDelay += 500;
             });
-            
+
             setTimeout(function() {
                 brainIcon.classList.add('active');
                 connectionLabel.classList.add('visible');
@@ -2423,7 +3358,7 @@
                 }, 300);
                 setTimeout(function() { brainIcon.classList.remove('active'); }, 1200);
             }, 400);
-            
+
             var withDelay = 0;
             scenario.with.forEach(function(msg, i) {
                 var el = createMessage(msg);
@@ -2436,7 +3371,7 @@
                 withDelay += 500;
             });
         }
-        
+
         // Navigation dots
         var navDots = document.querySelectorAll('.nav-dot');
         function updateDots() {
@@ -2453,13 +3388,13 @@
                 resetAutoPlay();
             });
         });
-        
+
         // Pause on hover
         var isPaused = false;
         var autoPlayInterval;
         demoContainer.addEventListener('mouseenter', function() { isPaused = true; });
         demoContainer.addEventListener('mouseleave', function() { isPaused = false; });
-        
+
         function autoPlay() {
             if (!isPaused) {
                 currentScenario = (currentScenario + 1) % scenarios.length;
@@ -2471,18 +3406,18 @@
             clearInterval(autoPlayInterval);
             autoPlayInterval = setInterval(autoPlay, 15000);
         }
-        
+
         setTimeout(function() {
             runScenario(scenarios[0]);
             updateDots();
             autoPlayInterval = setInterval(autoPlay, 15000);
         }, 500);
-        
+
         // Mobile Menu Toggle
         var mobileMenuToggle = document.getElementById('mobileMenuToggle');
         var mobileMenu = document.getElementById('mobileMenu');
         var menuIcon = document.getElementById('menuIcon');
-        
+
         if (mobileMenuToggle && mobileMenu) {
             mobileMenuToggle.addEventListener('click', function() {
                 var isOpen = mobileMenu.classList.toggle('open');
@@ -2494,7 +3429,7 @@
                     menuIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>';
                 }
             });
-            
+
             // Close menu when clicking nav links
             var mobileNavLinks = mobileMenu.querySelectorAll('.mobile-nav-link');
             mobileNavLinks.forEach(function(link) {

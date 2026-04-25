@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remembra v0.12.0 - User Profiles, Smart Auto-Forgetting & Browser Extension</title>
-    <meta name="description" content="Remembra v0.12.0 adds User Profiles API, smart auto-forgetting with 35+ temporal patterns, strict mode 410 GONE, and a Chrome browser extension.">
-    <meta name="keywords" content="Remembra, AI memory, changelog, v0.12.0, user profiles, auto-forgetting, browser extension, temporal patterns">
+    <title>Remembra v0.12.0 - User Profiles & Smart Auto-Forgetting</title>
+    <meta name="description" content="Remembra v0.12.0 adds User Profiles API, smart auto-forgetting with 35+ temporal patterns, strict mode 410 GONE, event-driven expiry, and shadow TTLs.">
+    <meta name="keywords" content="Remembra, AI memory, changelog, v0.12.0, user profiles, auto-forgetting, temporal patterns">
     
     <!-- Open Graph -->
     <meta property="og:title" content="Remembra v0.12.0 Released">
-    <meta property="og:description" content="User Profiles API, Smart Auto-Forgetting, Browser Extension, and more.">
+    <meta property="og:description" content="User Profiles API, smart auto-forgetting, strict expiry mode, event-driven expiry, and shadow TTLs.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://remembra.dev/changelog/v0.12.0">
     
@@ -54,7 +54,7 @@
             <div class="mb-8">
                 <time class="text-gray-500">March 22, 2026</time>
                 <h1 class="text-4xl md:text-5xl font-bold mt-2 mb-4">Remembra v0.12.0</h1>
-                <p class="text-xl text-gray-400">User Profiles, Smart Auto-Forgetting & Browser Extension</p>
+                <p class="text-xl text-gray-400">User Profiles & Smart Auto-Forgetting</p>
             </div>
 
             <div class="prose prose-invert max-w-none">
@@ -116,18 +116,6 @@
                                 <li>Automatic cache invalidation on store</li>
                             </ul>
                         </div>
-                        
-                        <div>
-                            <h3 class="font-semibold text-lg">🌐 Browser Extension</h3>
-                            <p class="text-gray-400">Chrome Manifest V3 extension for AI chat interfaces.</p>
-                            <ul class="text-gray-300 mt-2 space-y-1 list-disc list-inside">
-                                <li>Works with ChatGPT, Claude, and Perplexity</li>
-                                <li>Auto-injects memory context into conversations</li>
-                                <li>One-click memory storage from any chat</li>
-                                <li>Secure local API key storage</li>
-                                <li>Available on Chrome Web Store</li>
-                            </ul>
-                        </div>
                     </div>
                 </section>
 
@@ -142,9 +130,7 @@ docker pull remembra/remembra:0.12.0
 
 # Quick start
 remembra-install --all
-
-# Browser Extension
-# Install from Chrome Web Store: "Remembra for AI"</code></pre>
+</code></pre>
                     </div>
                 </section>
 
@@ -171,7 +157,6 @@ remembra-install --all
                         <a href="https://github.com/remembra-ai/remembra/releases/tag/v0.12.0" class="bg-dark-card border border-white/10 px-4 py-2 rounded-lg hover:border-primary transition">GitHub Release</a>
                         <a href="https://pypi.org/project/remembra/0.12.0/" class="bg-dark-card border border-white/10 px-4 py-2 rounded-lg hover:border-primary transition">PyPI</a>
                         <a href="https://hub.docker.com/r/remembra/remembra/tags" class="bg-dark-card border border-white/10 px-4 py-2 rounded-lg hover:border-primary transition">Docker Hub</a>
-                        <a href="https://chrome.google.com/webstore" class="bg-dark-card border border-white/10 px-4 py-2 rounded-lg hover:border-primary transition">Chrome Extension</a>
                     </div>
                 </section>
 

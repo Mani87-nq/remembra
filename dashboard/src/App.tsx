@@ -76,7 +76,12 @@ function App() {
 
         if (!response.ok) {
           // Token invalid, clear auth
-          handleLogout();
+          localStorage.removeItem('remembra_jwt_token');
+          localStorage.removeItem('remembra_user');
+          api.clearAll();
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+          setAuthMode('login');
         } else {
           const user = await response.json();
           console.log('[Auth] /auth/me response:', { email: user.email, is_admin: user.is_admin });
@@ -235,7 +240,7 @@ function App() {
           <InviteAccept
             token={inviteToken}
             isAuthenticated={false}
-            onAccepted={(teamId, teamName) => {
+            onAccepted={() => {
               setActiveTab('teams');
               window.history.replaceState({}, '', '/');
             }}
@@ -282,7 +287,7 @@ function App() {
         <InviteAccept
           token={inviteToken}
           isAuthenticated={true}
-          onAccepted={(teamId, teamName) => {
+          onAccepted={() => {
             setInviteToken(null);
             setActiveTab('teams');
             window.history.replaceState({}, '', '/');
@@ -314,6 +319,7 @@ function App() {
           onLogout={handleLogout}
           showNewMemory={showNewMemoryModal}
           onCloseNewMemory={() => setShowNewMemoryModal(false)}
+          onTabChange={setActiveTab}
         />
       </AppLayout>
 

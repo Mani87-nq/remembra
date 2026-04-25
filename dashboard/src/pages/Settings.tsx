@@ -538,7 +538,7 @@ function PasswordSettings() {
 }
 
 // Account Settings Component (Delete Account)
-function AccountSettings({ user: _user, onLogout }: { user: UserResponse; onLogout: () => void }) {
+function AccountSettings({ onLogout }: { user: UserResponse; onLogout: () => void }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmText, setConfirmText] = useState('');

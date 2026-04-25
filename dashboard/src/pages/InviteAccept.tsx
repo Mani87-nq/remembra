@@ -1,18 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Users, Check, X, Loader2 } from 'lucide-react';
+import { Users, Check, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 import { API_V1 } from '../config';
-
-interface InviteDetails {
-  id: string;
-  team_id: string;
-  team_name: string;
-  email: string;
-  role: string;
-  invited_by: string;
-  expires_at: string;
-  status: string;
-}
 
 interface InviteAcceptProps {
   token: string;
@@ -29,7 +18,6 @@ export function InviteAccept({
   onSwitchToLogin,
   onSwitchToSignup 
 }: InviteAcceptProps) {
-  const [invite, setInvite] = useState<InviteDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +42,7 @@ export function InviteAccept({
       // For now, we'll just show a generic accept page
       // The actual validation happens on accept
       setLoading(false);
-    } catch (err) {
+    } catch {
       setError('Failed to load invite details');
       setLoading(false);
     }

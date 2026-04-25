@@ -79,8 +79,8 @@ export function AppLayout({
 
   const tabMeta: Record<TabType, { title: string; subtitle: string }> = {
     memories: {
-      title: 'Memory Nexus',
-      subtitle: 'Search, store, and shape the working memory of your agents.',
+      title: 'Control Plane',
+      subtitle: 'Operate shared memory across agents, tools, teams, and projects.',
     },
     projects: {
       title: 'Projects',

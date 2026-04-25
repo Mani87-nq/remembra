@@ -185,6 +185,8 @@ export function TimelineSkeleton({ count = 6 }: { count?: number }) {
 
 // ─── Analytics Chart Skeleton ───────────────────────────────────
 export function ChartSkeleton() {
+  const barHeights = [48, 72, 36, 84, 58, 66, 42, 92, 54, 76, 62, 88];
+
   return (
     <div className="p-6 rounded-xl bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
       {/* Header */}
@@ -200,7 +202,7 @@ export function ChartSkeleton() {
             <Skeleton
               className="w-full rounded-t"
               style={{
-                height: `${20 + Math.random() * 80}%`,
+                height: `${barHeights[i]}%`,
                 animationDelay: `${i * 80}ms`,
               }}
             />

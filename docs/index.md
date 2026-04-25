@@ -3,8 +3,8 @@
 **Persistent memory for AI applications. Self-host in minutes.**
 
 <div class="admonition tip" markdown>
-<p class="admonition-title">🚀 v0.12.0 Released!</p>
-<p>Now with <strong>User Profiles</strong>, <strong>Smart Auto-Forgetting</strong>, <strong>Event-driven Expiry</strong>, and <strong>Browser Extension</strong>. Human-like memory that naturally fades over time.</p>
+<p class="admonition-title">Remembra v0.13.x</p>
+<p>Now with dashboard v2, team collaboration, cold archive, adaptive thresholds, smart auto-forgetting, event-driven expiry, and stronger observability for agent memory.</p>
 </div>
 
 ---
@@ -119,7 +119,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 === "Docker (Recommended)"
 
     ```bash
-    docker run -d -p 8787:8787 remembra/remembra:0.12.0
+    docker run -d -p 8787:8787 remembra/remembra
     ```
 
 === "Quick Start (One Command)"
@@ -209,15 +209,33 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
 ---
 
-## What's New in v0.12.0
+## What's New in v0.13.x
 
 <div class="grid cards" markdown>
+
+-   :material-view-dashboard:{ .lg .middle } __Dashboard v2__
+
+    ---
+
+    Teams, activity logs, entity browser, timeline fixes, retrieval settings, diagnostics, and admin surfaces for operating memory.
+
+-   :material-archive:{ .lg .middle } __Cold Archive__
+
+    ---
+
+    Decayed memories can move to queryable archive storage and be restored back into active recall when needed.
+
+-   :material-tune:{ .lg .middle } __Adaptive Thresholds__
+
+    ---
+
+    Cleanup and pruning can adjust by session mode, memory density, warm-up phase, and result quality.
 
 -   :material-account-box:{ .lg .middle } __User Profiles API__
 
     ---
 
-    `GET /api/v1/users/{user_id}/profile` returns aggregated user intelligence: facts, activity metrics, top topics, and memory count. Perfect for personalization dashboards.
+    `GET /api/v1/users/{user_id}/profile` returns aggregated facts, activity metrics, top topics, and memory count.
 
 -   :material-clock-alert:{ .lg .middle } __Smart Auto-Forgetting__
 
@@ -229,13 +247,7 @@ Every AI app needs memory. Developers hack together solutions using vector datab
 
     ---
 
-    New `expires_at` parameter accepts ISO 8601 timestamps for explicit expiration control. Perfect for event-driven workflows.
-
--   :material-google-chrome:{ .lg .middle } __Browser Extension__
-
-    ---
-
-    Chrome Manifest V3 extension for ChatGPT, Claude, and Perplexity. Auto-inject memory context into any AI chat. Available on Chrome Web Store.
+    `expires_at` accepts ISO 8601 timestamps for explicit expiration control. Perfect for event-driven workflows.
 
 -   :material-alert-decagram:{ .lg .middle } __Strict Mode 410 GONE__
 

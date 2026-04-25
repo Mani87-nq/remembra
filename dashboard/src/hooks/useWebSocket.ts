@@ -72,6 +72,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const currentNamespaceRef = useRef(namespace);
   const currentProjectIdRef = useRef(projectId);
+  const connectRef = useRef<() => void>(() => {});
 
   const getWebSocketUrl = useCallback(() => {
     // Determine the base URL
@@ -134,7 +135,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
         if (autoReconnect && event.code !== 1000) {
           reconnectTimeoutRef.current = setTimeout(() => {
             console.log('[WebSocket] Attempting reconnect...');
-            connect();
+            connectRef.current();
           }, reconnectDelay);
         }
       };
@@ -170,6 +171,10 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
       setError(`Failed to connect: ${e}`);
     }
   }, [getWebSocketUrl, autoReconnect, reconnectDelay, onMemoryEvent, onConnectionChange]);
+
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -207,8 +212,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 
   // Connect on mount
   useEffect(() => {
-    connect();
+    const timer = window.setTimeout(() => connect(), 0);
     return () => {
+      window.clearTimeout(timer);
       disconnect();
     };
   }, [connect, disconnect]);

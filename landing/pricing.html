@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pricing - Remembra | AI Memory That Works</title>
     <meta name="description" content="Simple pricing for Remembra. Start free, upgrade when you need more.">
-    
+
     <!-- Favicons -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    
+
     <!-- Paddle Checkout -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -33,12 +33,12 @@
             }
         }
     </script>
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <style>
         body { font-family: 'Inter', sans-serif; }
         .gradient-text {
@@ -86,7 +86,7 @@
     <section class="py-12 px-6">
         <div class="max-w-6xl mx-auto">
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                
+
                 <!-- Free Tier -->
                 <div class="bg-dark-card border border-white/10 rounded-2xl p-6 flex flex-col">
                     <div class="mb-6">
@@ -94,7 +94,7 @@
                         <div class="text-3xl font-bold mb-2">$0</div>
                         <p class="text-gray-400 text-sm">For indie devs & testing</p>
                     </div>
-                    
+
                     <ul class="space-y-2 mb-6 flex-1 text-sm">
                         <li class="flex items-center gap-2 text-gray-300">
                             <span class="text-primary">✓</span> 25,000 memories
@@ -118,19 +118,19 @@
                             <span class="text-primary">✓</span> Community support
                         </li>
                     </ul>
-                    
-                    <a href="/signup.html" 
+
+                    <a href="/signup.html"
                        class="block w-full py-3 text-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium transition">
                         Start Free
                     </a>
                 </div>
-                
+
                 <!-- Pro Tier -->
                 <div class="bg-dark-card border-2 border-primary rounded-2xl p-6 relative flex flex-col glow">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary rounded-full text-xs font-medium">
                         Most Popular
                     </div>
-                    
+
                     <div class="mb-6">
                         <h3 class="text-xl font-bold mb-2">Pro</h3>
                         <div class="flex items-baseline gap-1">
@@ -139,7 +139,7 @@
                         </div>
                         <p class="text-gray-400 text-sm mt-1">For startups & side projects</p>
                     </div>
-                    
+
                     <ul class="space-y-2 mb-6 flex-1 text-sm">
                         <li class="flex items-center gap-2 text-gray-300">
                             <span class="text-primary">✓</span> 500,000 memories
@@ -163,13 +163,13 @@
                             <span class="text-primary">✓</span> Usage analytics
                         </li>
                     </ul>
-                    
+
                     <button onclick="subscribePro()" id="proButton"
                        class="block w-full py-3 text-center bg-primary hover:bg-primary-dark rounded-xl font-semibold transition">
                         Subscribe →
                     </button>
                 </div>
-                
+
                 <!-- Team Tier -->
                 <div class="bg-dark-card border border-purple-500/50 rounded-2xl p-6 flex flex-col">
                     <div class="mb-6">
@@ -180,7 +180,7 @@
                         </div>
                         <p class="text-gray-400 text-sm mt-1">For growing companies</p>
                     </div>
-                    
+
                     <ul class="space-y-2 mb-6 flex-1 text-sm">
                         <li class="flex items-center gap-2 text-gray-300">
                             <span class="text-purple-400">✓</span> 2,000,000 memories
@@ -204,13 +204,13 @@
                             <span class="text-purple-400">✓</span> 99.9% uptime SLA
                         </li>
                     </ul>
-                    
+
                     <button onclick="subscribeTeam()" id="teamButton"
                        class="block w-full py-3 text-center bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold transition">
                         Subscribe →
                     </button>
                 </div>
-                
+
                 <!-- Enterprise Tier -->
                 <div class="bg-dark-card border border-white/10 rounded-2xl p-6 flex flex-col">
                     <div class="mb-6">
@@ -218,7 +218,7 @@
                         <div class="text-3xl font-bold mb-2">Custom</div>
                         <p class="text-gray-400 text-sm">For large deployments</p>
                     </div>
-                    
+
                     <ul class="space-y-2 mb-6 flex-1 text-sm">
                         <li class="flex items-center gap-2 text-gray-300">
                             <span class="text-primary">✓</span> Unlimited memories
@@ -242,19 +242,19 @@
                             <span class="text-primary">✓</span> Dedicated support
                         </li>
                     </ul>
-                    
-                    <a href="mailto:sales@dolphytech.com?subject=Remembra Enterprise" 
+
+                    <a href="mailto:sales@dolphytech.com?subject=Remembra Enterprise"
                        class="block w-full py-3 text-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-medium transition">
                         Contact Sales
                     </a>
                 </div>
             </div>
-            
+
             <!-- Self-hosted callout -->
             <div class="mt-8 p-6 bg-dark-card border border-white/10 rounded-xl text-center">
                 <p class="text-gray-300">
-                    🔧 <strong>Self-hosting?</strong> Remembra is <a href="https://github.com/remembra-ai/remembra" class="text-primary hover:underline">open source (MIT)</a>. 
-                    Deploy on your own infrastructure for free with unlimited memories.
+                    🔧 <strong>Self-hosting?</strong> Remembra is <a href="https://github.com/remembra-ai/remembra" class="text-primary hover:underline">open source (MIT)</a>.
+                    Deploy on your own infrastructure for free, with limits governed by your own storage and runtime configuration.
                 </p>
             </div>
         </div>
@@ -264,28 +264,28 @@
     <section class="py-16 px-6 bg-dark-lighter">
         <div class="max-w-3xl mx-auto">
             <h2 class="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-            
+
             <div class="space-y-6">
                 <div class="bg-dark-card border border-white/10 rounded-xl p-6">
-                    <h3 class="text-lg font-semibold mb-2">What's the difference between self-hosted and Pro Cloud?</h3>
-                    <p class="text-gray-400">Self-hosted runs on your own servers — you manage everything. Pro Cloud is fully managed by us — just sign up and start using the API. Same features, different ops burden.</p>
+                    <h3 class="text-lg font-semibold mb-2">What's the difference between self-hosted and Remembra Cloud?</h3>
+                    <p class="text-gray-400">Self-hosted runs on your own servers and gives you direct control over storage, scaling, and operations. Remembra Cloud is managed for you and applies the plan limits shown above.</p>
                 </div>
-                
+
                 <div class="bg-dark-card border border-white/10 rounded-xl p-6">
-                    <h3 class="text-lg font-semibold mb-2">Can I switch from self-hosted to Pro Cloud?</h3>
+                    <h3 class="text-lg font-semibold mb-2">Can I switch from self-hosted to Remembra Cloud?</h3>
                     <p class="text-gray-400">Yes! Use our import/export feature to migrate your memories. We provide migration guides in the docs.</p>
                 </div>
-                
+
                 <div class="bg-dark-card border border-white/10 rounded-xl p-6">
                     <h3 class="text-lg font-semibold mb-2">What happens if I exceed my limits?</h3>
                     <p class="text-gray-400">We'll notify you before you hit limits. If you exceed them, API calls will return a 429 error. You can upgrade anytime from your dashboard.</p>
                 </div>
-                
+
                 <div class="bg-dark-card border border-white/10 rounded-xl p-6">
                     <h3 class="text-lg font-semibold mb-2">How do I cancel?</h3>
                     <p class="text-gray-400">Cancel anytime from your dashboard. Your access continues until the end of your billing period. You can export all your data before canceling.</p>
                 </div>
-                
+
                 <div class="bg-dark-card border border-white/10 rounded-xl p-6">
                     <h3 class="text-lg font-semibold mb-2">Do you offer refunds?</h3>
                     <p class="text-gray-400">We offer a 14-day money-back guarantee. If you're not happy, contact us within 14 days of subscribing for a full refund.</p>
@@ -331,61 +331,71 @@
 
     <!-- Paddle Checkout Script -->
     <script>
-        // Initialize Paddle with client-side token (safe to expose)
-        Paddle.Initialize({
-            token: 'live_5d05508ad75c2fe0d5621718dbd'
-        });
-        
-        // Paddle Price IDs (from Paddle dashboard)
-        const PADDLE_PRICES = {
-            pro: 'pri_01kmepby4nfy150jbfjkpkev5h',   // $49/mo
-            team: 'pri_01kmepewmfpqdz413hc4f4fr3r'  // $199/mo
-        };
-        
+        let paddleConfigPromise = null;
+
+        async function getPaddleConfig() {
+            if (!paddleConfigPromise) {
+                paddleConfigPromise = fetch('https://app.remembra.dev/api/v1/billing/client-config')
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error('Billing config unavailable');
+                        }
+                        return response.json();
+                    });
+            }
+            return paddleConfigPromise;
+        }
+
+        async function openCheckout(plan, button, resetText) {
+            const config = await getPaddleConfig();
+            if (config.provider !== 'paddle' || !config.client_token || !config.prices?.[plan]) {
+                window.location.href = `https://app.remembra.dev/billing?plan=${plan}`;
+                return;
+            }
+
+            if (!Paddle.Initialized) {
+                Paddle.Initialize({ token: config.client_token });
+                Paddle.Initialized = true;
+            }
+
+            Paddle.Checkout.open({
+                items: [{ priceId: config.prices[plan], quantity: 1 }],
+                successUrl: config.success_url || 'https://app.remembra.dev/billing?success=true',
+                settings: {
+                    displayMode: 'overlay',
+                    theme: 'dark',
+                    locale: 'en'
+                }
+            });
+
+            setTimeout(() => {
+                button.textContent = resetText;
+                button.disabled = false;
+            }, 1000);
+        }
+
         function subscribePro() {
             const button = document.getElementById('proButton');
             button.textContent = 'Loading...';
             button.disabled = true;
-            
-            Paddle.Checkout.open({
-                items: [{ priceId: PADDLE_PRICES.pro, quantity: 1 }],
-                successUrl: 'https://app.remembra.dev/billing?success=true',
-                settings: {
-                    displayMode: 'overlay',
-                    theme: 'dark',
-                    locale: 'en'
-                }
-            });
-            
-            // Reset button after checkout closes
-            setTimeout(() => {
-                button.textContent = 'Subscribe →';
+
+            openCheckout('pro', button, 'Subscribe →').catch(() => {
+                window.location.href = 'https://app.remembra.dev/billing?plan=pro';
                 button.disabled = false;
-            }, 1000);
+            });
         }
-        
+
         function subscribeTeam() {
             const button = document.getElementById('teamButton');
             button.textContent = 'Loading...';
             button.disabled = true;
-            
-            Paddle.Checkout.open({
-                items: [{ priceId: PADDLE_PRICES.team, quantity: 1 }],
-                successUrl: 'https://app.remembra.dev/billing?success=true',
-                settings: {
-                    displayMode: 'overlay',
-                    theme: 'dark',
-                    locale: 'en'
-                }
-            });
-            
-            // Reset button after checkout closes
-            setTimeout(() => {
-                button.textContent = 'Subscribe →';
+
+            openCheckout('team', button, 'Subscribe →').catch(() => {
+                window.location.href = 'https://app.remembra.dev/billing?plan=team';
                 button.disabled = false;
-            }, 1000);
+            });
         }
-        
+
         // Check for success/cancelled states
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('checkout') === 'success') {

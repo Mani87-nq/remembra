@@ -218,7 +218,7 @@
                 
                 <h3>Remembra Self-Hosting</h3>
                 <pre><code>docker run -d -p 8787:8787 remembra/remembra</code></pre>
-                <p>That's the entire setup. Remembra bundles its vector storage (Qdrant) and embedding model internally. No external dependencies, no database configuration. See our <a href="/blog/self-hosting-ai-memory">complete self-hosting guide</a>.</p>
+                <p>That's the basic container startup. Remembra can run with bundled defaults for quick local use, while production deployments should configure persistent storage, model providers, and vector storage deliberately. See our <a href="/blog/self-hosting-ai-memory">complete self-hosting guide</a>.</p>
                 
                 <h3>Mem0 Self-Hosting</h3>
                 <pre><code>pip install mem0ai
@@ -246,7 +246,7 @@
                 <p>Self-hosting is free for all three (Apache 2.0 license). Cloud pricing differs:</p>
                 
                 <ul>
-                    <li><strong>Remembra Cloud:</strong> $49/month flat rate (unlimited memories, fair use policy)</li>
+                    <li><strong>Remembra Cloud:</strong> $49/month Pro plan with published plan limits</li>
                     <li><strong>Mem0 Cloud:</strong> Usage-based starting at $20/month + per-memory costs</li>
                     <li><strong>Zep Cloud:</strong> Usage-based with conversation-volume pricing</li>
                 </ul>

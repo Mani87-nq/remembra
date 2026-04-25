@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { api } from '../lib/api';
-import type { MemoryTimelineResponse, TimelineMemory } from '../lib/api';
+import type { TimelineMemory } from '../lib/api';
 import { Clock, Eye, Tag, Loader2, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';

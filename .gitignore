@@ -40,6 +40,7 @@ htmlcov/
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 .DS_Store
@@ -48,6 +49,21 @@ htmlcov/
 .env
 .env.*
 !.env.example
+TOOLS.md
+secrets/
+*.pem
+*.key
+**/INFRASTRUCTURE.md
+**/CONTEXT.md
+**/BACKEND-DEPLOY.md
+**/MASTER-PLAN.md
+credentials.*
+*_secret*
+*_key*
+id_rsa*
+coolify_key*
+google-tts-credentials.json
+config/master_config.json
 
 # Docker volumes (local dev)
 .qdrant_data/

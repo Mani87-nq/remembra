@@ -327,7 +327,7 @@ export function Billing() {
   const [billingContext, setBillingContext] = useState<BillingContextResponse | null>(null);
   const [planInfo, setPlanInfo] = useState<PlanInfoResponse | null>(null);
   const [usage, setUsage] = useState<UsageResponse | null>(null);
-  const [_dailyUsage, setDailyUsage] = useState<DailyUsageResponse | null>(null);
+  const [, setDailyUsage] = useState<DailyUsageResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -335,17 +335,6 @@ export function Billing() {
 
   useEffect(() => {
     loadBillingData();
-    
-    // Initialize Paddle.js for overlay checkout
-    // @ts-expect-error Paddle is loaded via script tag
-    if (typeof window.Paddle !== 'undefined' && !window.Paddle.Initialized) {
-      // @ts-expect-error Paddle global
-      window.Paddle.Initialize({
-        token: 'live_5d05508ad75c2fe0d5621718dbd', // Paddle client-side token
-      });
-      // @ts-expect-error Paddle global
-      window.Paddle.Initialized = true;
-    }
   }, []);
 
   const loadBillingData = async () => {
@@ -385,6 +374,14 @@ export function Billing() {
         const configResponse = await api.getBillingClientConfig();
 
         if (configResponse.provider === 'paddle' && configResponse.prices[plan]) {
+          // @ts-expect-error Paddle global
+          if (configResponse.client_token && !window.Paddle.Initialized) {
+            // @ts-expect-error Paddle global
+            window.Paddle.Initialize({ token: configResponse.client_token });
+            // @ts-expect-error Paddle global
+            window.Paddle.Initialized = true;
+          }
+
           const userJson = localStorage.getItem('remembra_user');
           const userEmail = userJson ? JSON.parse(userJson)?.email : undefined;
           const userId = api.getUserId();

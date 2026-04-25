@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import type { ElementType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { api } from '../lib/api';
+import type { Memory } from '../lib/api';
 import type { TabType } from './Sidebar';
 
 interface CommandPaletteProps {
@@ -36,7 +38,7 @@ interface CommandItem {
   id: string;
   label: string;
   description?: string;
-  icon: React.ElementType;
+  icon: ElementType;
   section: string;
   action: () => void;
   keywords?: string[];
@@ -74,7 +76,7 @@ export function CommandPalette({ isOpen, onClose, onNavigate, onNewMemory }: Com
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mode, setMode] = useState<'commands' | 'search'>('commands');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Memory[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);

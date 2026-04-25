@@ -5,6 +5,25 @@ All notable changes to Remembra will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.2] - 2026-04-25
+
+### Added
+- **Product Surface Refresh** — Reworked the landing page into a live product narrative with memory graph, product dock, API system, and operator-focused proof points.
+- **Dashboard Control Plane** — Added a dashboard overview surface that brings live memory health, API posture, graph signals, and operational next steps into one view.
+- **Release Notes Page** — Added public landing changelog coverage for the latest product surface and dashboard improvements.
+
+### Changed
+- **Truth Scrub** — Updated landing, docs, and generated site copy to remove stale claims and unsupported phrasing.
+- **Billing Checkout Safety** — Removed hardcoded Paddle client token usage from tracked frontend files; checkout now initializes from runtime billing config.
+- **Security Docs** — Replaced real-looking key examples with environment-variable based examples.
+- **Git Safety** — Hardened ignored credential patterns for local agent/tooling files, secrets, keys, and deployment context.
+
+### Verified
+- `uv run mkdocs build`
+- `npm run build` in `dashboard`
+- `npm run build` in `landing`
+- Staged publish/security scans for blocked files, live-looking tokens, production IPs, and whitespace.
+
 ## [0.13.1] - 2026-03-30
 
 ### Added
@@ -105,12 +124,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Sanitization** — No Python exceptions leaked to clients
 - **Bcrypt Performance** — SHA256 cache mitigates O(n) timing
 
-### Stats
-- 2,700+ PyPI downloads/month
-- 700+ Docker pulls
-- 400 unique cloners
-- Indexed on 8 platforms including npm
-
 ---
 
 ## [0.12.1] - 2026-03-23
@@ -152,13 +165,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Skip recall for known-expired memories
   - Reduces API calls by up to 40%
   - Automatic cache invalidation on store
-
-- **Browser Extension** — Chrome Manifest V3 for AI chat interfaces
-  - Works with ChatGPT, Claude, and Perplexity
-  - Auto-injects memory context into conversations
-  - One-click memory storage from any chat
-  - Secure local API key storage
-  - Available on Chrome Web Store
 
 ### Changed
 - Store endpoint now accepts `expires_at` parameter alongside `ttl`
@@ -211,7 +217,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.10.0] - 2026-03-15
 
 ### Added
-- **Universal Agent Installer** — One command to configure ALL your AI tools
+- **Universal Agent Installer** — One command to configure supported AI tools
   - `remembra-install --all` auto-detects and configures installed agents
   - `remembra-install --agent <name>` for specific agent setup
   - `remembra-install --detect` lists installed agents
@@ -293,7 +299,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.3] - 2026-03-08
 
 ### Fixed
-- **Security: Server IP Removed** — Removed hardcoded server IP `178.156.226.84` from tracked files
+- **Security: Server IP Removed** — Removed hardcoded production server IP from tracked files
 - **Security: JWT Secret Blocked** — Added quickstart JWT secret to blocked list
 - **Dashboard: Light Mode CSS** — Fixed styling issues in light mode theme
 - **Dashboard: Auth Flow** — Fixed userId not being set on token verify, added fallback to user object

@@ -4,17 +4,19 @@ import { useEffect } from 'react';
 import clsx from 'clsx';
 
 function AnimatedNumber({ value }: { value: string | number }) {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
+  const numericValue = typeof value === 'number' ? value : 0;
+
+  useEffect(() => {
+    if (typeof value === 'string') return;
+    const animation = animate(count, numericValue, { duration: 1.5, ease: "easeOut" });
+    return animation.stop;
+  }, [value, numericValue, count]);
+
   if (typeof value === 'string') {
     return <span>{value}</span>;
   }
-  
-  const count = useMotionValue(0);
-  const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
-
-  useEffect(() => {
-    const animation = animate(count, value, { duration: 1.5, ease: "easeOut" });
-    return animation.stop;
-  }, [value, count]);
 
   return <motion.span>{rounded}</motion.span>;
 }

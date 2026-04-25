@@ -1,5 +1,5 @@
 declare module 'react-force-graph-2d' {
-  import { Component, RefObject } from 'react';
+  import { RefObject } from 'react';
   
   export interface NodeObject {
     id?: string | number;
@@ -9,17 +9,17 @@ declare module 'react-force-graph-2d' {
     vy?: number;
     fx?: number;
     fy?: number;
-    [key: string]: any;
+    [key: string]: unknown;
   }
   
   export interface LinkObject {
     source?: string | number | NodeObject;
     target?: string | number | NodeObject;
-    [key: string]: any;
+    [key: string]: unknown;
   }
   
   export interface ForceGraphMethods {
-    d3Force: (forceName: string, force?: any) => any;
+    d3Force: (forceName: string, force?: unknown) => unknown;
     d3ReheatSimulation: () => void;
     emitParticle: (link: LinkObject) => void;
     pauseAnimation: () => void;

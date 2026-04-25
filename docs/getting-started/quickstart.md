@@ -103,7 +103,7 @@ If you prefer to configure things yourself, choose one of the options below.
 
 ```bash
 curl http://localhost:8787/health
-# {"status":"ok","version":"0.12.0","dependencies":{"qdrant":{"status":"ok"}}}
+# {"status":"ok","version":"0.13.2","dependencies":{"qdrant":{"status":"ok"}}}
 ```
 
 Or open the dashboard: [http://localhost:8787](http://localhost:8787)

@@ -2,7 +2,6 @@ import {
   Database, 
   Users, 
   UsersRound,
-  Share2, 
   TrendingDown, 
   Bug, 
   BarChart3, 
@@ -34,7 +33,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   // Memory
-  { id: 'memories', label: 'Memories', icon: Database, section: 'memory' },
+  { id: 'memories', label: 'Control Plane', icon: Database, section: 'memory' },
   { id: 'entities', label: 'Entities', icon: Users, section: 'memory' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, section: 'memory' },
   // Exploration
@@ -72,8 +71,6 @@ export function Sidebar({
   onSearch,
   isAdmin = false 
 }: SidebarProps) {
-  // Debug logging
-  console.log('[Sidebar] isAdmin prop:', isAdmin, 'strict check:', isAdmin === true);
   const activeItem = navItems.find((item) => item.id === activeTab);
 
   const renderNavSection = (section: string, title: string) => {
@@ -134,11 +131,11 @@ export function Sidebar({
         {!collapsed && (
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.26em] text-[hsl(var(--muted-foreground))]">
-              Remembra Cloud
+              Remembra
             </p>
-            <h1 className="text-base font-semibold text-[hsl(var(--foreground))]">Dashboard v2.0</h1>
+            <h1 className="text-base font-semibold text-[hsl(var(--foreground))]">Control Plane</h1>
             <p className="text-[11px] text-[hsl(var(--muted-foreground))] truncate">
-              Synced memory intelligence
+              Shared agent memory
             </p>
           </div>
         )}

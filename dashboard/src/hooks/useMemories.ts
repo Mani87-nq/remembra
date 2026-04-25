@@ -9,7 +9,6 @@ export function useMemories(limit = 20, projectId?: string) {
   const [error, setError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [wsConnected, setWsConnected] = useState(false);
   const lastRefreshRef = useRef<number>(0);
 
   const fetchMemories = useCallback(async (pageOffset: number, reset = false) => {
@@ -66,7 +65,6 @@ export function useMemories(limit = 20, projectId?: string) {
 
   // WebSocket connection for real-time updates
   // Pass either API key or JWT token for authentication
-  const authToken = api.getApiKey() || api.getJwtToken() || undefined;
   const { connected } = useWebSocket({
     baseUrl: getApiBaseUrl() || undefined,  // Use API URL for WebSocket, not current origin
     namespace: projectId || 'default',
@@ -74,7 +72,6 @@ export function useMemories(limit = 20, projectId?: string) {
     apiKey: api.getApiKey() || undefined,
     token: api.getJwtToken() || undefined,
     onMemoryEvent: handleMemoryEvent,
-    onConnectionChange: setWsConnected,
     autoReconnect: true,
   });
 

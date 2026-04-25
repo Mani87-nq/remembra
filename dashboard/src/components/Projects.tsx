@@ -2,12 +2,8 @@ import { useState, useEffect } from 'react';
 import { 
   FolderOpen, 
   Plus, 
-  Settings, 
   Trash2, 
   Users, 
-  Lock, 
-  Globe,
-  MoreVertical,
   Search,
   Loader2,
   FolderPlus,

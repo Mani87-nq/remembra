@@ -68,7 +68,7 @@ curl -X POST http://localhost:8787/api/v1/admin/keys \
 ```json
 {
   "id": "key_abc123",
-  "key": "rem_sk_live_...",
+  "key": "rem_...",
   "name": "Backend Service",
   "role": "editor",
   "permissions": ["memory:create", "memory:read", "memory:update", "memory:delete", "entity:read", "entity:update"],
@@ -90,12 +90,13 @@ curl -X POST http://localhost:8787/api/v1/admin/keys \
 Pass the API key in requests:
 
 ```python
+import os
 from remembra import Memory
 
 # Editor key - can store and recall
 memory = Memory(
     base_url="http://localhost:8787",
-    api_key="rem_sk_live_editor_...",
+    api_key=os.environ["REMEMBRA_EDITOR_API_KEY"],
     user_id="user_123"
 )
 
@@ -104,10 +105,12 @@ memory.recall("feedback")  # ✅ Works
 ```
 
 ```python
+import os
+
 # Viewer key - read only
 memory = Memory(
     base_url="http://localhost:8787",
-    api_key="rem_sk_live_viewer_...",
+    api_key=os.environ["REMEMBRA_VIEWER_API_KEY"],
     user_id="user_123"
 )
 

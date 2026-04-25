@@ -39,6 +39,7 @@ Usage:
 from __future__ import annotations
 
 from datetime import datetime
+from importlib.metadata import PackageNotFoundError, version
 from typing import TYPE_CHECKING, Any
 
 import httpx
@@ -57,6 +58,11 @@ from remembra.client.types import (
     RecallResult,
     StoreResult,
 )
+
+try:
+    USER_AGENT_VERSION = version("remembra")
+except PackageNotFoundError:
+    USER_AGENT_VERSION = "0.13.2"
 
 if TYPE_CHECKING:
     pass
@@ -138,7 +144,7 @@ class Memory:
         # Build headers
         self._headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "User-Agent": "remembra-python/0.12.0",
+            "User-Agent": f"remembra-python/{USER_AGENT_VERSION}",
         }
         if api_key:
             self._headers["X-API-Key"] = api_key
