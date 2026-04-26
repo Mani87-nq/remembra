@@ -125,7 +125,7 @@ export function EntityGraph({ projectId }: EntityGraphProps) {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getEntityGraph(projectId || 'default');
+      const data = await api.getEntityGraph(projectId || undefined);
       
       const nodes: GraphNode[] = data.nodes.map((n) => ({
         id: n.id,

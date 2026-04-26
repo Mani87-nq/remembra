@@ -424,6 +424,18 @@ async def get_entity_graph(
     memory_service: MemoryServiceDep,
     current_user: CurrentUser,
     project_id: str | None = Query(default=None, description="Filter graph to one project"),
+    max_nodes: int = Query(
+        default=400,
+        ge=1,
+        le=400,
+        description="Maximum number of entities (nodes) to return. Large graphs can time out in production.",
+    ),
+    max_edges: int = Query(
+        default=4000,
+        ge=0,
+        le=20000,
+        description="Maximum number of relationships (edges) to return. 0 disables the edge limit.",
+    ),
 ) -> EntityGraphResponse:
     """Get entity graph data in nodes + edges format for D3/vis-network."""
     project_id = resolve_project_access(current_user, project_id)
@@ -434,7 +446,6 @@ async def get_entity_graph(
                COUNT(DISTINCT me.memory_id) AS memory_count
         FROM entities e
         LEFT JOIN memory_entities me ON me.entity_id = e.id
-        LEFT JOIN memories m ON m.id = me.memory_id
         WHERE e.user_id = ?
     """
     entity_params: list[Any] = [current_user.user_id]
@@ -443,8 +454,11 @@ async def get_entity_graph(
         entity_params.append(project_id)
     entity_query += """
         GROUP BY e.id, e.canonical_name, e.type, e.confidence
-        ORDER BY e.confidence DESC
+        ORDER BY memory_count DESC, e.confidence DESC
     """
+    if max_nodes:
+        entity_query += " LIMIT ?"
+        entity_params.append(max_nodes)
 
     cursor = await db.conn.execute(entity_query, entity_params)
     entity_rows = await cursor.fetchall()
@@ -461,6 +475,8 @@ async def get_entity_graph(
             }
         )
 
+    node_ids = [node["id"] for node in nodes]
+
     relationship_query = """
         SELECT r.id, r.from_entity_id, r.to_entity_id, r.type, r.confidence
         FROM relationships r
@@ -472,6 +488,16 @@ async def get_entity_graph(
     if project_id:
         relationship_query += " AND e_from.project_id = ? AND e_to.project_id = ?"
         relationship_params.extend([project_id, project_id])
+
+    if node_ids:
+        placeholders = ",".join(["?"] * len(node_ids))
+        relationship_query += f" AND r.from_entity_id IN ({placeholders}) AND r.to_entity_id IN ({placeholders})"
+        relationship_params.extend(node_ids)
+        relationship_params.extend(node_ids)
+
+    if max_edges:
+        relationship_query += " LIMIT ?"
+        relationship_params.append(max_edges)
 
     cursor = await db.conn.execute(relationship_query, relationship_params)
     rel_rows = await cursor.fetchall()
@@ -500,6 +526,9 @@ async def get_entity_graph(
     for edge in edges:
         t = edge["type"]
         stats["relationship_types"][t] = stats["relationship_types"].get(t, 0) + 1
+
+    stats["truncated_nodes"] = bool(max_nodes and len(nodes) == max_nodes)
+    stats["truncated_edges"] = bool(max_edges and len(edges) == max_edges)
 
     return EntityGraphResponse(nodes=nodes, edges=edges, stats=stats)
 

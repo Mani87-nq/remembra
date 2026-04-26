@@ -189,6 +189,9 @@ CREATE TABLE IF NOT EXISTS memory_entities (
     FOREIGN KEY (entity_id) REFERENCES entities(id) ON DELETE CASCADE
 );
 
+-- Speeds up entity graph queries (JOIN memory_entities ON entity_id)
+CREATE INDEX IF NOT EXISTS idx_memory_entities_entity ON memory_entities(entity_id);
+
 -- Teams (collaborative workspaces)
 CREATE TABLE IF NOT EXISTS teams (
     id TEXT PRIMARY KEY,
