@@ -528,10 +528,19 @@ class ApiClient {
     return this.fetchApi<AnalyticsResponse>(`/debug/analytics${suffix}`);
   }
 
-  async getEntityGraph(projectId?: string): Promise<EntityGraphDataResponse> {
+  async getEntityGraph(
+    projectId?: string,
+    maxNodes: number = 200,
+    maxEdges: number = 1500,
+  ): Promise<EntityGraphDataResponse> {
     const resolvedProjectId = projectId ?? this.getProjectId();
-    const suffix = resolvedProjectId ? `?project_id=${encodeURIComponent(resolvedProjectId)}` : '';
-    return this.fetchApi<EntityGraphDataResponse>(`/debug/entities/graph${suffix}`);
+    const query = new URLSearchParams();
+    if (resolvedProjectId) {
+      query.set('project_id', resolvedProjectId);
+    }
+    query.set('max_nodes', String(maxNodes));
+    query.set('max_edges', String(maxEdges));
+    return this.fetchApi<EntityGraphDataResponse>(`/debug/entities/graph?${query.toString()}`);
   }
 
   async getMemoryTimeline(
