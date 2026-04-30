@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS entities (
 );
 
 CREATE INDEX IF NOT EXISTS idx_entities_user ON entities(user_id);
+CREATE INDEX IF NOT EXISTS idx_entities_user_project ON entities(user_id, project_id);
 CREATE INDEX IF NOT EXISTS idx_entities_name ON entities(canonical_name);
 CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(type);
 

@@ -425,13 +425,13 @@ async def get_entity_graph(
     current_user: CurrentUser,
     project_id: str | None = Query(default=None, description="Filter graph to one project"),
     max_nodes: int = Query(
-        default=400,
+        default=200,
         ge=1,
         le=400,
         description="Maximum number of entities (nodes) to return. Large graphs can time out in production.",
     ),
     max_edges: int = Query(
-        default=4000,
+        default=1500,
         ge=0,
         le=20000,
         description="Maximum number of relationships (edges) to return. 0 disables the edge limit.",
@@ -443,7 +443,7 @@ async def get_entity_graph(
 
     entity_query = """
         SELECT e.id, e.canonical_name, e.type, e.confidence,
-               COUNT(DISTINCT me.memory_id) AS memory_count
+               COUNT(me.memory_id) AS memory_count
         FROM entities e
         LEFT JOIN memory_entities me ON me.entity_id = e.id
         WHERE e.user_id = ?
@@ -480,14 +480,9 @@ async def get_entity_graph(
     relationship_query = """
         SELECT r.id, r.from_entity_id, r.to_entity_id, r.type, r.confidence
         FROM relationships r
-        JOIN entities e_from ON r.from_entity_id = e_from.id
-        JOIN entities e_to ON r.to_entity_id = e_to.id
-        WHERE e_from.user_id = ?
+        WHERE 1=1
     """
-    relationship_params: list[Any] = [current_user.user_id]
-    if project_id:
-        relationship_query += " AND e_from.project_id = ? AND e_to.project_id = ?"
-        relationship_params.extend([project_id, project_id])
+    relationship_params: list[Any] = []
 
     if node_ids:
         placeholders = ",".join(["?"] * len(node_ids))
